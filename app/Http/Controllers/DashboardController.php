@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Activity;
+use App\Services\PointService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request, PointService $pointService): Response
     {
         $user = $request->user();
 
@@ -24,24 +25,23 @@ class DashboardController extends Controller
             'tags' => $activity->tags->pluck('name')->toArray(),
         ]);
 
-        $todayPoints = $user->activityLogs()
+        $todayPoints = (int) $user->activityLogs()
             ->whereDate('completed_at', today())
             ->sum('points_earned');
 
-        $totalPoints = $user->activityLogs()->sum('points_earned');
-
-        $todayActivities = $user->activityLogs()
+        $todayActivities = (int) $user->activityLogs()
             ->whereDate('completed_at', today())
             ->sum('quantity');
 
-        $totalActivities = $user->activityLogs()->sum('quantity');
+        $progression = $pointService->getRewardProgression($user);
 
         return Inertia::render('dashboard', [
             'activities' => $activities,
-            'todayPoints' => (int) $todayPoints,
-            'totalPoints' => (int) $totalPoints,
-            'todayActivities' => (int) $todayActivities,
-            'totalActivities' => (int) $totalActivities,
+            'todayPoints' => $todayPoints,
+            'todayActivities' => $todayActivities,
+            'totalPoints' => $progression['totalEarned'],
+            'totalActivities' => (int) $user->activityLogs()->sum('quantity'),
+            'rewardProgression' => $progression,
         ]);
     }
 }

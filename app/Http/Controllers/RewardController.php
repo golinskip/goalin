@@ -54,7 +54,7 @@ class RewardController extends Controller
     public function store(StoreRewardRequest $request): RedirectResponse
     {
         $user = $request->user();
-        $data = $request->validated();
+        $data = $request->safe()->except(['picture']);
 
         if ($request->hasFile('picture')) {
             $data['picture'] = $request->file('picture')->store('rewards', 'public');
@@ -97,7 +97,7 @@ class RewardController extends Controller
     {
         $this->authorize('update', $reward);
 
-        $data = $request->validated();
+        $data = $request->safe()->except(['picture']);
 
         if ($request->hasFile('picture')) {
             if ($reward->picture) {

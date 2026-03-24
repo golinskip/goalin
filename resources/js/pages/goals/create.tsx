@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import InputError from '@/components/input-error';
 import AppLayout from '@/layouts/app-layout';
+import { randomColor } from '@/lib/utils';
 import { index as goalsIndex } from '@/routes/goals';
 import type { BreadcrumbItem } from '@/types';
 
@@ -17,7 +18,7 @@ export default function GoalCreate() {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         description: '',
-        color: '#3a9a4e',
+        color: randomColor(),
     });
 
     function submit(e: React.FormEvent) {

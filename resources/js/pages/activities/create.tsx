@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import InputError from '@/components/input-error';
 import AppLayout from '@/layouts/app-layout';
+import { randomColor } from '@/lib/utils';
 import { index as activitiesIndex } from '@/routes/activities';
 import type { BreadcrumbItem } from '@/types';
 
@@ -31,7 +32,7 @@ export default function ActivityCreate({ availableTags, availableGoals }: Props)
         name: '',
         description: '',
         point_cost: '',
-        color: '#3a9a4e',
+        color: randomColor(),
         needs_timer: false,
         duration_minutes: '',
         tags: [] as string[],

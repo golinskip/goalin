@@ -17,17 +17,46 @@ type Props = {
     };
 };
 
-type TimerState = 'ready' | 'running' | 'paused' | 'finished';
+type TimerState = 'running' | 'paused' | 'finished';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: dashboard() },
     { title: 'Timer', href: '#' },
 ];
 
+function createRingSound(): () => void {
+    const ctx = new AudioContext();
+    const now = ctx.currentTime;
+
+    const frequencies = [880, 1108.73, 880, 1108.73, 880];
+    const noteDuration = 0.15;
+    const gap = 0.08;
+
+    frequencies.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+
+        const start = now + i * (noteDuration + gap);
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(0.3, start + 0.02);
+        gain.gain.linearRampToValueAtTime(0, start + noteDuration);
+
+        osc.start(start);
+        osc.stop(start + noteDuration);
+    });
+
+    return () => ctx.close();
+}
+
 export default function ActivityTimer({ activity }: Props) {
     const totalSeconds = activity.duration_minutes * 60;
     const [secondsLeft, setSecondsLeft] = useState(totalSeconds);
-    const [timerState, setTimerState] = useState<TimerState>('ready');
+    const [timerState, setTimerState] = useState<TimerState>('running');
     const [showConfirm, setShowConfirm] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -39,20 +68,7 @@ export default function ActivityTimer({ activity }: Props) {
         }
     }, []);
 
-    useEffect(() => {
-        return () => clearTimer();
-    }, [clearTimer]);
-
-    useEffect(() => {
-        if (secondsLeft <= 0 && timerState === 'running') {
-            clearTimer();
-            setTimerState('finished');
-            setShowConfirm(true);
-        }
-    }, [secondsLeft, timerState, clearTimer]);
-
-    const start = useCallback(() => {
-        setTimerState('running');
+    const startInterval = useCallback(() => {
         intervalRef.current = setInterval(() => {
             setSecondsLeft((prev) => {
                 if (prev <= 1) return 0;
@@ -60,6 +76,21 @@ export default function ActivityTimer({ activity }: Props) {
             });
         }, 1000);
     }, []);
+
+    // Auto-start on mount
+    useEffect(() => {
+        startInterval();
+        return () => clearTimer();
+    }, [startInterval, clearTimer]);
+
+    useEffect(() => {
+        if (secondsLeft <= 0 && timerState === 'running') {
+            clearTimer();
+            setTimerState('finished');
+            setShowConfirm(true);
+            createRingSound();
+        }
+    }, [secondsLeft, timerState, clearTimer]);
 
     const pause = useCallback(() => {
         clearTimer();
@@ -68,20 +99,16 @@ export default function ActivityTimer({ activity }: Props) {
 
     const resume = useCallback(() => {
         setTimerState('running');
-        intervalRef.current = setInterval(() => {
-            setSecondsLeft((prev) => {
-                if (prev <= 1) return 0;
-                return prev - 1;
-            });
-        }, 1000);
-    }, []);
+        startInterval();
+    }, [startInterval]);
 
     const reset = useCallback(() => {
         clearTimer();
         setSecondsLeft(totalSeconds);
-        setTimerState('ready');
+        setTimerState('running');
         setShowConfirm(false);
-    }, [clearTimer, totalSeconds]);
+        startInterval();
+    }, [clearTimer, totalSeconds, startInterval]);
 
     const handleComplete = useCallback(
         (completed: boolean) => {
@@ -145,6 +172,44 @@ export default function ActivityTimer({ activity }: Props) {
                         )}
                     </div>
 
+                    {/* Completion buttons - above timer when finished */}
+                    {showConfirm && (
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="flex items-center gap-2" style={{ color: activity.color }}>
+                                <CheckCircle2 className="size-6" />
+                                <span className="text-lg font-semibold">Time&apos;s up!</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">Did you complete the activity?</p>
+                            <div className="flex gap-3">
+                                <Button
+                                    size="lg"
+                                    onClick={() => handleComplete(true)}
+                                    disabled={submitting}
+                                    className="px-8"
+                                >
+                                    {submitting ? 'Saving...' : 'Yes, completed!'}
+                                </Button>
+                                <Button
+                                    size="lg"
+                                    variant="outline"
+                                    onClick={() => handleComplete(false)}
+                                    disabled={submitting}
+                                >
+                                    No, cancel
+                                </Button>
+                                <Button
+                                    size="lg"
+                                    variant="ghost"
+                                    onClick={reset}
+                                    className="gap-2"
+                                >
+                                    <RotateCcw className="size-4" />
+                                    Try again
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Timer circle */}
                     <div className="relative">
                         <svg width="320" height="320" className="-rotate-90">
@@ -182,15 +247,9 @@ export default function ActivityTimer({ activity }: Props) {
                         </div>
                     </div>
 
-                    {/* Controls */}
-                    {!showConfirm ? (
+                    {/* Controls - below timer when running/paused */}
+                    {!showConfirm && (
                         <div className="flex items-center gap-3">
-                            {timerState === 'ready' && (
-                                <Button size="lg" onClick={start} className="gap-2 px-8">
-                                    <Play className="size-5" />
-                                    Start
-                                </Button>
-                            )}
                             {timerState === 'running' && (
                                 <Button size="lg" variant="outline" onClick={pause} className="gap-2 px-8">
                                     <Pause className="size-5" />
@@ -209,51 +268,15 @@ export default function ActivityTimer({ activity }: Props) {
                                     </Button>
                                 </>
                             )}
-                            {timerState !== 'ready' && (
-                                <Button
-                                    size="lg"
-                                    variant="ghost"
-                                    onClick={() => router.visit('/dashboard')}
-                                    className="gap-2"
-                                >
-                                    <X className="size-5" />
-                                    Cancel
-                                </Button>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="w-full max-w-sm rounded-xl border border-green-200/80 bg-white/80 p-6 text-center shadow-lg backdrop-blur-sm dark:border-green-800/50 dark:bg-black/60">
-                            <CheckCircle2
-                                className="mx-auto mb-3 size-12"
-                                style={{ color: activity.color }}
-                            />
-                            <h3 className="text-lg font-semibold">Time&apos;s up!</h3>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                                Did you complete the activity?
-                            </p>
-                            <div className="mt-5 flex gap-3">
-                                <Button
-                                    className="flex-1"
-                                    onClick={() => handleComplete(true)}
-                                    disabled={submitting}
-                                >
-                                    {submitting ? 'Saving...' : 'Yes, completed!'}
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="flex-1"
-                                    onClick={() => handleComplete(false)}
-                                    disabled={submitting}
-                                >
-                                    No, cancel
-                                </Button>
-                            </div>
-                            <button
-                                onClick={reset}
-                                className="mt-3 text-sm text-muted-foreground hover:text-foreground"
+                            <Button
+                                size="lg"
+                                variant="ghost"
+                                onClick={() => router.visit('/dashboard')}
+                                className="gap-2"
                             >
-                                Try again
-                            </button>
+                                <X className="size-5" />
+                                Cancel
+                            </Button>
                         </div>
                     )}
                 </div>

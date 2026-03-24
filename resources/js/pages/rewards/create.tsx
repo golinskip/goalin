@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import InputError from '@/components/input-error';
 import AppLayout from '@/layouts/app-layout';
+import { randomColor } from '@/lib/utils';
 import { index as rewardsIndex } from '@/routes/rewards';
 import type { BreadcrumbItem } from '@/types';
 
@@ -25,7 +26,7 @@ export default function RewardCreate({ currencySymbol, multiplier }: Props) {
         name: '',
         picture: null as File | null,
         cost_in_money: '',
-        color: '#3a9a4e',
+        color: randomColor(),
         shop_url: '',
         description: '',
     });

@@ -16,7 +16,7 @@ class StoreRewardRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'picture' => ['nullable', 'image', 'max:2048'],
+            'picture' => ['sometimes', 'image', 'max:2048'],
             'cost_in_money' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
             'color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'shop_url' => ['nullable', 'url', 'max:2048'],
