@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Gift, LayoutGrid, Menu, Zap } from 'lucide-react';
+import { Gift, LayoutGrid, Menu, Target, Zap } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -28,6 +28,7 @@ import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as activitiesIndex } from '@/routes/activities';
+import { index as goalsIndex } from '@/routes/goals';
 import { index as rewardsIndex } from '@/routes/rewards';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
@@ -40,6 +41,11 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: 'Goals',
+        href: goalsIndex(),
+        icon: Target,
     },
     {
         title: 'Activities',

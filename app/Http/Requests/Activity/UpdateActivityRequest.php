@@ -23,6 +23,8 @@ class UpdateActivityRequest extends FormRequest
             'duration_minutes' => ['nullable', 'required_if:needs_timer,true', 'integer', 'min:1', 'max:1440'],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:50'],
+            'goal_ids' => ['nullable', 'array'],
+            'goal_ids.*' => ['integer', 'exists:goals,id'],
         ];
     }
 }

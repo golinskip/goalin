@@ -19,14 +19,22 @@ type ActivityData = {
     needs_timer: boolean;
     duration_minutes: number | null;
     tags: string[];
+    goal_ids: number[];
+};
+
+type GoalOption = {
+    id: number;
+    name: string;
+    color: string;
 };
 
 type Props = {
     activity: ActivityData;
     availableTags: string[];
+    availableGoals: GoalOption[];
 };
 
-export default function ActivityEdit({ activity, availableTags }: Props) {
+export default function ActivityEdit({ activity, availableTags, availableGoals }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Activities', href: activitiesIndex() },
         { title: 'Edit', href: `/activities/${activity.id}/edit` },
@@ -40,6 +48,7 @@ export default function ActivityEdit({ activity, availableTags }: Props) {
         needs_timer: activity.needs_timer,
         duration_minutes: activity.duration_minutes ? String(activity.duration_minutes) : '',
         tags: activity.tags,
+        goal_ids: activity.goal_ids,
     });
 
     const [tagInput, setTagInput] = useState('');
@@ -225,6 +234,43 @@ export default function ActivityEdit({ activity, availableTags }: Props) {
                                 </p>
                                 <InputError message={errors.tags} />
                             </div>
+
+                            {availableGoals.length > 0 && (
+                                <div className="grid gap-2">
+                                    <Label>Goals this activity helps achieve</Label>
+                                    <div className="grid gap-2 sm:grid-cols-2">
+                                        {availableGoals.map((goal) => (
+                                            <label
+                                                key={goal.id}
+                                                className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${
+                                                    data.goal_ids.includes(goal.id)
+                                                        ? 'border-primary bg-primary/5'
+                                                        : 'border-border/50 hover:border-border'
+                                                }`}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={data.goal_ids.includes(goal.id)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setData('goal_ids', [...data.goal_ids, goal.id]);
+                                                        } else {
+                                                            setData('goal_ids', data.goal_ids.filter((id) => id !== goal.id));
+                                                        }
+                                                    }}
+                                                    className="size-4 rounded border-input"
+                                                />
+                                                <div
+                                                    className="size-3 shrink-0 rounded-full"
+                                                    style={{ backgroundColor: goal.color }}
+                                                />
+                                                <span className="text-sm font-medium">{goal.name}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <InputError message={errors.goal_ids} />
+                                </div>
+                            )}
 
                             <div className="space-y-4 rounded-lg border border-border/50 p-4">
                                 <div className="flex items-center gap-3">

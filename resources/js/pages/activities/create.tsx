@@ -15,11 +15,18 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Create', href: '/activities/create' },
 ];
 
-type Props = {
-    availableTags: string[];
+type GoalOption = {
+    id: number;
+    name: string;
+    color: string;
 };
 
-export default function ActivityCreate({ availableTags }: Props) {
+type Props = {
+    availableTags: string[];
+    availableGoals: GoalOption[];
+};
+
+export default function ActivityCreate({ availableTags, availableGoals }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         description: '',
@@ -28,6 +35,7 @@ export default function ActivityCreate({ availableTags }: Props) {
         needs_timer: false,
         duration_minutes: '',
         tags: [] as string[],
+        goal_ids: [] as number[],
     });
 
     const [tagInput, setTagInput] = useState('');
@@ -213,6 +221,43 @@ export default function ActivityCreate({ availableTags }: Props) {
                                 </p>
                                 <InputError message={errors.tags} />
                             </div>
+
+                            {availableGoals.length > 0 && (
+                                <div className="grid gap-2">
+                                    <Label>Goals this activity helps achieve</Label>
+                                    <div className="grid gap-2 sm:grid-cols-2">
+                                        {availableGoals.map((goal) => (
+                                            <label
+                                                key={goal.id}
+                                                className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${
+                                                    data.goal_ids.includes(goal.id)
+                                                        ? 'border-primary bg-primary/5'
+                                                        : 'border-border/50 hover:border-border'
+                                                }`}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={data.goal_ids.includes(goal.id)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setData('goal_ids', [...data.goal_ids, goal.id]);
+                                                        } else {
+                                                            setData('goal_ids', data.goal_ids.filter((id) => id !== goal.id));
+                                                        }
+                                                    }}
+                                                    className="size-4 rounded border-input"
+                                                />
+                                                <div
+                                                    className="size-3 shrink-0 rounded-full"
+                                                    style={{ backgroundColor: goal.color }}
+                                                />
+                                                <span className="text-sm font-medium">{goal.name}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <InputError message={errors.goal_ids} />
+                                </div>
+                            )}
 
                             <div className="space-y-4 rounded-lg border border-border/50 p-4">
                                 <div className="flex items-center gap-3">

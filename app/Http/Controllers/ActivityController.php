@@ -21,7 +21,7 @@ class ActivityController extends Controller
         $user = $request->user();
 
         return Inertia::render('activities/index', [
-            'activities' => $user->activities()->with('tags')->get()->map(fn (Activity $activity) => [
+            'activities' => $user->activities()->with(['tags', 'goals'])->get()->map(fn (Activity $activity) => [
                 'id' => $activity->id,
                 'name' => $activity->name,
                 'description' => $activity->description,
@@ -30,6 +30,7 @@ class ActivityController extends Controller
                 'needs_timer' => $activity->needs_timer,
                 'duration_minutes' => $activity->duration_minutes,
                 'tags' => $activity->tags->pluck('name')->toArray(),
+                'goals' => $activity->goals->map(fn ($g) => ['id' => $g->id, 'name' => $g->name, 'color' => $g->color])->toArray(),
                 'sort_order' => $activity->sort_order,
                 'updated_at' => $activity->updated_at->toISOString(),
             ]),
@@ -38,8 +39,11 @@ class ActivityController extends Controller
 
     public function create(Request $request): Response
     {
+        $user = $request->user();
+
         return Inertia::render('activities/create', [
-            'availableTags' => $request->user()->tags()->pluck('name')->toArray(),
+            'availableTags' => $user->tags()->pluck('name')->toArray(),
+            'availableGoals' => $user->goals()->get()->map(fn ($g) => ['id' => $g->id, 'name' => $g->name, 'color' => $g->color])->toArray(),
         ]);
     }
 
@@ -49,7 +53,8 @@ class ActivityController extends Controller
         $data = $request->validated();
 
         $tags = $data['tags'] ?? [];
-        unset($data['tags']);
+        $goalIds = $data['goal_ids'] ?? [];
+        unset($data['tags'], $data['goal_ids']);
 
         if (! $data['needs_timer']) {
             $data['duration_minutes'] = null;
@@ -60,6 +65,7 @@ class ActivityController extends Controller
         $activity = $user->activities()->create($data);
 
         $this->syncTags($user, $activity, $tags);
+        $activity->goals()->sync($goalIds);
 
         return to_route('activities.index');
     }
@@ -67,6 +73,8 @@ class ActivityController extends Controller
     public function edit(Request $request, Activity $activity): Response
     {
         $this->authorize('update', $activity);
+
+        $user = $request->user();
 
         return Inertia::render('activities/edit', [
             'activity' => [
@@ -78,8 +86,10 @@ class ActivityController extends Controller
                 'needs_timer' => $activity->needs_timer,
                 'duration_minutes' => $activity->duration_minutes,
                 'tags' => $activity->tags->pluck('name')->toArray(),
+                'goal_ids' => $activity->goals->pluck('id')->toArray(),
             ],
-            'availableTags' => $request->user()->tags()->pluck('name')->toArray(),
+            'availableTags' => $user->tags()->pluck('name')->toArray(),
+            'availableGoals' => $user->goals()->get()->map(fn ($g) => ['id' => $g->id, 'name' => $g->name, 'color' => $g->color])->toArray(),
         ]);
     }
 
@@ -90,7 +100,8 @@ class ActivityController extends Controller
         $data = $request->validated();
 
         $tags = $data['tags'] ?? [];
-        unset($data['tags']);
+        $goalIds = $data['goal_ids'] ?? [];
+        unset($data['tags'], $data['goal_ids']);
 
         if (! $data['needs_timer']) {
             $data['duration_minutes'] = null;
@@ -99,6 +110,7 @@ class ActivityController extends Controller
         $activity->update($data);
 
         $this->syncTags($request->user(), $activity, $tags);
+        $activity->goals()->sync($goalIds);
 
         return to_route('activities.index');
     }

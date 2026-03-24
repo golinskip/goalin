@@ -22,6 +22,7 @@ type Activity = {
     needs_timer: boolean;
     duration_minutes: number | null;
     tags: string[];
+    goals: { id: number; name: string; color: string }[];
     sort_order: number;
     updated_at: string;
 };
@@ -160,6 +161,7 @@ export default function ActivitiesIndex({ activities: initialActivities }: Props
                                             <th className="px-3 py-3 text-right font-medium">Points</th>
                                             <th className="px-3 py-3 font-medium">Timer</th>
                                             <th className="px-3 py-3 font-medium">Tags</th>
+                                            <th className="px-3 py-3 font-medium">Goals</th>
                                             <th className="px-3 py-3 font-medium">Last Changed</th>
                                             <th className="w-24 px-3 py-3"></th>
                                         </tr>
@@ -223,6 +225,26 @@ export default function ActivitiesIndex({ activities: initialActivities }: Props
                                                                     }}
                                                                 >
                                                                     {tag}
+                                                                </span>
+                                                            ))
+                                                        ) : (
+                                                            <span className="text-xs text-muted-foreground/50">—</span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-3 py-3">
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {activity.goals.length > 0 ? (
+                                                            activity.goals.map((goal) => (
+                                                                <span
+                                                                    key={goal.id}
+                                                                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                                                                    style={{
+                                                                        backgroundColor: goal.color + '20',
+                                                                        color: goal.color,
+                                                                    }}
+                                                                >
+                                                                    {goal.name}
                                                                 </span>
                                                             ))
                                                         ) : (
