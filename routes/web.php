@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RewardController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
@@ -10,7 +12,10 @@ Route::inertia('/', 'welcome', [
 ])->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', DashboardController::class)->name('dashboard');
+
+    Route::post('activity-logs', [ActivityLogController::class, 'store'])->name('activity-logs.store');
+    Route::get('activities/{activity}/timer', [ActivityLogController::class, 'timer'])->name('activities.timer');
 
     Route::patch('rewards/reorder', [RewardController::class, 'reorder'])->name('rewards.reorder');
     Route::resource('rewards', RewardController::class)->except(['show']);
