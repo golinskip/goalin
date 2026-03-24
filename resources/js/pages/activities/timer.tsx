@@ -134,16 +134,54 @@ export default function ActivityTimer({ activity }: Props) {
         [activity.id],
     );
 
+    // Wake Lock to prevent screen sleep
+    const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+
+    useEffect(() => {
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLockRef.current = await navigator.wakeLock.request('screen');
+                } catch {
+                    // Wake lock request failed (e.g. low battery)
+                }
+            }
+        }
+
+        requestWakeLock();
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                requestWakeLock();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            wakeLockRef.current?.release();
+            wakeLockRef.current = null;
+        };
+    }, []);
+
     const minutes = Math.floor(secondsLeft / 60);
     const seconds = secondsLeft % 60;
+    const timeDisplay = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     const progress = totalSeconds > 0 ? ((totalSeconds - secondsLeft) / totalSeconds) * 100 : 0;
 
     const circumference = 2 * Math.PI * 140;
     const strokeDashoffset = circumference - (progress / 100) * circumference;
 
+    const tabTitle =
+        timerState === 'finished'
+            ? `Done! - ${activity.name}`
+            : timerState === 'paused'
+              ? `${timeDisplay} (paused) - ${activity.name}`
+              : `${timeDisplay} - ${activity.name}`;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Timer - ${activity.name}`} />
+            <Head title={tabTitle} />
 
             <div className="relative flex h-full flex-1 flex-col">
                 <div className="pointer-events-none fixed inset-0 z-0">
@@ -239,7 +277,7 @@ export default function ActivityTimer({ activity }: Props) {
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
                             <span className="font-mono text-6xl font-bold tabular-nums tracking-tight">
-                                {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                                {timeDisplay}
                             </span>
                             <span className="mt-1 text-sm text-muted-foreground">
                                 {activity.point_cost} pts on completion
