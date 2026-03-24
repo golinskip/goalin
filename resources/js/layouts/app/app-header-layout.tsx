@@ -9,7 +9,9 @@ export default function AppHeaderLayout({
 }: AppLayoutProps) {
     return (
         <AppShell variant="header">
-            <AppHeader breadcrumbs={breadcrumbs} />
+            <div className="sticky top-0 z-50">
+                <AppHeader breadcrumbs={breadcrumbs} />
+            </div>
             <AppContent variant="header">{children}</AppContent>
         </AppShell>
     );
