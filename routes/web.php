@@ -5,6 +5,9 @@ use App\Http\Controllers\Manage\ActivityController;
 use App\Http\Controllers\Manage\ActivityLogController;
 use App\Http\Controllers\Manage\GoalController;
 use App\Http\Controllers\Manage\RewardController;
+use App\Http\Controllers\StatisticsController;
+use App\Http\Controllers\Tools\MemoCardController;
+use App\Http\Controllers\Tools\MemoSetController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -14,6 +17,7 @@ Route::inertia('/', 'welcome', [
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
+    Route::get('statistics', StatisticsController::class)->name('statistics');
 
     Route::post('activity-logs', [ActivityLogController::class, 'store'])->name('activity-logs.store');
     Route::get('activities/{activity}/timer', [ActivityLogController::class, 'timer'])->name('activities.timer');
@@ -26,6 +30,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::patch('goals/reorder', [GoalController::class, 'reorder'])->name('goals.reorder');
     Route::resource('goals', GoalController::class)->except(['show']);
+
+    Route::get('memo-sets/{memo_set}/learn', [MemoSetController::class, 'learn'])->name('memo-sets.learn');
+    Route::get('memo-sets/{memo_set}/export', [MemoSetController::class, 'export'])->name('memo-sets.export');
+    Route::post('memo-sets/{memo_set}/import', [MemoSetController::class, 'import'])->name('memo-sets.import');
+    Route::resource('memo-sets', MemoSetController::class);
+    Route::post('memo-sets/{memo_set}/cards', [MemoCardController::class, 'store'])->name('memo-cards.store');
+    Route::put('memo-cards/{memo_card}', [MemoCardController::class, 'update'])->name('memo-cards.update');
+    Route::delete('memo-cards/{memo_card}', [MemoCardController::class, 'destroy'])->name('memo-cards.destroy');
+    Route::post('memo-cards/{memo_card}/review', [MemoCardController::class, 'review'])->name('memo-cards.review');
 });
 
 require __DIR__.'/settings.php';

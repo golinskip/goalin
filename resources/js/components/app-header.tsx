@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { ChevronDown, Gift, LayoutGrid, Menu, Target, Zap } from 'lucide-react';
+import { BarChart3, BookOpen, ChevronDown, Gift, Layers, LayoutGrid, Menu, Target, Zap } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -27,9 +27,10 @@ import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
-import { dashboard } from '@/routes';
+import { dashboard, statistics } from '@/routes';
 import { index as activitiesIndex } from '@/routes/activities';
 import { index as goalsIndex } from '@/routes/goals';
+import { index as memoSetsIndex } from '@/routes/memo-sets';
 import { index as rewardsIndex } from '@/routes/rewards';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
@@ -55,6 +56,14 @@ const manageNavItems: NavItem[] = [
     },
 ];
 
+const toolsNavItems: NavItem[] = [
+    {
+        title: 'Memo Cards',
+        href: memoSetsIndex(),
+        icon: BookOpen,
+    },
+];
+
 const activeItemStyles =
     'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary';
 
@@ -65,6 +74,10 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
     const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
 
     const isManageActive = manageNavItems.some((item) =>
+        isCurrentUrl(item.href, undefined, true),
+    );
+
+    const isToolsActive = toolsNavItems.some((item) =>
         isCurrentUrl(item.href, undefined, true),
     );
 
@@ -107,12 +120,40 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                             <span>Dashboard</span>
                                         </Link>
 
+                                        <Link
+                                            href={statistics()}
+                                            className="flex items-center space-x-2 font-medium"
+                                        >
+                                            <BarChart3 className="h-5 w-5" />
+                                            <span>Statistics</span>
+                                        </Link>
+
                                         <div className="pt-2">
                                             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                                 Manage
                                             </p>
                                             <div className="flex flex-col space-y-4">
                                                 {manageNavItems.map((item) => (
+                                                    <Link
+                                                        key={item.title}
+                                                        href={item.href}
+                                                        className="flex items-center space-x-2 font-medium"
+                                                    >
+                                                        {item.icon && (
+                                                            <item.icon className="h-5 w-5" />
+                                                        )}
+                                                        <span>{item.title}</span>
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-2">
+                                            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                                Tools
+                                            </p>
+                                            <div className="flex flex-col space-y-4">
+                                                {toolsNavItems.map((item) => (
                                                     <Link
                                                         key={item.title}
                                                         href={item.href}
@@ -166,6 +207,26 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 </NavigationMenuItem>
 
                                 <NavigationMenuItem className="relative flex h-full items-center">
+                                    <Link
+                                        href={statistics()}
+                                        className={cn(
+                                            navigationMenuTriggerStyle(),
+                                            whenCurrentUrl(
+                                                statistics(),
+                                                activeItemStyles,
+                                            ),
+                                            'h-9 cursor-pointer px-3',
+                                        )}
+                                    >
+                                        <BarChart3 className="mr-2 h-4 w-4" />
+                                        Statistics
+                                    </Link>
+                                    {isCurrentUrl(statistics()) && (
+                                        <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-primary"></div>
+                                    )}
+                                </NavigationMenuItem>
+
+                                <NavigationMenuItem className="relative flex h-full items-center">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger
                                             className={cn(
@@ -194,6 +255,40 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                     {isManageActive && (
+                                        <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-primary"></div>
+                                    )}
+                                </NavigationMenuItem>
+
+                                <NavigationMenuItem className="relative flex h-full items-center">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger
+                                            className={cn(
+                                                navigationMenuTriggerStyle(),
+                                                isToolsActive && activeItemStyles,
+                                                'h-9 cursor-pointer gap-1 px-3',
+                                            )}
+                                        >
+                                            <Layers className="mr-1 h-4 w-4" />
+                                            Tools
+                                            <ChevronDown className="h-3.5 w-3.5" />
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="start" className="w-48">
+                                            {toolsNavItems.map((item) => (
+                                                <DropdownMenuItem key={item.title} asChild>
+                                                    <Link
+                                                        href={item.href}
+                                                        className="flex items-center gap-2"
+                                                    >
+                                                        {item.icon && (
+                                                            <item.icon className="h-4 w-4" />
+                                                        )}
+                                                        {item.title}
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                            ))}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                    {isToolsActive && (
                                         <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-primary"></div>
                                     )}
                                 </NavigationMenuItem>

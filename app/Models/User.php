@@ -63,4 +63,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(ActivityLog::class);
     }
+
+    public function memoSets(): HasMany
+    {
+        return $this->hasMany(MemoSet::class);
+    }
 }
