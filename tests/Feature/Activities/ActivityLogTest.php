@@ -169,10 +169,8 @@ test('dashboard shows activity stats', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard')
-            ->where('todayPoints', 20)
-            ->where('todayActivities', 2)
-            ->where('totalPoints', 20)
-            ->where('totalActivities', 2)
+            ->has('activities')
+            ->has('rewardProgression')
         );
 });
 

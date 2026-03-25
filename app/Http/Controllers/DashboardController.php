@@ -25,22 +25,10 @@ class DashboardController extends Controller
             'tags' => $activity->tags->pluck('name')->toArray(),
         ]);
 
-        $todayPoints = (int) $user->activityLogs()
-            ->whereDate('completed_at', today())
-            ->sum('points_earned');
-
-        $todayActivities = (int) $user->activityLogs()
-            ->whereDate('completed_at', today())
-            ->sum('quantity');
-
         $progression = $pointService->getRewardProgression($user);
 
         return Inertia::render('dashboard', [
             'activities' => $activities,
-            'todayPoints' => $todayPoints,
-            'todayActivities' => $todayActivities,
-            'totalPoints' => $progression['totalEarned'],
-            'totalActivities' => (int) $user->activityLogs()->sum('quantity'),
             'rewardProgression' => $progression,
         ]);
     }

@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Calendar, CheckCircle, Clock, Gift, History, Star, Target, TrendingUp, Zap } from 'lucide-react';
+import { BookOpen, Calendar, CheckCircle, Clock, Gift, History, Layers, Star, Zap } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,10 +51,6 @@ type RewardProgression = {
 
 type Props = {
     activities: Activity[];
-    todayPoints: number;
-    totalPoints: number;
-    todayActivities: number;
-    totalActivities: number;
     rewardProgression: RewardProgression;
 };
 
@@ -62,10 +58,6 @@ type LogMode = 'today' | 'postponed' | null;
 
 export default function Dashboard({
     activities,
-    todayPoints,
-    totalPoints,
-    todayActivities,
-    totalActivities,
     rewardProgression,
 }: Props) {
     const [logMode, setLogMode] = useState<LogMode>(null);
@@ -479,51 +471,27 @@ export default function Dashboard({
                         </div>
                     )}
 
-                    {/* Stats */}
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <div className="rounded-xl border border-green-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm dark:border-green-800/50 dark:bg-black/40">
-                            <div className="flex items-center gap-3">
-                                <div className="flex size-10 items-center justify-center rounded-lg bg-green-500/15">
-                                    <Zap className="size-5 text-green-600 dark:text-green-400" />
+                    {/* Tools */}
+                    <div>
+                        <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
+                            <Layers className="size-5" />
+                            Tools
+                        </h2>
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            <Link
+                                href="/memo-sets"
+                                className="group rounded-xl border border-blue-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm transition-all hover:shadow-md dark:border-blue-800/50 dark:bg-black/40"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="flex size-10 items-center justify-center rounded-lg bg-blue-500/15 transition-colors group-hover:bg-blue-500/25">
+                                        <BookOpen className="size-5 text-blue-600 dark:text-blue-400" />
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold">Memo Cards</p>
+                                        <p className="text-sm text-muted-foreground">Flashcards to learn and memorize</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Today&apos;s Activities</p>
-                                    <p className="text-2xl font-semibold">{todayActivities}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="rounded-xl border border-yellow-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm dark:border-yellow-800/50 dark:bg-black/40">
-                            <div className="flex items-center gap-3">
-                                <div className="flex size-10 items-center justify-center rounded-lg bg-yellow-500/15">
-                                    <Star className="size-5 text-yellow-600 dark:text-yellow-400" />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Today&apos;s Points</p>
-                                    <p className="text-2xl font-semibold">{todayPoints}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="rounded-xl border border-blue-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm dark:border-blue-800/50 dark:bg-black/40">
-                            <div className="flex items-center gap-3">
-                                <div className="flex size-10 items-center justify-center rounded-lg bg-blue-500/15">
-                                    <Target className="size-5 text-blue-600 dark:text-blue-400" />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Total Activities</p>
-                                    <p className="text-2xl font-semibold">{totalActivities}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="rounded-xl border border-green-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm dark:border-green-800/50 dark:bg-black/40">
-                            <div className="flex items-center gap-3">
-                                <div className="flex size-10 items-center justify-center rounded-lg bg-green-500/15">
-                                    <TrendingUp className="size-5 text-green-600 dark:text-green-400" />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Total Points</p>
-                                    <p className="text-2xl font-semibold">{totalPoints}</p>
-                                </div>
-                            </div>
+                            </Link>
                         </div>
                     </div>
                 </div>
