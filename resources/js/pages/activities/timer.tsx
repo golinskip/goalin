@@ -61,6 +61,18 @@ export default function ActivityTimer({ activity }: Props) {
     const [submitting, setSubmitting] = useState(false);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+    // Wall-clock tracking: remember when the timer was started and how many
+    // seconds had already elapsed at that point. On every tick (and on
+    // visibility change) we recompute secondsLeft from Date.now() so the
+    // timer stays accurate even if the browser throttles setInterval.
+    const startedAtRef = useRef<number>(Date.now());
+    const elapsedBeforePauseRef = useRef<number>(0);
+
+    const computeSecondsLeft = useCallback(() => {
+        const elapsed = elapsedBeforePauseRef.current + (Date.now() - startedAtRef.current) / 1000;
+        return Math.max(0, Math.round(totalSeconds - elapsed));
+    }, [totalSeconds]);
+
     const clearTimer = useCallback(() => {
         if (intervalRef.current) {
             clearInterval(intervalRef.current);
@@ -69,19 +81,28 @@ export default function ActivityTimer({ activity }: Props) {
     }, []);
 
     const startInterval = useCallback(() => {
+        startedAtRef.current = Date.now();
         intervalRef.current = setInterval(() => {
-            setSecondsLeft((prev) => {
-                if (prev <= 1) return 0;
-                return prev - 1;
-            });
-        }, 1000);
-    }, []);
+            setSecondsLeft(computeSecondsLeft());
+        }, 250);
+    }, [computeSecondsLeft]);
 
     // Auto-start on mount
     useEffect(() => {
         startInterval();
         return () => clearTimer();
     }, [startInterval, clearTimer]);
+
+    // Sync on tab re-focus (catches throttled intervals in background tabs)
+    useEffect(() => {
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible' && timerState === 'running') {
+                setSecondsLeft(computeSecondsLeft());
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+        return () => document.removeEventListener('visibilitychange', handleVisibility);
+    }, [timerState, computeSecondsLeft]);
 
     useEffect(() => {
         if (secondsLeft <= 0 && timerState === 'running') {
@@ -93,6 +114,8 @@ export default function ActivityTimer({ activity }: Props) {
     }, [secondsLeft, timerState, clearTimer]);
 
     const pause = useCallback(() => {
+        // Capture elapsed time so far
+        elapsedBeforePauseRef.current += (Date.now() - startedAtRef.current) / 1000;
         clearTimer();
         setTimerState('paused');
     }, [clearTimer]);
@@ -104,6 +127,7 @@ export default function ActivityTimer({ activity }: Props) {
 
     const reset = useCallback(() => {
         clearTimer();
+        elapsedBeforePauseRef.current = 0;
         setSecondsLeft(totalSeconds);
         setTimerState('running');
         setShowConfirm(false);
