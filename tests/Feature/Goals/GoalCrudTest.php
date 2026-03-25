@@ -171,7 +171,7 @@ test('goals index shows activity count', function () {
         ->get(route('goals.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->component('goals/index')
+            ->component('manage/goals/index')
             ->has('goals', 1)
             ->where('goals.0.activities_count', 2)
         );

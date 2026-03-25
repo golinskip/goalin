@@ -1,10 +1,10 @@
 <?php
 
-use App\Http\Controllers\ActivityController;
-use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\GoalController;
-use App\Http\Controllers\RewardController;
+use App\Http\Controllers\Manage\ActivityController;
+use App\Http\Controllers\Manage\ActivityLogController;
+use App\Http\Controllers\Manage\GoalController;
+use App\Http\Controllers\Manage\RewardController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 

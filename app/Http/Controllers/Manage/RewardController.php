@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Manage;
 
+use App\Http\Controllers\Controller;
 use App\Enums\Currency;
 use App\Http\Requests\Reward\StoreRewardRequest;
 use App\Http\Requests\Reward\UpdateRewardRequest;
@@ -22,7 +23,7 @@ class RewardController extends Controller
         $user = $request->user();
         $setting = $user->setting;
 
-        return Inertia::render('rewards/index', [
+        return Inertia::render('manage/rewards/index', [
             'rewards' => $user->rewards()->get()->map(fn (Reward $reward) => [
                 'id' => $reward->id,
                 'name' => $reward->name,
@@ -44,7 +45,7 @@ class RewardController extends Controller
     {
         $setting = $request->user()->setting;
 
-        return Inertia::render('rewards/create', [
+        return Inertia::render('manage/rewards/create', [
             'currency' => $setting?->currency?->value ?? Currency::Euro->value,
             'currencySymbol' => $setting?->currency?->symbol() ?? Currency::Euro->symbol(),
             'multiplier' => $setting?->multiplier ?? '1.00',
@@ -76,7 +77,7 @@ class RewardController extends Controller
 
         $setting = $request->user()->setting;
 
-        return Inertia::render('rewards/edit', [
+        return Inertia::render('manage/rewards/edit', [
             'reward' => [
                 'id' => $reward->id,
                 'name' => $reward->name,

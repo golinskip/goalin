@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Gift, LayoutGrid, Menu, Target, Zap } from 'lucide-react';
+import { ChevronDown, Gift, LayoutGrid, Menu, Target, Zap } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -36,12 +37,7 @@ type Props = {
     breadcrumbs?: BreadcrumbItem[];
 };
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
+const manageNavItems: NavItem[] = [
     {
         title: 'Goals',
         href: goalsIndex(),
@@ -67,6 +63,10 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
     const { auth } = page.props;
     const getInitials = useInitials();
     const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
+
+    const isManageActive = manageNavItems.some((item) =>
+        isCurrentUrl(item.href, undefined, true),
+    );
 
     return (
         <>
@@ -99,18 +99,33 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 </SheetHeader>
                                 <div className="flex h-full flex-1 flex-col space-y-4 p-4">
                                     <div className="flex flex-col space-y-4 text-sm">
-                                        {mainNavItems.map((item) => (
-                                            <Link
-                                                key={item.title}
-                                                href={item.href}
-                                                className="flex items-center space-x-2 font-medium"
-                                            >
-                                                {item.icon && (
-                                                    <item.icon className="h-5 w-5" />
-                                                )}
-                                                <span>{item.title}</span>
-                                            </Link>
-                                        ))}
+                                        <Link
+                                            href={dashboard()}
+                                            className="flex items-center space-x-2 font-medium"
+                                        >
+                                            <LayoutGrid className="h-5 w-5" />
+                                            <span>Dashboard</span>
+                                        </Link>
+
+                                        <div className="pt-2">
+                                            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                                Manage
+                                            </p>
+                                            <div className="flex flex-col space-y-4">
+                                                {manageNavItems.map((item) => (
+                                                    <Link
+                                                        key={item.title}
+                                                        href={item.href}
+                                                        className="flex items-center space-x-2 font-medium"
+                                                    >
+                                                        {item.icon && (
+                                                            <item.icon className="h-5 w-5" />
+                                                        )}
+                                                        <span>{item.title}</span>
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </SheetContent>
@@ -130,32 +145,58 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     <div className="ml-6 hidden h-full items-center space-x-6 lg:flex">
                         <NavigationMenu className="flex h-full items-stretch">
                             <NavigationMenuList className="flex h-full items-stretch space-x-2">
-                                {mainNavItems.map((item, index) => (
-                                    <NavigationMenuItem
-                                        key={index}
-                                        className="relative flex h-full items-center"
+                                <NavigationMenuItem className="relative flex h-full items-center">
+                                    <Link
+                                        href={dashboard()}
+                                        className={cn(
+                                            navigationMenuTriggerStyle(),
+                                            whenCurrentUrl(
+                                                dashboard(),
+                                                activeItemStyles,
+                                            ),
+                                            'h-9 cursor-pointer px-3',
+                                        )}
                                     >
-                                        <Link
-                                            href={item.href}
+                                        <LayoutGrid className="mr-2 h-4 w-4" />
+                                        Dashboard
+                                    </Link>
+                                    {isCurrentUrl(dashboard()) && (
+                                        <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-primary"></div>
+                                    )}
+                                </NavigationMenuItem>
+
+                                <NavigationMenuItem className="relative flex h-full items-center">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger
                                             className={cn(
                                                 navigationMenuTriggerStyle(),
-                                                whenCurrentUrl(
-                                                    item.href,
-                                                    activeItemStyles,
-                                                ),
-                                                'h-9 cursor-pointer px-3',
+                                                isManageActive && activeItemStyles,
+                                                'h-9 cursor-pointer gap-1 px-3',
                                             )}
                                         >
-                                            {item.icon && (
-                                                <item.icon className="mr-2 h-4 w-4" />
-                                            )}
-                                            {item.title}
-                                        </Link>
-                                        {isCurrentUrl(item.href) && (
-                                            <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-primary"></div>
-                                        )}
-                                    </NavigationMenuItem>
-                                ))}
+                                            Manage
+                                            <ChevronDown className="h-3.5 w-3.5" />
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="start" className="w-48">
+                                            {manageNavItems.map((item) => (
+                                                <DropdownMenuItem key={item.title} asChild>
+                                                    <Link
+                                                        href={item.href}
+                                                        className="flex items-center gap-2"
+                                                    >
+                                                        {item.icon && (
+                                                            <item.icon className="h-4 w-4" />
+                                                        )}
+                                                        {item.title}
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                            ))}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                    {isManageActive && (
+                                        <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-primary"></div>
+                                    )}
+                                </NavigationMenuItem>
                             </NavigationMenuList>
                         </NavigationMenu>
                     </div>

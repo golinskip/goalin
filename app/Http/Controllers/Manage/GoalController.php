@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Manage;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Goal\StoreGoalRequest;
 use App\Http\Requests\Goal\UpdateGoalRequest;
 use App\Models\Goal;
@@ -19,7 +20,7 @@ class GoalController extends Controller
     {
         $user = $request->user();
 
-        return Inertia::render('goals/index', [
+        return Inertia::render('manage/goals/index', [
             'goals' => $user->goals()->withCount('activities')->get()->map(fn (Goal $goal) => [
                 'id' => $goal->id,
                 'name' => $goal->name,
@@ -34,7 +35,7 @@ class GoalController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('goals/create');
+        return Inertia::render('manage/goals/create');
     }
 
     public function store(StoreGoalRequest $request): RedirectResponse
@@ -52,7 +53,7 @@ class GoalController extends Controller
     {
         $this->authorize('update', $goal);
 
-        return Inertia::render('goals/edit', [
+        return Inertia::render('manage/goals/edit', [
             'goal' => [
                 'id' => $goal->id,
                 'name' => $goal->name,

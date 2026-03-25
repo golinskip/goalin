@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Manage;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\ActivityLog\StoreActivityLogRequest;
 use App\Models\Activity;
 use Illuminate\Http\RedirectResponse;
@@ -38,7 +39,7 @@ class ActivityLogController extends Controller
             abort(403);
         }
 
-        return Inertia::render('activities/timer', [
+        return Inertia::render('manage/activities/timer', [
             'activity' => [
                 'id' => $activity->id,
                 'name' => $activity->name,

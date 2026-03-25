@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { index as rewardsIndex, create as rewardsCreate } from '@/routes/rewards';
 import type { BreadcrumbItem } from '@/types';
-import RewardController from '@/actions/App/Http/Controllers/RewardController';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {

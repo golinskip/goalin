@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Manage;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Activity\StoreActivityRequest;
 use App\Http\Requests\Activity\UpdateActivityRequest;
 use App\Models\Activity;
@@ -20,7 +21,7 @@ class ActivityController extends Controller
     {
         $user = $request->user();
 
-        return Inertia::render('activities/index', [
+        return Inertia::render('manage/activities/index', [
             'activities' => $user->activities()->with(['tags', 'goals'])->get()->map(fn (Activity $activity) => [
                 'id' => $activity->id,
                 'name' => $activity->name,
@@ -41,7 +42,7 @@ class ActivityController extends Controller
     {
         $user = $request->user();
 
-        return Inertia::render('activities/create', [
+        return Inertia::render('manage/activities/create', [
             'availableTags' => $user->tags()->pluck('name')->toArray(),
             'availableGoals' => $user->goals()->get()->map(fn ($g) => ['id' => $g->id, 'name' => $g->name, 'color' => $g->color])->toArray(),
         ]);
@@ -76,7 +77,7 @@ class ActivityController extends Controller
 
         $user = $request->user();
 
-        return Inertia::render('activities/edit', [
+        return Inertia::render('manage/activities/edit', [
             'activity' => [
                 'id' => $activity->id,
                 'name' => $activity->name,
