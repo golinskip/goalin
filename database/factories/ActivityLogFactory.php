@@ -26,6 +26,7 @@ class ActivityLogFactory extends Factory
             'quantity' => fake()->numberBetween(1, 5),
             'points_earned' => fake()->numberBetween(5, 100),
             'used_timer' => false,
+            'comment' => null,
         ];
     }
 }

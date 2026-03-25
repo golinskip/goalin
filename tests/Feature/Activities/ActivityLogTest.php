@@ -176,6 +176,39 @@ test('dashboard shows activity stats', function () {
         );
 });
 
+test('user can log activity with a comment', function () {
+    $user = User::factory()->create();
+    $activity = Activity::factory()->create(['user_id' => $user->id, 'point_cost' => 10]);
+
+    $this->actingAs($user)
+        ->post(route('activity-logs.store'), [
+            'activity_id' => $activity->id,
+            'completed_at' => today()->format('Y-m-d'),
+            'quantity' => 1,
+            'comment' => 'Felt great today!',
+        ])
+        ->assertRedirect(route('dashboard'));
+
+    $log = $user->activityLogs()->first();
+    expect($log->comment)->toBe('Felt great today!');
+});
+
+test('activity log comment is optional', function () {
+    $user = User::factory()->create();
+    $activity = Activity::factory()->create(['user_id' => $user->id, 'point_cost' => 10]);
+
+    $this->actingAs($user)
+        ->post(route('activity-logs.store'), [
+            'activity_id' => $activity->id,
+            'completed_at' => today()->format('Y-m-d'),
+            'quantity' => 1,
+        ])
+        ->assertRedirect(route('dashboard'));
+
+    $log = $user->activityLogs()->first();
+    expect($log->comment)->toBeNull();
+});
+
 test('activity log requires valid data', function () {
     $user = User::factory()->create();
 

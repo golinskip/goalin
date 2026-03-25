@@ -72,6 +72,7 @@ export default function Dashboard({
     const [selectedActivity, setSelectedActivity] = useState<number | null>(null);
     const [quantity, setQuantity] = useState('1');
     const [completedAt, setCompletedAt] = useState('');
+    const [comment, setComment] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [selectedTimerActivity, setSelectedTimerActivity] = useState<string>('');
 
@@ -89,6 +90,7 @@ export default function Dashboard({
                 completed_at: logMode === 'postponed' ? completedAt : today,
                 quantity: parseInt(quantity) || 1,
                 used_timer: false,
+                comment: comment || null,
             },
             {
                 onSuccess: () => {
@@ -96,12 +98,13 @@ export default function Dashboard({
                     setSelectedActivity(null);
                     setQuantity('1');
                     setCompletedAt('');
+                    setComment('');
                     setSubmitting(false);
                 },
                 onError: () => setSubmitting(false),
             },
         );
-    }, [selectedActivity, logMode, completedAt, quantity, today, submitting]);
+    }, [selectedActivity, logMode, completedAt, quantity, comment, today, submitting]);
 
     const { achievedRewards, currentReward, queuedRewards, availablePoints } = rewardProgression;
     const hasAnyRewards = achievedRewards.length > 0 || currentReward !== null || queuedRewards.length > 0;
@@ -206,6 +209,7 @@ export default function Dashboard({
                                             setSelectedActivity(null);
                                             setQuantity('1');
                                             setCompletedAt('');
+                                            setComment('');
                                         }}
                                         className="text-sm text-muted-foreground hover:text-foreground"
                                     >
@@ -281,6 +285,19 @@ export default function Dashboard({
                                                 max="999"
                                                 value={quantity}
                                                 onChange={(e) => setQuantity(e.target.value)}
+                                            />
+                                        </div>
+
+                                        <div className="grid gap-1.5">
+                                            <Label htmlFor="comment">Comment</Label>
+                                            <textarea
+                                                id="comment"
+                                                value={comment}
+                                                onChange={(e) => setComment(e.target.value)}
+                                                placeholder="Optional note..."
+                                                rows={2}
+                                                maxLength={1000}
+                                                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                                             />
                                         </div>
 

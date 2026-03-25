@@ -58,6 +58,7 @@ export default function ActivityTimer({ activity }: Props) {
     const [secondsLeft, setSecondsLeft] = useState(totalSeconds);
     const [timerState, setTimerState] = useState<TimerState>('running');
     const [showConfirm, setShowConfirm] = useState(false);
+    const [comment, setComment] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -145,6 +146,7 @@ export default function ActivityTimer({ activity }: Props) {
                         completed_at: new Date().toISOString().split('T')[0],
                         quantity: 1,
                         used_timer: true,
+                        comment: comment || null,
                     },
                     {
                         onSuccess: () => setSubmitting(false),
@@ -155,7 +157,7 @@ export default function ActivityTimer({ activity }: Props) {
                 router.visit('/dashboard');
             }
         },
-        [activity.id],
+        [activity.id, comment],
     );
 
     // Wake Lock to prevent screen sleep
@@ -242,6 +244,14 @@ export default function ActivityTimer({ activity }: Props) {
                                 <span className="text-lg font-semibold">Time&apos;s up!</span>
                             </div>
                             <p className="text-sm text-muted-foreground">Did you complete the activity?</p>
+                            <textarea
+                                value={comment}
+                                onChange={(e) => setComment(e.target.value)}
+                                placeholder="Optional comment..."
+                                rows={2}
+                                maxLength={1000}
+                                className="w-full max-w-md rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                            />
                             <div className="flex gap-3">
                                 <Button
                                     size="lg"

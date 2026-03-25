@@ -24,6 +24,7 @@ class ActivityLogController extends Controller
             'quantity' => $data['quantity'],
             'points_earned' => $activity->point_cost * $data['quantity'],
             'used_timer' => $data['used_timer'] ?? false,
+            'comment' => $data['comment'] ?? null,
         ]);
 
         return to_route('dashboard');

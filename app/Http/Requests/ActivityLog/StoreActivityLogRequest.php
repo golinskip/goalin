@@ -19,6 +19,7 @@ class StoreActivityLogRequest extends FormRequest
             'completed_at' => ['required', 'date', 'before_or_equal:today'],
             'quantity' => ['required', 'integer', 'min:1', 'max:999'],
             'used_timer' => ['boolean'],
+            'comment' => ['nullable', 'string', 'max:1000'],
         ];
     }
 }
