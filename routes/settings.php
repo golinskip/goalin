@@ -1,8 +1,8 @@
 <?php
 
-use App\Http\Controllers\Settings\GeneralController;
-use App\Http\Controllers\Settings\ProfileController;
-use App\Http\Controllers\Settings\SecurityController;
+use Domain\User\Controllers\GeneralController;
+use Domain\User\Controllers\ProfileController;
+use Domain\User\Controllers\SecurityController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {

@@ -1,10 +1,10 @@
 <?php
 
-use App\Models\Activity;
-use App\Models\ActivityLog;
-use App\Models\Reward;
-use App\Models\User;
-use App\Services\PointService;
+use Domain\GoalTracker\Models\Activity;
+use Domain\GoalTracker\Models\ActivityLog;
+use Domain\GoalTracker\Models\Reward;
+use Domain\GoalTracker\Services\PointService;
+use Domain\User\Models\User;
 
 test('returns empty progression when no rewards', function () {
     $user = User::factory()->create();

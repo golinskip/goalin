@@ -3,8 +3,18 @@
 namespace App\Providers;
 
 use Carbon\CarbonImmutable;
+use Domain\GoalTracker\Models\Activity;
+use Domain\GoalTracker\Models\Goal;
+use Domain\GoalTracker\Models\Reward;
+use Domain\GoalTracker\Policies\ActivityPolicy;
+use Domain\GoalTracker\Policies\GoalPolicy;
+use Domain\GoalTracker\Policies\RewardPolicy;
+use Domain\Tools\Flashcards\Models\MemoSet;
+use Domain\Tools\Flashcards\Policies\MemoSetPolicy;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -24,6 +34,31 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configurePolicies();
+        $this->configureFactories();
+    }
+
+    /**
+     * Configure factory resolution for domain models.
+     */
+    protected function configureFactories(): void
+    {
+        Factory::guessFactoryNamesUsing(function (string $modelName): string {
+            $modelBaseName = class_basename($modelName);
+
+            return 'Database\\Factories\\'.$modelBaseName.'Factory';
+        });
+    }
+
+    /**
+     * Register model policies for domain classes.
+     */
+    protected function configurePolicies(): void
+    {
+        Gate::policy(Activity::class, ActivityPolicy::class);
+        Gate::policy(Goal::class, GoalPolicy::class);
+        Gate::policy(Reward::class, RewardPolicy::class);
+        Gate::policy(MemoSet::class, MemoSetPolicy::class);
     }
 
     /**

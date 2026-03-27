@@ -1,6 +1,6 @@
 import { Transition } from '@headlessui/react';
 import { Form, Head } from '@inertiajs/react';
-import GeneralController from '@/actions/App/Http/Controllers/Settings/GeneralController';
+import GeneralController from '@/actions/Domain/User/Controllers/GeneralController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';

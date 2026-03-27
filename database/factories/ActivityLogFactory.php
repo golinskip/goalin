@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\Activity;
-use App\Models\ActivityLog;
-use App\Models\User;
+use Domain\GoalTracker\Models\Activity;
+use Domain\GoalTracker\Models\ActivityLog;
+use Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class ActivityLogFactory extends Factory
 {
+    protected $model = ActivityLog::class;
+
     /**
      * Define the model's default state.
      *

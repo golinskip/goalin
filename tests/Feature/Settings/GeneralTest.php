@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Reward;
-use App\Models\User;
-use App\Models\UserSetting;
+use Domain\GoalTracker\Models\Reward;
+use Domain\User\Models\User;
+use Domain\User\Models\UserSetting;
 
 test('guests cannot access general settings', function () {
     $this->get(route('general.edit'))->assertRedirect(route('login'));

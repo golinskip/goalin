@@ -1,13 +1,13 @@
 <?php
 
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Manage\ActivityController;
-use App\Http\Controllers\Manage\ActivityLogController;
-use App\Http\Controllers\Manage\GoalController;
-use App\Http\Controllers\Manage\RewardController;
-use App\Http\Controllers\StatisticsController;
-use App\Http\Controllers\Tools\MemoCardController;
-use App\Http\Controllers\Tools\MemoSetController;
+use Domain\GoalTracker\Controllers\ActivityController;
+use Domain\GoalTracker\Controllers\ActivityLogController;
+use Domain\GoalTracker\Controllers\DashboardController;
+use Domain\GoalTracker\Controllers\GoalController;
+use Domain\GoalTracker\Controllers\RewardController;
+use Domain\GoalTracker\Controllers\StatisticsController;
+use Domain\Tools\Flashcards\Controllers\MemoCardController;
+use Domain\Tools\Flashcards\Controllers\MemoSetController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 

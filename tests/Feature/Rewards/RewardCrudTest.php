@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Reward;
-use App\Models\User;
-use App\Models\UserSetting;
+use Domain\GoalTracker\Models\Reward;
+use Domain\User\Models\User;
+use Domain\User\Models\UserSetting;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 

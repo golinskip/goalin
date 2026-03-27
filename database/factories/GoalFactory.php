@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Goal;
-use App\Models\User;
+use Domain\GoalTracker\Models\Goal;
+use Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class GoalFactory extends Factory
 {
+    protected $model = Goal::class;
+
     /**
      * Define the model's default state.
      *

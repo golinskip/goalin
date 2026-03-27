@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Activity;
-use App\Models\ActivityLog;
-use App\Models\User;
+use Domain\GoalTracker\Models\Activity;
+use Domain\GoalTracker\Models\ActivityLog;
+use Domain\User\Models\User;
 
 test('guests cannot log activities', function () {
     $this->post(route('activity-logs.store'))->assertRedirect(route('login'));

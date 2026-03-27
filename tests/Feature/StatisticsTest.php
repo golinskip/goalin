@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Activity;
-use App\Models\ActivityLog;
-use App\Models\User;
+use Domain\GoalTracker\Models\Activity;
+use Domain\GoalTracker\Models\ActivityLog;
+use Domain\User\Models\User;
 
 test('guests are redirected to the login page', function () {
     $response = $this->get(route('statistics'));

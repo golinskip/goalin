@@ -1,8 +1,9 @@
 <?php
 
-use App\Models\MemoCard;
-use App\Models\MemoSet;
-use App\Models\User;
+use Domain\Tools\Flashcards\Models\MemoCard;
+use Domain\Tools\Flashcards\Models\MemoSet;
+use Domain\User\Models\User;
+use Illuminate\Http\UploadedFile;
 
 test('guests are redirected to the login page', function () {
     $response = $this->get(route('memo-sets.index'));
@@ -202,7 +203,7 @@ test('users can import cards from csv file', function () {
     $memoSet = MemoSet::factory()->for($user)->create();
     $this->actingAs($user);
 
-    $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('cards.csv', "Hola;Hello\nAdios;Goodbye");
+    $file = UploadedFile::fake()->createWithContent('cards.csv', "Hola;Hello\nAdios;Goodbye");
 
     $response = $this->post(route('memo-sets.import', $memoSet), [
         'csv_file' => $file,

@@ -1,3 +1,47 @@
+# Project Architecture (DDD)
+
+This project uses a Domain-Driven Design approach. Domain logic lives in the `domain/` directory, organized by bounded context. The `app/` directory contains only framework infrastructure (Providers, Middleware, base Controller).
+
+## Domain Structure
+
+```
+domain/
+├── User/                         # User identity, authentication & settings
+│   ├── Models/                   # User, UserSetting
+│   ├── Enums/                    # Currency
+│   ├── Concerns/                 # PasswordValidationRules, ProfileValidationRules
+│   ├── Actions/                  # CreateNewUser, ResetUserPassword (Fortify)
+│   ├── Controllers/              # Profile, Security, General (settings)
+│   └── Requests/                 # Profile, Password, General form requests
+├── GoalTracker/                  # Core goal tracking, activities, rewards & statistics
+│   ├── Models/                   # Activity, ActivityLog, Tag, Goal, Reward
+│   ├── Controllers/              # Dashboard, Statistics, Activity, ActivityLog, Goal, Reward
+│   ├── Requests/                 # Activity, ActivityLog, Goal, Reward form requests
+│   ├── Services/                 # PointService
+│   └── Policies/                 # Activity, Goal, Reward policies
+└── Tools/                        # Productivity tools
+    └── Flashcards/               # Subdomain: spaced-repetition flashcards
+        ├── Models/               # MemoSet, MemoCard
+        ├── Controllers/          # MemoSet, MemoCard
+        ├── Requests/             # MemoSet form requests
+        └── Policies/             # MemoSet policy
+```
+
+## Namespace Convention
+
+- Domain classes use the `Domain\` root namespace (e.g., `Domain\User\Models\User`)
+- Autoloaded via `"Domain\\": "domain/"` in composer.json
+- Factories stay in `database/factories/` with `Database\Factories\` namespace and explicit `$model` property
+- Policies are registered manually in `AppServiceProvider::configurePolicies()`
+- Factory resolution configured in `AppServiceProvider::configureFactories()`
+
+## Adding New Domains
+
+1. Create directory under `domain/` (or as subdomain under existing domain like `Tools/`)
+2. Use `Domain\{DomainName}\` namespace
+3. Register policies in `AppServiceProvider::configurePolicies()`
+4. Create factories in `database/factories/` with explicit `protected $model` property
+
 <laravel-boost-guidelines>
 === foundation rules ===
 
@@ -50,7 +94,8 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 ## Application Structure & Architecture
 
-- Stick to existing directory structure; don't create new base folders without approval.
+- This project uses DDD with domain logic in `domain/` — see the top of this file for the full structure.
+- New domains/subdomains go under `domain/`. New tools go under `domain/Tools/`.
 - Do not change the application's dependencies without approval.
 
 ## Frontend Bundling

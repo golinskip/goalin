@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\MemoCard;
-use App\Models\MemoSet;
+use Domain\Tools\Flashcards\Models\MemoCard;
+use Domain\Tools\Flashcards\Models\MemoSet;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class MemoCardFactory extends Factory
 {
+    protected $model = MemoCard::class;
+
     /**
      * Define the model's default state.
      *

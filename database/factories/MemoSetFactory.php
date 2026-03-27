@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\MemoSet;
-use App\Models\User;
+use Domain\Tools\Flashcards\Models\MemoSet;
+use Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class MemoSetFactory extends Factory
 {
+    protected $model = MemoSet::class;
+
     /**
      * Define the model's default state.
      *

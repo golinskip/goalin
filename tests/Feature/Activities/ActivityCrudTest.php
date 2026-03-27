@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Activity;
-use App\Models\Tag;
-use App\Models\User;
+use Domain\GoalTracker\Models\Activity;
+use Domain\GoalTracker\Models\Tag;
+use Domain\User\Models\User;
 
 test('guests cannot access activities', function () {
     $this->get(route('activities.index'))->assertRedirect(route('login'));

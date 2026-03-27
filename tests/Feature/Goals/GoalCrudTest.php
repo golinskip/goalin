@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Activity;
-use App\Models\Goal;
-use App\Models\User;
+use Domain\GoalTracker\Models\Activity;
+use Domain\GoalTracker\Models\Goal;
+use Domain\User\Models\User;
 
 test('guests cannot access goals', function () {
     $this->get(route('goals.index'))->assertRedirect(route('login'));

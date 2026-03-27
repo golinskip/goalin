@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Enums\Currency;
-use App\Models\User;
-use App\Models\UserSetting;
+use Domain\User\Enums\Currency;
+use Domain\User\Models\User;
+use Domain\User\Models\UserSetting;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class UserSettingFactory extends Factory
 {
+    protected $model = UserSetting::class;
+
     /**
      * Define the model's default state.
      *

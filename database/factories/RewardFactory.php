@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Reward;
-use App\Models\User;
+use Domain\GoalTracker\Models\Reward;
+use Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class RewardFactory extends Factory
 {
+    protected $model = Reward::class;
+
     /**
      * Define the model's default state.
      *
