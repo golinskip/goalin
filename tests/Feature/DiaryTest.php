@@ -8,7 +8,7 @@ test('guests are redirected to the login page', function () {
     $response->assertRedirect(route('login'));
 });
 
-test('authenticated users can visit the diary index', function () {
+test('authenticated users can visit the diary index with today auto-selected', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
@@ -19,6 +19,7 @@ test('authenticated users can visit the diary index', function () {
         ->has('month')
         ->has('entryDates')
         ->has('totalEntries')
+        ->where('selectedDate', now()->format('Y-m-d'))
     );
 });
 

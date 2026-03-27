@@ -1,7 +1,8 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { CalendarDays, ChevronLeft, ChevronRight, NotebookPen, Pencil, Plus, Trash2 } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { index as diaryIndex } from '@/routes/diary';
 import { store, update, destroy } from '@/actions/Domain/Tools/Diary/Controllers/DiaryController';
@@ -10,6 +11,7 @@ import type { BreadcrumbItem } from '@/types';
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Diary', href: diaryIndex() }];
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 type DiaryEntry = {
     id: number;
@@ -25,12 +27,6 @@ type Props = {
     selectedEntry: DiaryEntry | null;
     totalEntries: number;
 };
-
-function getMonthLabel(month: string): string {
-    const [year, m] = month.split('-');
-    const date = new Date(parseInt(year), parseInt(m) - 1);
-    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-}
 
 function getCalendarGrid(month: string): (string | null)[][] {
     const [year, m] = month.split('-');
@@ -78,6 +74,16 @@ export default function Diary({ month, selectedDate, entryDates, selectedEntry, 
     const createForm = useForm({ entry_date: '', content: '' });
     const editForm = useForm({ content: selectedEntry?.content ?? '' });
 
+    const [currentYear, currentMonthNum] = useMemo(() => month.split('-').map(Number), [month]);
+    const todayYear = new Date().getFullYear();
+    const yearOptions = useMemo(() => {
+        const years: number[] = [];
+        for (let y = todayYear - 10; y <= todayYear + 1; y++) {
+            years.push(y);
+        }
+        return years;
+    }, [todayYear]);
+
     const navigateMonth = useCallback(
         (delta: number) => {
             const newMonth = shiftMonth(month, delta);
@@ -88,6 +94,17 @@ export default function Diary({ month, selectedDate, entryDates, selectedEntry, 
             );
         },
         [month],
+    );
+
+    const navigateTo = useCallback(
+        (newMonth: string) => {
+            router.get(
+                diaryIndex.url({ query: { month: newMonth } }),
+                {},
+                { preserveState: true, preserveScroll: true },
+            );
+        },
+        [],
     );
 
     const selectDate = useCallback(
@@ -163,18 +180,56 @@ export default function Diary({ month, selectedDate, entryDates, selectedEntry, 
                         {/* Calendar */}
                         <div className="rounded-xl border border-amber-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm lg:col-span-1 dark:border-amber-800/50 dark:bg-black/40">
                             <div className="mb-4 flex items-center justify-between">
-                                <h2 className="flex items-center gap-2 text-lg font-semibold">
-                                    <CalendarDays className="size-5" />
-                                    {getMonthLabel(month)}
-                                </h2>
-                                <div className="flex gap-1">
+                                <div className="flex items-center gap-1.5">
                                     <Button variant="ghost" size="icon" className="size-8" onClick={() => navigateMonth(-1)}>
                                         <ChevronLeft className="size-4" />
                                     </Button>
+                                    <Select
+                                        value={String(currentMonthNum)}
+                                        onValueChange={(v) => navigateTo(`${currentYear}-${v.padStart(2, '0')}`)}
+                                    >
+                                        <SelectTrigger className="h-8 w-[120px] text-sm font-semibold">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {MONTH_NAMES.map((name, i) => (
+                                                <SelectItem key={i + 1} value={String(i + 1)}>
+                                                    {name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <Select
+                                        value={String(currentYear)}
+                                        onValueChange={(v) => navigateTo(`${v}-${String(currentMonthNum).padStart(2, '0')}`)}
+                                    >
+                                        <SelectTrigger className="h-8 w-[80px] text-sm font-semibold">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {yearOptions.map((y) => (
+                                                <SelectItem key={y} value={String(y)}>
+                                                    {y}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                     <Button variant="ghost" size="icon" className="size-8" onClick={() => navigateMonth(1)}>
                                         <ChevronRight className="size-4" />
                                     </Button>
                                 </div>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-xs"
+                                    onClick={() => {
+                                        const todayMonth = new Date().toISOString().slice(0, 7).replace('-0', '-').replace('-', '-');
+                                        const m = String(new Date().getMonth() + 1).padStart(2, '0');
+                                        navigateTo(`${new Date().getFullYear()}-${m}`);
+                                    }}
+                                >
+                                    Today
+                                </Button>
                             </div>
 
                             <div className="grid grid-cols-7 gap-1">

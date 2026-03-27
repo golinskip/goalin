@@ -21,7 +21,7 @@ class DiaryController extends Controller
     {
         $user = $request->user();
         $month = $request->input('month', now()->format('Y-m'));
-        $selectedDate = $request->input('date');
+        $selectedDate = $request->input('date', now()->format('Y-m-d'));
 
         [$year, $monthNum] = explode('-', $month);
         $startOfMonth = Carbon::createFromDate((int) $year, (int) $monthNum, 1)->startOfMonth();

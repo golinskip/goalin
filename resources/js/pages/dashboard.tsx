@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { BookOpen, Calendar, CheckCircle, Clock, Gift, History, Layers, Star, Zap } from 'lucide-react';
+import { BookOpen, Calendar, CheckCircle, Clock, Gift, History, Layers, NotebookPen, Star, Zap } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -489,6 +489,20 @@ export default function Dashboard({
                                     <div>
                                         <p className="font-semibold">Memo Cards</p>
                                         <p className="text-sm text-muted-foreground">Flashcards to learn and memorize</p>
+                                    </div>
+                                </div>
+                            </Link>
+                            <Link
+                                href="/diary"
+                                className="group rounded-xl border border-amber-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm transition-all hover:shadow-md dark:border-amber-800/50 dark:bg-black/40"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="flex size-10 items-center justify-center rounded-lg bg-amber-500/15 transition-colors group-hover:bg-amber-500/25">
+                                        <NotebookPen className="size-5 text-amber-600 dark:text-amber-400" />
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold">Diary</p>
+                                        <p className="text-sm text-muted-foreground">Write and reflect on your days</p>
                                     </div>
                                 </div>
                             </Link>
