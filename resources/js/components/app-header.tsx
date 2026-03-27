@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BarChart3, BookOpen, ChevronDown, Gift, Layers, LayoutGrid, Menu, Target, Zap } from 'lucide-react';
+import { BarChart3, BookOpen, ChevronDown, Gift, Layers, LayoutGrid, Menu, NotebookPen, Target, Zap } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 import { dashboard, statistics } from '@/routes';
 import { index as activitiesIndex } from '@/routes/activities';
 import { index as goalsIndex } from '@/routes/goals';
+import { index as diaryIndex } from '@/routes/diary';
 import { index as memoSetsIndex } from '@/routes/memo-sets';
 import { index as rewardsIndex } from '@/routes/rewards';
 import type { BreadcrumbItem, NavItem } from '@/types';
@@ -61,6 +62,11 @@ const toolsNavItems: NavItem[] = [
         title: 'Memo Cards',
         href: memoSetsIndex(),
         icon: BookOpen,
+    },
+    {
+        title: 'Diary',
+        href: diaryIndex(),
+        icon: NotebookPen,
     },
 ];
 

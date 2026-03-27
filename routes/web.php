@@ -6,6 +6,7 @@ use Domain\GoalTracker\Controllers\DashboardController;
 use Domain\GoalTracker\Controllers\GoalController;
 use Domain\GoalTracker\Controllers\RewardController;
 use Domain\GoalTracker\Controllers\StatisticsController;
+use Domain\Tools\Diary\Controllers\DiaryController;
 use Domain\Tools\Flashcards\Controllers\MemoCardController;
 use Domain\Tools\Flashcards\Controllers\MemoSetController;
 use Illuminate\Support\Facades\Route;
@@ -39,6 +40,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('memo-cards/{memo_card}', [MemoCardController::class, 'update'])->name('memo-cards.update');
     Route::delete('memo-cards/{memo_card}', [MemoCardController::class, 'destroy'])->name('memo-cards.destroy');
     Route::post('memo-cards/{memo_card}/review', [MemoCardController::class, 'review'])->name('memo-cards.review');
+
+    Route::get('diary', [DiaryController::class, 'index'])->name('diary.index');
+    Route::post('diary', [DiaryController::class, 'store'])->name('diary.store');
+    Route::put('diary/{diary_entry}', [DiaryController::class, 'update'])->name('diary.update');
+    Route::delete('diary/{diary_entry}', [DiaryController::class, 'destroy'])->name('diary.destroy');
 });
 
 require __DIR__.'/settings.php';

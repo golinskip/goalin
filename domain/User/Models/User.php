@@ -9,6 +9,7 @@ use Domain\GoalTracker\Models\ActivityLog;
 use Domain\GoalTracker\Models\Goal;
 use Domain\GoalTracker\Models\Reward;
 use Domain\GoalTracker\Models\Tag;
+use Domain\Tools\Diary\Models\DiaryEntry;
 use Domain\Tools\Flashcards\Models\MemoSet;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -73,5 +74,10 @@ class User extends Authenticatable
     public function memoSets(): HasMany
     {
         return $this->hasMany(MemoSet::class);
+    }
+
+    public function diaryEntries(): HasMany
+    {
+        return $this->hasMany(DiaryEntry::class);
     }
 }

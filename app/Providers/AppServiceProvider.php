@@ -9,6 +9,8 @@ use Domain\GoalTracker\Models\Reward;
 use Domain\GoalTracker\Policies\ActivityPolicy;
 use Domain\GoalTracker\Policies\GoalPolicy;
 use Domain\GoalTracker\Policies\RewardPolicy;
+use Domain\Tools\Diary\Models\DiaryEntry;
+use Domain\Tools\Diary\Policies\DiaryEntryPolicy;
 use Domain\Tools\Flashcards\Models\MemoSet;
 use Domain\Tools\Flashcards\Policies\MemoSetPolicy;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -59,6 +61,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Goal::class, GoalPolicy::class);
         Gate::policy(Reward::class, RewardPolicy::class);
         Gate::policy(MemoSet::class, MemoSetPolicy::class);
+        Gate::policy(DiaryEntry::class, DiaryEntryPolicy::class);
     }
 
     /**
