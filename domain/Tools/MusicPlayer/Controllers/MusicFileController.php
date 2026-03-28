@@ -37,12 +37,13 @@ class MusicFileController extends Controller
                 'file_size' => $file->file_size,
                 'created_at' => $file->created_at->toISOString(),
             ]),
-            'playlists' => $user->playlists()->withCount('musicFiles')->latest()->get()->map(fn ($playlist) => [
+            'playlists' => $user->playlists()->withCount('musicFiles')->with('musicFiles:id')->latest()->get()->map(fn ($playlist) => [
                 'id' => $playlist->id,
                 'name' => $playlist->name,
                 'description' => $playlist->description,
                 'color' => $playlist->color,
                 'music_files_count' => $playlist->music_files_count,
+                'music_file_ids' => $playlist->musicFiles->pluck('id'),
             ]),
         ]);
     }

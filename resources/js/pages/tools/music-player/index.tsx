@@ -1,7 +1,13 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { ListMusic, Music, Pencil, Plus, Trash2, Upload, X } from 'lucide-react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { Check, ListMusic, ListPlus, Music, Pause, Play, Pencil, Plus, Search, Trash2, Upload, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
@@ -28,6 +34,7 @@ type PlaylistType = {
     description: string | null;
     color: string;
     music_files_count: number;
+    music_file_ids: number[];
 };
 
 type Props = {
@@ -60,12 +67,39 @@ function isAudioFile(file: File): boolean {
 export default function MusicIndex({ musicFiles, playlists, maxFileSize }: Props) {
     const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
     const [editingFile, setEditingFile] = useState<MusicFileType | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
     const [isDragging, setIsDragging] = useState(false);
     const [pendingFiles, setPendingFiles] = useState<File[]>([]);
     const [rejectedFiles, setRejectedFiles] = useState<{ name: string; reason: string }[]>([]);
     const [uploading, setUploading] = useState(false);
+    const [previewingId, setPreviewingId] = useState<number | null>(null);
+    const audioRef = useRef<HTMLAudioElement>(null);
     const dragCounter = useRef(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const togglePreview = useCallback((fileId: number) => {
+        const audio = audioRef.current;
+        if (!audio) return;
+
+        if (previewingId === fileId) {
+            audio.pause();
+            setPreviewingId(null);
+            return;
+        }
+
+        audio.src = `/music/${fileId}/stream`;
+        audio.play();
+        setPreviewingId(fileId);
+    }, [previewingId]);
+
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (!audio) return;
+
+        const handleEnded = () => setPreviewingId(null);
+        audio.addEventListener('ended', handleEnded);
+        return () => audio.removeEventListener('ended', handleEnded);
+    }, []);
 
     const playlistForm = useForm({ name: '', description: '', color: randomColor() });
     const editForm = useForm({ title: '', artist: '' });
@@ -193,17 +227,34 @@ export default function MusicIndex({ musicFiles, playlists, maxFileSize }: Props
 
     const handleDelete = useCallback((id: number) => {
         if (!confirm('Delete this music file?')) return;
+        if (previewingId === id) {
+            audioRef.current?.pause();
+            setPreviewingId(null);
+        }
         router.delete(`/music/${id}`, { preserveScroll: true });
-    }, []);
+    }, [previewingId]);
 
     const handleDeletePlaylist = useCallback((id: number) => {
         if (!confirm('Delete this playlist?')) return;
         router.delete(`/playlists/${id}`, { preserveScroll: true });
     }, []);
 
+    const handleAddToPlaylist = useCallback((playlistId: number, musicFileId: number) => {
+        router.post(`/playlists/${playlistId}/tracks`, { music_file_id: musicFileId }, { preserveScroll: true });
+    }, []);
+
+    const filteredFiles = useMemo(() => {
+        if (!searchQuery.trim()) return musicFiles;
+        const q = searchQuery.toLowerCase();
+        return musicFiles.filter(
+            (f) => f.title.toLowerCase().includes(q) || (f.artist && f.artist.toLowerCase().includes(q)),
+        );
+    }, [musicFiles, searchQuery]);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Music Player" />
+            <audio ref={audioRef} className="hidden" />
 
             <div className="relative flex h-full flex-1 flex-col">
                 <div className="pointer-events-none fixed inset-0 z-0">
@@ -324,11 +375,30 @@ export default function MusicIndex({ musicFiles, playlists, maxFileSize }: Props
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
                     >
-                        <div className="mb-3 flex items-center justify-between">
-                            <h2 className="flex items-center gap-2 text-lg font-semibold">
+                        <div className="mb-3 flex items-center justify-between gap-4">
+                            <h2 className="flex shrink-0 items-center gap-2 text-lg font-semibold">
                                 <Music className="size-5" />
                                 Music Library
                             </h2>
+                            {musicFiles.length > 0 && (
+                                <div className="relative max-w-xs flex-1">
+                                    <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/50" />
+                                    <Input
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="Search by title or artist..."
+                                        className="pl-9"
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            onClick={() => setSearchQuery('')}
+                                            className="absolute top-1/2 right-2 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground/50 hover:text-foreground"
+                                        >
+                                            <X className="size-3.5" />
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         {/* Drop Zone / Upload Area */}
@@ -488,40 +558,82 @@ export default function MusicIndex({ musicFiles, playlists, maxFileSize }: Props
                             </div>
                         ) : musicFiles.length > 0 ? (
                             <div className="rounded-xl border border-pink-200/80 bg-white/70 shadow-sm backdrop-blur-sm dark:border-pink-800/50 dark:bg-black/40">
-                                <div className="divide-y divide-border/50">
-                                    {musicFiles.map((file) => (
-                                        <div
-                                            key={file.id}
-                                            className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-black/[.02] dark:hover:bg-white/[.02]"
-                                        >
-                                            <Music className="size-4 shrink-0 text-pink-500/60" />
-                                            <div className="min-w-0 flex-1">
-                                                <p className="truncate text-sm font-medium">{file.title}</p>
-                                                <p className="truncate text-xs text-muted-foreground">
-                                                    {file.artist ?? 'Unknown artist'}
-                                                </p>
+                                {filteredFiles.length === 0 ? (
+                                    <div className="px-5 py-8 text-center">
+                                        <Search className="mx-auto mb-2 size-6 text-muted-foreground/30" />
+                                        <p className="text-sm text-muted-foreground">No tracks matching &ldquo;{searchQuery}&rdquo;</p>
+                                    </div>
+                                ) : (
+                                    <div className="divide-y divide-border/50">
+                                        {filteredFiles.map((file) => (
+                                            <div
+                                                key={file.id}
+                                                className={`flex items-center gap-3 px-5 py-3 transition-colors hover:bg-black/[.02] dark:hover:bg-white/[.02] ${previewingId === file.id ? 'bg-pink-50/50 dark:bg-pink-950/20' : ''}`}
+                                            >
+                                                <button
+                                                    onClick={() => togglePreview(file.id)}
+                                                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-pink-500/10 text-pink-600 transition-colors hover:bg-pink-500/20 dark:text-pink-400"
+                                                >
+                                                    {previewingId === file.id ? (
+                                                        <Pause className="size-3.5" />
+                                                    ) : (
+                                                        <Play className="size-3.5 translate-x-px" />
+                                                    )}
+                                                </button>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="truncate text-sm font-medium">{file.title}</p>
+                                                    <p className="truncate text-xs text-muted-foreground">
+                                                        {file.artist ?? 'Unknown artist'}
+                                                    </p>
+                                                </div>
+                                                <span className="shrink-0 text-xs text-muted-foreground">
+                                                    {formatDuration(file.duration_seconds)}
+                                                </span>
+                                                <span className="shrink-0 text-xs text-muted-foreground/60">
+                                                    {formatFileSize(file.file_size)}
+                                                </span>
+                                                {playlists.length > 0 && (
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger className="rounded-md p-1 text-muted-foreground/50 hover:text-foreground">
+                                                            <ListPlus className="size-3.5" />
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end" className="w-48">
+                                                            {playlists.map((playlist) => {
+                                                                const alreadyAdded = playlist.music_file_ids.includes(file.id);
+                                                                return (
+                                                                    <DropdownMenuItem
+                                                                        key={playlist.id}
+                                                                        disabled={alreadyAdded}
+                                                                        onClick={() => !alreadyAdded && handleAddToPlaylist(playlist.id, file.id)}
+                                                                    >
+                                                                        <div
+                                                                            className="size-2.5 shrink-0 rounded-full"
+                                                                            style={{ backgroundColor: playlist.color }}
+                                                                        />
+                                                                        <span className="truncate">{playlist.name}</span>
+                                                                        {alreadyAdded && <Check className="ml-auto size-3.5 shrink-0 text-muted-foreground" />}
+                                                                    </DropdownMenuItem>
+                                                                );
+                                                            })}
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                )}
+                                                <button
+                                                    onClick={() => handleEdit(file)}
+                                                    className="rounded-md p-1 text-muted-foreground/50 hover:text-foreground"
+                                                >
+                                                    <Pencil className="size-3.5" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(file.id)}
+                                                    className="rounded-md p-1 text-muted-foreground/50 hover:text-red-500"
+                                                >
+                                                    <Trash2 className="size-3.5" />
+                                                </button>
                                             </div>
-                                            <span className="shrink-0 text-xs text-muted-foreground">
-                                                {formatDuration(file.duration_seconds)}
-                                            </span>
-                                            <span className="shrink-0 text-xs text-muted-foreground/60">
-                                                {formatFileSize(file.file_size)}
-                                            </span>
-                                            <button
-                                                onClick={() => handleEdit(file)}
-                                                className="rounded-md p-1 text-muted-foreground/50 hover:text-foreground"
-                                            >
-                                                <Pencil className="size-3.5" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(file.id)}
-                                                className="rounded-md p-1 text-muted-foreground/50 hover:text-red-500"
-                                            >
-                                                <Trash2 className="size-3.5" />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         ) : null}
                     </div>

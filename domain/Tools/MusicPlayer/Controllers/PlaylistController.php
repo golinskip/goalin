@@ -83,13 +83,17 @@ class PlaylistController extends Controller
             'music_file_id' => ['required', 'integer', 'exists:music_files,id'],
         ]);
 
+        if ($playlist->musicFiles()->where('music_files.id', $validated['music_file_id'])->exists()) {
+            return back();
+        }
+
         $maxPosition = $playlist->musicFiles()->max('position') ?? -1;
 
         $playlist->musicFiles()->attach($validated['music_file_id'], [
             'position' => $maxPosition + 1,
         ]);
 
-        return to_route('playlists.show', $playlist);
+        return back();
     }
 
     public function removeTrack(Playlist $playlist, MusicFile $musicFile): RedirectResponse
