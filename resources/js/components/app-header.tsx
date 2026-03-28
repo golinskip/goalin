@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BarChart3, BookOpen, ChevronDown, Gift, Layers, LayoutGrid, Menu, NotebookPen, Target, Zap } from 'lucide-react';
+import { BarChart3, BookOpen, ChevronDown, Gift, Layers, LayoutGrid, Menu, Music, NotebookPen, Target, Zap } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -32,6 +32,7 @@ import { index as activitiesIndex } from '@/routes/activities';
 import { index as goalsIndex } from '@/routes/goals';
 import { index as diaryIndex } from '@/routes/diary';
 import { index as memoSetsIndex } from '@/routes/memo-sets';
+import { index as musicIndex } from '@/routes/music';
 import { index as rewardsIndex } from '@/routes/rewards';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
@@ -67,6 +68,12 @@ const toolsNavItems: NavItem[] = [
         title: 'Diary',
         href: diaryIndex(),
         icon: NotebookPen,
+    },
+    {
+        title: 'Music Player',
+        href: musicIndex(),
+        icon: Music,
+        external: true,
     },
 ];
 
@@ -159,18 +166,33 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                                 Tools
                                             </p>
                                             <div className="flex flex-col space-y-4">
-                                                {toolsNavItems.map((item) => (
-                                                    <Link
-                                                        key={item.title}
-                                                        href={item.href}
-                                                        className="flex items-center space-x-2 font-medium"
-                                                    >
-                                                        {item.icon && (
-                                                            <item.icon className="h-5 w-5" />
-                                                        )}
-                                                        <span>{item.title}</span>
-                                                    </Link>
-                                                ))}
+                                                {toolsNavItems.map((item) =>
+                                                    item.external ? (
+                                                        <a
+                                                            key={item.title}
+                                                            href={typeof item.href === 'string' ? item.href : item.href.url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex items-center space-x-2 font-medium"
+                                                        >
+                                                            {item.icon && (
+                                                                <item.icon className="h-5 w-5" />
+                                                            )}
+                                                            <span>{item.title}</span>
+                                                        </a>
+                                                    ) : (
+                                                        <Link
+                                                            key={item.title}
+                                                            href={item.href}
+                                                            className="flex items-center space-x-2 font-medium"
+                                                        >
+                                                            {item.icon && (
+                                                                <item.icon className="h-5 w-5" />
+                                                            )}
+                                                            <span>{item.title}</span>
+                                                        </Link>
+                                                    ),
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -281,15 +303,29 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                         <DropdownMenuContent align="start" className="w-48">
                                             {toolsNavItems.map((item) => (
                                                 <DropdownMenuItem key={item.title} asChild>
-                                                    <Link
-                                                        href={item.href}
-                                                        className="flex items-center gap-2"
-                                                    >
-                                                        {item.icon && (
-                                                            <item.icon className="h-4 w-4" />
-                                                        )}
-                                                        {item.title}
-                                                    </Link>
+                                                    {item.external ? (
+                                                        <a
+                                                            href={typeof item.href === 'string' ? item.href : item.href.url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex items-center gap-2"
+                                                        >
+                                                            {item.icon && (
+                                                                <item.icon className="h-4 w-4" />
+                                                            )}
+                                                            {item.title}
+                                                        </a>
+                                                    ) : (
+                                                        <Link
+                                                            href={item.href}
+                                                            className="flex items-center gap-2"
+                                                        >
+                                                            {item.icon && (
+                                                                <item.icon className="h-4 w-4" />
+                                                            )}
+                                                            {item.title}
+                                                        </Link>
+                                                    )}
                                                 </DropdownMenuItem>
                                             ))}
                                         </DropdownMenuContent>

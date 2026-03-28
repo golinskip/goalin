@@ -9,6 +9,8 @@ use Domain\GoalTracker\Controllers\StatisticsController;
 use Domain\Tools\Diary\Controllers\DiaryController;
 use Domain\Tools\Flashcards\Controllers\MemoCardController;
 use Domain\Tools\Flashcards\Controllers\MemoSetController;
+use Domain\Tools\MusicPlayer\Controllers\MusicFileController;
+use Domain\Tools\MusicPlayer\Controllers\PlaylistController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -45,6 +47,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('diary', [DiaryController::class, 'store'])->name('diary.store');
     Route::put('diary/{diary_entry}', [DiaryController::class, 'update'])->name('diary.update');
     Route::delete('diary/{diary_entry}', [DiaryController::class, 'destroy'])->name('diary.destroy');
+
+    // Music Player
+    Route::get('music', [MusicFileController::class, 'index'])->name('music.index');
+    Route::post('music', [MusicFileController::class, 'store'])->name('music.store');
+    Route::put('music/{music_file}', [MusicFileController::class, 'update'])->name('music.update');
+    Route::delete('music/{music_file}', [MusicFileController::class, 'destroy'])->name('music.destroy');
+    Route::get('music/{music_file}/stream', [MusicFileController::class, 'stream'])->name('music.stream');
+
+    Route::post('playlists', [PlaylistController::class, 'store'])->name('playlists.store');
+    Route::get('playlists/{playlist}', [PlaylistController::class, 'show'])->name('playlists.show');
+    Route::put('playlists/{playlist}', [PlaylistController::class, 'update'])->name('playlists.update');
+    Route::delete('playlists/{playlist}', [PlaylistController::class, 'destroy'])->name('playlists.destroy');
+    Route::post('playlists/{playlist}/tracks', [PlaylistController::class, 'addTrack'])->name('playlists.add-track');
+    Route::delete('playlists/{playlist}/tracks/{music_file}', [PlaylistController::class, 'removeTrack'])->name('playlists.remove-track');
 });
 
 require __DIR__.'/settings.php';

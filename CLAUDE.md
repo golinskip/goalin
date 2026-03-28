@@ -20,11 +20,16 @@ domain/
 │   ├── Services/                 # PointService
 │   └── Policies/                 # Activity, Goal, Reward policies
 └── Tools/                        # Productivity tools
-    └── Flashcards/               # Subdomain: spaced-repetition flashcards
-        ├── Models/               # MemoSet, MemoCard
-        ├── Controllers/          # MemoSet, MemoCard
-        ├── Requests/             # MemoSet form requests
-        └── Policies/             # MemoSet policy
+    ├── Flashcards/               # Subdomain: spaced-repetition flashcards
+    │   ├── Models/               # MemoSet, MemoCard
+    │   ├── Controllers/          # MemoSet, MemoCard
+    │   ├── Requests/             # MemoSet form requests
+    │   └── Policies/             # MemoSet policy
+    └── MusicPlayer/              # Subdomain: music file management & playback
+        ├── Models/               # MusicFile, Playlist
+        ├── Controllers/          # MusicFile, Playlist
+        ├── Requests/             # MusicFile, Playlist form requests
+        └── Policies/             # MusicFile, Playlist policies
 ```
 
 ## Namespace Convention
@@ -41,6 +46,12 @@ domain/
 2. Use `Domain\{DomainName}\` namespace
 3. Register policies in `AppServiceProvider::configurePolicies()`
 4. Create factories in `database/factories/` with explicit `protected $model` property
+
+## Adding New Tools
+
+When adding a new tool under `domain/Tools/`, it must have:
+1. A tile on the dashboard (`resources/js/pages/dashboard.tsx` — Tools grid section)
+2. A menu position in the header navigation (`resources/js/components/app-header.tsx` — `toolsNavItems` array)
 
 <laravel-boost-guidelines>
 === foundation rules ===

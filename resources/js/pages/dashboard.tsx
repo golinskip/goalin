@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { BookOpen, Calendar, CheckCircle, Clock, Gift, History, Layers, NotebookPen, Star, Zap } from 'lucide-react';
+import { BookOpen, Calendar, CheckCircle, Clock, Gift, History, Layers, Music, NotebookPen, Star, Zap } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -506,6 +506,22 @@ export default function Dashboard({
                                     </div>
                                 </div>
                             </Link>
+                            <a
+                                href="/music"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group rounded-xl border border-pink-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm transition-all hover:shadow-md dark:border-pink-800/50 dark:bg-black/40"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="flex size-10 items-center justify-center rounded-lg bg-pink-500/15 transition-colors group-hover:bg-pink-500/25">
+                                        <Music className="size-5 text-pink-600 dark:text-pink-400" />
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold">Music Player</p>
+                                        <p className="text-sm text-muted-foreground">Upload and listen to your music</p>
+                                    </div>
+                                </div>
+                            </a>
                         </div>
                     </div>
                 </div>

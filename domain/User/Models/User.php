@@ -11,6 +11,8 @@ use Domain\GoalTracker\Models\Reward;
 use Domain\GoalTracker\Models\Tag;
 use Domain\Tools\Diary\Models\DiaryEntry;
 use Domain\Tools\Flashcards\Models\MemoSet;
+use Domain\Tools\MusicPlayer\Models\MusicFile;
+use Domain\Tools\MusicPlayer\Models\Playlist;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -79,5 +81,15 @@ class User extends Authenticatable
     public function diaryEntries(): HasMany
     {
         return $this->hasMany(DiaryEntry::class);
+    }
+
+    public function musicFiles(): HasMany
+    {
+        return $this->hasMany(MusicFile::class);
+    }
+
+    public function playlists(): HasMany
+    {
+        return $this->hasMany(Playlist::class);
     }
 }

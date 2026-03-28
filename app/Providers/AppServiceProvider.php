@@ -13,6 +13,10 @@ use Domain\Tools\Diary\Models\DiaryEntry;
 use Domain\Tools\Diary\Policies\DiaryEntryPolicy;
 use Domain\Tools\Flashcards\Models\MemoSet;
 use Domain\Tools\Flashcards\Policies\MemoSetPolicy;
+use Domain\Tools\MusicPlayer\Models\MusicFile;
+use Domain\Tools\MusicPlayer\Models\Playlist;
+use Domain\Tools\MusicPlayer\Policies\MusicFilePolicy;
+use Domain\Tools\MusicPlayer\Policies\PlaylistPolicy;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -62,6 +66,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Reward::class, RewardPolicy::class);
         Gate::policy(MemoSet::class, MemoSetPolicy::class);
         Gate::policy(DiaryEntry::class, DiaryEntryPolicy::class);
+        Gate::policy(MusicFile::class, MusicFilePolicy::class);
+        Gate::policy(Playlist::class, PlaylistPolicy::class);
     }
 
     /**
