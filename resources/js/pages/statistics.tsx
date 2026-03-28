@@ -208,7 +208,7 @@ export default function Statistics({
 
                     <div className="grid gap-6 lg:grid-cols-3">
                         {/* Calendar */}
-                        <div className="rounded-xl border border-blue-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm lg:col-span-2 dark:border-blue-800/50 dark:bg-black/40">
+                        <div className="rounded-xl border border-blue-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm dark:border-blue-800/50 dark:bg-black/40">
                             <div className="mb-4 flex items-center justify-between">
                                 <h2 className="flex items-center gap-2 text-lg font-semibold">
                                     <CalendarDays className="size-5" />
@@ -267,7 +267,7 @@ export default function Statistics({
                             </div>
 
                             <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                                <span>{totalDays} active days total</span>
+                                <span>{totalDays} active days</span>
                                 <div className="flex items-center gap-1.5">
                                     <span>Less</span>
                                     {[0.15, 0.35, 0.6, 0.85, 1].map((opacity) => (
@@ -280,6 +280,63 @@ export default function Statistics({
                                     <span>More</span>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Day Detail */}
+                        <div className="rounded-xl border border-green-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm dark:border-green-800/50 dark:bg-black/40">
+                            {selectedDate ? (
+                                <>
+                                    <h2 className="mb-4 text-lg font-semibold">{selectedDateLabel}</h2>
+
+                                    {dayLogs.length === 0 ? (
+                                        <p className="py-4 text-center text-sm text-muted-foreground">No activities logged on this day</p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {dayLogs.map((log) => (
+                                                <div
+                                                    key={log.id}
+                                                    className="flex items-center gap-3 rounded-lg border border-border/50 bg-white/50 p-3 dark:bg-white/5"
+                                                >
+                                                    <div
+                                                        className="size-3.5 shrink-0 rounded-full"
+                                                        style={{ backgroundColor: log.activity_color }}
+                                                    />
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="truncate text-sm font-medium">{log.activity_name}</p>
+                                                            {log.used_timer && <Clock className="size-3.5 text-blue-500" />}
+                                                        </div>
+                                                        {log.comment && (
+                                                            <p className="mt-0.5 truncate text-xs text-muted-foreground">{log.comment}</p>
+                                                        )}
+                                                    </div>
+                                                    <div className="shrink-0 text-right">
+                                                        <p className="text-sm font-medium text-primary">+{log.points_earned} pts</p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {log.quantity > 1 && <>&times;{log.quantity} &middot; </>}
+                                                            {log.created_at}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            <div className="flex items-center justify-between border-t border-border/50 pt-3 text-sm">
+                                                <span className="text-muted-foreground">
+                                                    {dayLogs.reduce((sum, l) => sum + l.quantity, 0)} activities
+                                                </span>
+                                                <span className="font-semibold text-primary">
+                                                    {dayLogs.reduce((sum, l) => sum + l.points_earned, 0)} pts earned
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="flex h-full flex-col items-center justify-center py-8 text-center">
+                                    <CalendarDays className="mb-2 size-8 text-muted-foreground/30" />
+                                    <p className="text-sm text-muted-foreground">Select a day on the calendar to see activities</p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Best Weekdays */}
@@ -327,56 +384,6 @@ export default function Statistics({
                             )}
                         </div>
                     </div>
-
-                    {/* Day Detail */}
-                    {selectedDate && (
-                        <div className="rounded-xl border border-green-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm dark:border-green-800/50 dark:bg-black/40">
-                            <h2 className="mb-4 text-lg font-semibold">{selectedDateLabel}</h2>
-
-                            {dayLogs.length === 0 ? (
-                                <p className="py-4 text-center text-sm text-muted-foreground">No activities logged on this day</p>
-                            ) : (
-                                <div className="space-y-2">
-                                    {dayLogs.map((log) => (
-                                        <div
-                                            key={log.id}
-                                            className="flex items-center gap-3 rounded-lg border border-border/50 bg-white/50 p-3 dark:bg-white/5"
-                                        >
-                                            <div
-                                                className="size-3.5 shrink-0 rounded-full"
-                                                style={{ backgroundColor: log.activity_color }}
-                                            />
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex items-center gap-2">
-                                                    <p className="truncate text-sm font-medium">{log.activity_name}</p>
-                                                    {log.used_timer && <Clock className="size-3.5 text-blue-500" />}
-                                                </div>
-                                                {log.comment && (
-                                                    <p className="mt-0.5 truncate text-xs text-muted-foreground">{log.comment}</p>
-                                                )}
-                                            </div>
-                                            <div className="shrink-0 text-right">
-                                                <p className="text-sm font-medium text-primary">+{log.points_earned} pts</p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {log.quantity > 1 && <>&times;{log.quantity} &middot; </>}
-                                                    {log.created_at}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))}
-
-                                    <div className="flex items-center justify-between border-t border-border/50 pt-3 text-sm">
-                                        <span className="text-muted-foreground">
-                                            {dayLogs.reduce((sum, l) => sum + l.quantity, 0)} activities
-                                        </span>
-                                        <span className="font-semibold text-primary">
-                                            {dayLogs.reduce((sum, l) => sum + l.points_earned, 0)} pts earned
-                                        </span>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
                 </div>
             </div>
         </AppLayout>
