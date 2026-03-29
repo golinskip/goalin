@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['entry_date', 'content'])]
+#[Fillable(['entry_date', 'content', 'fields'])]
 class DiaryEntry extends Model
 {
     /** @use HasFactory<DiaryEntryFactory> */
@@ -22,6 +22,7 @@ class DiaryEntry extends Model
     {
         return [
             'entry_date' => 'date',
+            'fields' => 'array',
         ];
     }
 

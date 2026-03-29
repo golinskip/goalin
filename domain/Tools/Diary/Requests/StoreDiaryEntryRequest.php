@@ -30,6 +30,9 @@ class StoreDiaryEntryRequest extends FormRequest
                 },
             ],
             'content' => ['required', 'string', 'max:10000'],
+            'fields' => ['nullable', 'array'],
+            'fields.*.label' => ['required', 'string', 'max:100'],
+            'fields.*.value' => ['required', 'string', 'max:500'],
         ];
     }
 }

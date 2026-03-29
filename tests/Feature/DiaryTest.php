@@ -150,3 +150,86 @@ test('diary index returns selected entry when date is provided', function () {
         ->where('selectedEntry.content', 'Test content')
     );
 });
+
+test('users can create a diary entry with additional fields', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $date = now()->subDay()->format('Y-m-d');
+
+    $response = $this->post(route('diary.store'), [
+        'entry_date' => $date,
+        'content' => 'A day with fields',
+        'fields' => [
+            ['label' => 'Mood', 'value' => 'Happy'],
+            ['label' => 'Weather', 'value' => 'Sunny'],
+        ],
+    ]);
+
+    $response->assertRedirect();
+    $entry = $user->diaryEntries()->whereDate('entry_date', $date)->first();
+    expect($entry->fields)->toBe([
+        ['label' => 'Mood', 'value' => 'Happy'],
+        ['label' => 'Weather', 'value' => 'Sunny'],
+    ]);
+});
+
+test('users can update diary entry fields', function () {
+    $user = User::factory()->create();
+    $entry = DiaryEntry::factory()->for($user)->create([
+        'content' => 'Original',
+        'fields' => [['label' => 'Mood', 'value' => 'Sad']],
+    ]);
+    $this->actingAs($user);
+
+    $response = $this->put(route('diary.update', $entry), [
+        'content' => 'Updated',
+        'fields' => [['label' => 'Mood', 'value' => 'Happy']],
+    ]);
+
+    $response->assertRedirect();
+    expect($entry->fresh()->fields)->toBe([
+        ['label' => 'Mood', 'value' => 'Happy'],
+    ]);
+});
+
+test('diary index returns field suggestions from existing entries', function () {
+    $user = User::factory()->create();
+    DiaryEntry::factory()->for($user)->create([
+        'entry_date' => now()->subDays(2),
+        'fields' => [
+            ['label' => 'Mood', 'value' => 'Happy'],
+            ['label' => 'Weather', 'value' => 'Sunny'],
+        ],
+    ]);
+    DiaryEntry::factory()->for($user)->create([
+        'entry_date' => now()->subDays(3),
+        'fields' => [
+            ['label' => 'Mood', 'value' => 'Calm'],
+        ],
+    ]);
+    $this->actingAs($user);
+
+    $response = $this->get(route('diary.index'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->where('fieldSuggestions.Mood', ['Happy', 'Calm'])
+        ->where('fieldSuggestions.Weather', ['Sunny'])
+    );
+});
+
+test('diary entry fields validation rejects empty labels', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->post(route('diary.store'), [
+        'entry_date' => now()->subDay()->format('Y-m-d'),
+        'content' => 'Test',
+        'fields' => [
+            ['label' => '', 'value' => 'Something'],
+        ],
+    ]);
+
+    $response->assertSessionHasErrors('fields.0.label');
+});

@@ -44,6 +44,7 @@ class DiaryController extends Controller
                     'id' => $entry->id,
                     'entry_date' => $entry->entry_date->format('Y-m-d'),
                     'content' => $entry->content,
+                    'fields' => $entry->fields ?? [],
                     'updated_at' => $entry->updated_at->toISOString(),
                 ];
             }
@@ -51,12 +52,32 @@ class DiaryController extends Controller
 
         $totalEntries = $user->diaryEntries()->count();
 
+        /** @var array<string, string[]> $fieldSuggestions */
+        $fieldSuggestions = [];
+        $user->diaryEntries()
+            ->whereNotNull('fields')
+            ->pluck('fields')
+            ->each(function (array $fields) use (&$fieldSuggestions): void {
+                foreach ($fields as $field) {
+                    $label = $field['label'] ?? '';
+                    $value = $field['value'] ?? '';
+                    if ($label !== '') {
+                        $fieldSuggestions[$label][] = $value;
+                    }
+                }
+            });
+
+        foreach ($fieldSuggestions as $label => $values) {
+            $fieldSuggestions[$label] = array_values(array_unique(array_filter($values)));
+        }
+
         return Inertia::render('tools/diary/index', [
             'month' => $month,
             'selectedDate' => $selectedDate,
             'entryDates' => $entryDates,
             'selectedEntry' => $selectedEntry,
             'totalEntries' => $totalEntries,
+            'fieldSuggestions' => $fieldSuggestions,
         ]);
     }
 
