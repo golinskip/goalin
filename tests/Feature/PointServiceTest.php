@@ -1,9 +1,9 @@
 <?php
 
-use Domain\GoalTracker\Models\Activity;
-use Domain\GoalTracker\Models\ActivityLog;
-use Domain\GoalTracker\Models\Reward;
-use Domain\GoalTracker\Services\PointService;
+use Domain\Tools\GoalTracker\Models\Activity;
+use Domain\Tools\GoalTracker\Models\ActivityLog;
+use Domain\Tools\GoalTracker\Models\Reward;
+use Domain\Tools\GoalTracker\Services\PointService;
 use Domain\User\Models\User;
 
 test('returns empty progression when no rewards', function () {
@@ -151,10 +151,10 @@ test('dashboard includes reward progression data', function () {
     Reward::factory()->create(['user_id' => $user->id, 'cost_in_points' => 100, 'sort_order' => 0]);
 
     $this->actingAs($user)
-        ->get(route('dashboard'))
+        ->get(route('goal-tracker.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->component('dashboard')
+            ->component('tools/goal-tracker/index')
             ->has('rewardProgression')
             ->where('rewardProgression.totalEarned', 50)
             ->where('rewardProgression.currentReward.percentage', 50)

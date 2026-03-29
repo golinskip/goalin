@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use Domain\GoalTracker\Models\Tag;
+use Domain\Tools\GoalTracker\Models\Tag;
 use Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

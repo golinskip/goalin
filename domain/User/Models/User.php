@@ -4,13 +4,13 @@ namespace Domain\User\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
-use Domain\GoalTracker\Models\Activity;
-use Domain\GoalTracker\Models\ActivityLog;
-use Domain\GoalTracker\Models\Goal;
-use Domain\GoalTracker\Models\Reward;
-use Domain\GoalTracker\Models\Tag;
 use Domain\Tools\Diary\Models\DiaryEntry;
 use Domain\Tools\Flashcards\Models\MemoSet;
+use Domain\Tools\GoalTracker\Models\Activity;
+use Domain\Tools\GoalTracker\Models\ActivityLog;
+use Domain\Tools\GoalTracker\Models\Goal;
+use Domain\Tools\GoalTracker\Models\Reward;
+use Domain\Tools\GoalTracker\Models\Tag;
 use Domain\Tools\MusicPlayer\Models\MusicFile;
 use Domain\Tools\MusicPlayer\Models\Playlist;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

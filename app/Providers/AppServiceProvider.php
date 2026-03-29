@@ -3,16 +3,16 @@
 namespace App\Providers;
 
 use Carbon\CarbonImmutable;
-use Domain\GoalTracker\Models\Activity;
-use Domain\GoalTracker\Models\Goal;
-use Domain\GoalTracker\Models\Reward;
-use Domain\GoalTracker\Policies\ActivityPolicy;
-use Domain\GoalTracker\Policies\GoalPolicy;
-use Domain\GoalTracker\Policies\RewardPolicy;
 use Domain\Tools\Diary\Models\DiaryEntry;
 use Domain\Tools\Diary\Policies\DiaryEntryPolicy;
 use Domain\Tools\Flashcards\Models\MemoSet;
 use Domain\Tools\Flashcards\Policies\MemoSetPolicy;
+use Domain\Tools\GoalTracker\Models\Activity;
+use Domain\Tools\GoalTracker\Models\Goal;
+use Domain\Tools\GoalTracker\Models\Reward;
+use Domain\Tools\GoalTracker\Policies\ActivityPolicy;
+use Domain\Tools\GoalTracker\Policies\GoalPolicy;
+use Domain\Tools\GoalTracker\Policies\RewardPolicy;
 use Domain\Tools\MusicPlayer\Models\MusicFile;
 use Domain\Tools\MusicPlayer\Models\Playlist;
 use Domain\Tools\MusicPlayer\Policies\MusicFilePolicy;

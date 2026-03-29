@@ -1,7 +1,7 @@
 <?php
 
-use Domain\GoalTracker\Models\Activity;
-use Domain\GoalTracker\Models\ActivityLog;
+use Domain\Tools\GoalTracker\Models\Activity;
+use Domain\Tools\GoalTracker\Models\ActivityLog;
 use Domain\User\Models\User;
 
 test('guests are redirected to the login page', function () {

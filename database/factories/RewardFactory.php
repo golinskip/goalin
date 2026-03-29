@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use Domain\GoalTracker\Models\Reward;
+use Domain\Tools\GoalTracker\Models\Reward;
 use Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

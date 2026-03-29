@@ -13,13 +13,13 @@ domain/
 │   ├── Actions/                  # CreateNewUser, ResetUserPassword (Fortify)
 │   ├── Controllers/              # Profile, Security, General (settings)
 │   └── Requests/                 # Profile, Password, General form requests
-├── GoalTracker/                  # Core goal tracking, activities, rewards & statistics
-│   ├── Models/                   # Activity, ActivityLog, Tag, Goal, Reward
-│   ├── Controllers/              # Dashboard, Statistics, Activity, ActivityLog, Goal, Reward
-│   ├── Requests/                 # Activity, ActivityLog, Goal, Reward form requests
-│   ├── Services/                 # PointService
-│   └── Policies/                 # Activity, Goal, Reward policies
 └── Tools/                        # Productivity tools
+    ├── GoalTracker/              # Subdomain: goal tracking, activities, rewards & statistics
+    │   ├── Models/               # Activity, ActivityLog, Tag, Goal, Reward
+    │   ├── Controllers/          # GoalTracker, Dashboard, Statistics, Activity, ActivityLog, Goal, Reward
+    │   ├── Requests/             # Activity, ActivityLog, Goal, Reward form requests
+    │   ├── Services/             # PointService
+    │   └── Policies/             # Activity, Goal, Reward policies
     ├── Flashcards/               # Subdomain: spaced-repetition flashcards
     │   ├── Models/               # MemoSet, MemoCard
     │   ├── Controllers/          # MemoSet, MemoCard

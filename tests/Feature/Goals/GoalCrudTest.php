@@ -1,7 +1,7 @@
 <?php
 
-use Domain\GoalTracker\Models\Activity;
-use Domain\GoalTracker\Models\Goal;
+use Domain\Tools\GoalTracker\Models\Activity;
+use Domain\Tools\GoalTracker\Models\Goal;
 use Domain\User\Models\User;
 
 test('guests cannot access goals', function () {

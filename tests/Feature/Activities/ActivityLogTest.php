@@ -1,7 +1,7 @@
 <?php
 
-use Domain\GoalTracker\Models\Activity;
-use Domain\GoalTracker\Models\ActivityLog;
+use Domain\Tools\GoalTracker\Models\Activity;
+use Domain\Tools\GoalTracker\Models\ActivityLog;
 use Domain\User\Models\User;
 
 test('guests cannot log activities', function () {
@@ -19,7 +19,7 @@ test('user can log a today activity', function () {
             'quantity' => 1,
             'used_timer' => false,
         ])
-        ->assertRedirect(route('dashboard'));
+        ->assertRedirect(route('goal-tracker.index'));
 
     $log = $user->activityLogs()->first();
     expect($log)->not->toBeNull();
@@ -152,7 +152,7 @@ test('user cannot view timer page for another users activity', function () {
         ->assertForbidden();
 });
 
-test('dashboard shows activity stats', function () {
+test('goal tracker page shows activity stats', function () {
     $user = User::factory()->create();
     $activity = Activity::factory()->create(['user_id' => $user->id, 'point_cost' => 10]);
 
@@ -165,10 +165,10 @@ test('dashboard shows activity stats', function () {
     ]);
 
     $this->actingAs($user)
-        ->get(route('dashboard'))
+        ->get(route('goal-tracker.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->component('dashboard')
+            ->component('tools/goal-tracker/index')
             ->has('activities')
             ->has('rewardProgression')
         );
@@ -185,7 +185,7 @@ test('user can log activity with a comment', function () {
             'quantity' => 1,
             'comment' => 'Felt great today!',
         ])
-        ->assertRedirect(route('dashboard'));
+        ->assertRedirect(route('goal-tracker.index'));
 
     $log = $user->activityLogs()->first();
     expect($log->comment)->toBe('Felt great today!');
@@ -201,7 +201,7 @@ test('activity log comment is optional', function () {
             'completed_at' => today()->format('Y-m-d'),
             'quantity' => 1,
         ])
-        ->assertRedirect(route('dashboard'));
+        ->assertRedirect(route('goal-tracker.index'));
 
     $log = $user->activityLogs()->first();
     expect($log->comment)->toBeNull();

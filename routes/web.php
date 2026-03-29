@@ -1,14 +1,15 @@
 <?php
 
-use Domain\GoalTracker\Controllers\ActivityController;
-use Domain\GoalTracker\Controllers\ActivityLogController;
-use Domain\GoalTracker\Controllers\DashboardController;
-use Domain\GoalTracker\Controllers\GoalController;
-use Domain\GoalTracker\Controllers\RewardController;
-use Domain\GoalTracker\Controllers\StatisticsController;
 use Domain\Tools\Diary\Controllers\DiaryController;
 use Domain\Tools\Flashcards\Controllers\MemoCardController;
 use Domain\Tools\Flashcards\Controllers\MemoSetController;
+use Domain\Tools\GoalTracker\Controllers\ActivityController;
+use Domain\Tools\GoalTracker\Controllers\ActivityLogController;
+use Domain\Tools\GoalTracker\Controllers\DashboardController;
+use Domain\Tools\GoalTracker\Controllers\GoalController;
+use Domain\Tools\GoalTracker\Controllers\GoalTrackerController;
+use Domain\Tools\GoalTracker\Controllers\RewardController;
+use Domain\Tools\GoalTracker\Controllers\StatisticsController;
 use Domain\Tools\MusicPlayer\Controllers\MusicFileController;
 use Domain\Tools\MusicPlayer\Controllers\PlaylistController;
 use Illuminate\Support\Facades\Route;
@@ -20,6 +21,9 @@ Route::inertia('/', 'welcome', [
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
+
+    // Goal Tracker
+    Route::get('goal-tracker', GoalTrackerController::class)->name('goal-tracker.index');
     Route::get('statistics', StatisticsController::class)->name('statistics');
 
     Route::post('activity-logs', [ActivityLogController::class, 'store'])->name('activity-logs.store');
