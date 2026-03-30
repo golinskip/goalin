@@ -1,6 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { BarChart3, Calendar, CheckCircle, Clock, Flame, Gift, History, MoreHorizontal, Target, TrendingUp, Zap } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { BarChart3, Calendar, CheckCircle, Clock, Coffee, Flame, Gift, History, MoreHorizontal, Pause, Play, Target, TrendingUp, Zap } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -72,6 +72,154 @@ type Props = {
 };
 
 type LogMode = 'today' | 'postponed' | null;
+
+const BREAK_OPTIONS = [5, 10, 15, 20] as const;
+
+function playAlarmSound(): () => void {
+    const ctx = new AudioContext();
+    const now = ctx.currentTime;
+
+    const frequencies = [880, 1108.73, 880, 1108.73, 880];
+    const noteDuration = 0.15;
+    const gap = 0.08;
+
+    frequencies.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+
+        const start = now + i * (noteDuration + gap);
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(0.3, start + 0.02);
+        gain.gain.linearRampToValueAtTime(0, start + noteDuration);
+
+        osc.start(start);
+        osc.stop(start + noteDuration);
+    });
+
+    return () => ctx.close();
+}
+
+function BreakTimer() {
+    const [breakMinutes, setBreakMinutes] = useState<number | null>(null);
+    const [running, setRunning] = useState(false);
+    const [remainingSeconds, setRemainingSeconds] = useState(0);
+    const endTimeRef = useRef<number>(0);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const alarmCleanupRef = useRef<(() => void) | null>(null);
+
+    const clearTimer = useCallback(() => {
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+    }, []);
+
+    const startBreak = useCallback((minutes: number) => {
+        setBreakMinutes(minutes);
+        setRunning(true);
+        setRemainingSeconds(minutes * 60);
+        endTimeRef.current = Date.now() + minutes * 60 * 1000;
+    }, []);
+
+    const cancelBreak = useCallback(() => {
+        clearTimer();
+        setBreakMinutes(null);
+        setRunning(false);
+        setRemainingSeconds(0);
+        if (alarmCleanupRef.current) {
+            alarmCleanupRef.current();
+            alarmCleanupRef.current = null;
+        }
+    }, [clearTimer]);
+
+    useEffect(() => {
+        if (!running) {
+            clearTimer();
+            return;
+        }
+
+        const tick = () => {
+            const diff = Math.max(0, Math.ceil((endTimeRef.current - Date.now()) / 1000));
+            setRemainingSeconds(diff);
+
+            if (diff <= 0) {
+                clearTimer();
+                setRunning(false);
+                alarmCleanupRef.current = playAlarmSound();
+            }
+        };
+
+        tick();
+        intervalRef.current = setInterval(tick, 500);
+
+        return clearTimer;
+    }, [running, clearTimer]);
+
+    useEffect(() => {
+        if (!running) return;
+
+        const handleVisibility = () => {
+            if (!document.hidden) {
+                const diff = Math.max(0, Math.ceil((endTimeRef.current - Date.now()) / 1000));
+                setRemainingSeconds(diff);
+                if (diff <= 0) {
+                    clearTimer();
+                    setRunning(false);
+                    alarmCleanupRef.current = playAlarmSound();
+                }
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibility);
+        return () => document.removeEventListener('visibilitychange', handleVisibility);
+    }, [running, clearTimer]);
+
+    const minutes = Math.floor(remainingSeconds / 60);
+    const seconds = remainingSeconds % 60;
+    const finished = breakMinutes !== null && !running && remainingSeconds === 0;
+
+    return (
+        <div className="rounded-xl border border-amber-200/80 bg-white/70 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-amber-800/50 dark:bg-black/40">
+            <div className="flex items-center gap-3">
+                <Coffee className="size-4 shrink-0 text-amber-500" />
+                {breakMinutes === null ? (
+                    <>
+                        <span className="text-sm font-medium">Break</span>
+                        <div className="flex items-center gap-1.5">
+                            {BREAK_OPTIONS.map((m) => (
+                                <button
+                                    key={m}
+                                    onClick={() => startBreak(m)}
+                                    className="rounded-md border border-border/50 px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:border-amber-400 hover:text-amber-600 dark:hover:border-amber-500 dark:hover:text-amber-400"
+                                >
+                                    {m}m
+                                </button>
+                            ))}
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <span className={`font-mono text-sm font-semibold tabular-nums ${finished ? 'text-amber-600 dark:text-amber-400' : ''}`}>
+                            {finished ? 'Done!' : `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`}
+                        </span>
+                        <span className="text-xs text-muted-foreground">{breakMinutes}m break</span>
+                        <button
+                            onClick={cancelBreak}
+                            className="ml-auto text-xs text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                            {finished ? 'Dismiss' : 'Cancel'}
+                        </button>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+}
 
 export default function GoalTracker({ activities, rewardProgression, summary }: Props) {
     const [logMode, setLogMode] = useState<LogMode>(null);
@@ -354,6 +502,9 @@ export default function GoalTracker({ activities, rewardProgression, summary }: 
                             </div>
                         )}
                     </div>
+
+                    {/* Break Timer */}
+                    <BreakTimer />
 
                     {/* Two-Week Summary */}
                     <div className="rounded-xl border border-border/20 bg-white/40 px-4 py-3 backdrop-blur-sm dark:border-border/10 dark:bg-black/20">

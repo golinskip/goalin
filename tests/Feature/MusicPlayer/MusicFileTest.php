@@ -184,7 +184,7 @@ test('music index returns tags and suggested tags', function () {
         ->component('tools/music-player/index')
         ->has('suggestedTags')
         ->has('availableTags')
-        ->where('musicFiles.0.tags', ['timer'])
+        ->where('musicFiles.data.0.tags', ['timer'])
     );
 });
 

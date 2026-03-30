@@ -31,7 +31,7 @@ class MusicFileController extends Controller
             'maxFileSize' => $uploadMaxBytes,
             'suggestedTags' => ['timer'],
             'availableTags' => $user->tags()->pluck('name')->toArray(),
-            'musicFiles' => $user->musicFiles()->with('tags')->latest()->get()->map(fn (MusicFile $file) => [
+            'musicFiles' => Inertia::scroll(fn () => $user->musicFiles()->with('tags')->latest()->paginate(20)->through(fn (MusicFile $file) => [
                 'id' => $file->id,
                 'title' => $file->title,
                 'artist' => $file->artist,
@@ -40,7 +40,7 @@ class MusicFileController extends Controller
                 'file_size' => $file->file_size,
                 'tags' => $file->tags->pluck('name')->toArray(),
                 'created_at' => $file->created_at->toISOString(),
-            ]),
+            ])),
             'playlists' => $user->playlists()->withCount('musicFiles')->with('musicFiles:id')->latest()->get()->map(fn ($playlist) => [
                 'id' => $playlist->id,
                 'name' => $playlist->name,

@@ -1,4 +1,4 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, InfiniteScroll, Link, router, useForm } from '@inertiajs/react';
 import { Check, ListMusic, ListPlus, Music, Pause, Play, Pencil, Plus, Search, Tag, Trash2, Upload, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -38,8 +38,18 @@ type PlaylistType = {
     music_file_ids: number[];
 };
 
+type PaginatedData<T> = {
+    data: T[];
+    meta: {
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+    };
+};
+
 type Props = {
-    musicFiles: MusicFileType[];
+    musicFiles: PaginatedData<MusicFileType>;
     playlists: PlaylistType[];
     maxFileSize: number;
     suggestedTags: string[];
@@ -300,12 +310,12 @@ export default function MusicIndex({ musicFiles, playlists, maxFileSize, suggest
     }, []);
 
     const filteredFiles = useMemo(() => {
-        if (!searchQuery.trim()) return musicFiles;
+        if (!searchQuery.trim()) return musicFiles.data;
         const q = searchQuery.toLowerCase();
-        return musicFiles.filter(
+        return musicFiles.data.filter(
             (f) => f.title.toLowerCase().includes(q) || (f.artist && f.artist.toLowerCase().includes(q)) || f.tags.some((t) => t.toLowerCase().includes(q)),
         );
-    }, [musicFiles, searchQuery]);
+    }, [musicFiles.data, searchQuery]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -436,7 +446,7 @@ export default function MusicIndex({ musicFiles, playlists, maxFileSize, suggest
                                 <Music className="size-5" />
                                 Music Library
                             </h2>
-                            {musicFiles.length > 0 && (
+                            {musicFiles.data.length > 0 && (
                                 <div className="relative max-w-xs flex-1">
                                     <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/50" />
                                     <Input
@@ -689,13 +699,14 @@ export default function MusicIndex({ musicFiles, playlists, maxFileSize, suggest
                             </div>
                         )}
 
-                        {musicFiles.length === 0 && pendingFiles.length === 0 ? (
+                        {musicFiles.data.length === 0 && pendingFiles.length === 0 ? (
                             <div className="rounded-xl border border-pink-200/80 bg-white/70 p-8 text-center shadow-sm backdrop-blur-sm dark:border-pink-800/50 dark:bg-black/40">
                                 <Music className="mx-auto mb-2 size-8 text-pink-400/50" />
                                 <p className="text-muted-foreground">No music files uploaded yet</p>
                                 <p className="text-sm text-muted-foreground/75">Drag files above or browse to build your library.</p>
                             </div>
-                        ) : musicFiles.length > 0 ? (
+                        ) : musicFiles.data.length > 0 ? (
+                            <InfiniteScroll data="musicFiles">
                             <div className="rounded-xl border border-pink-200/80 bg-white/70 shadow-sm backdrop-blur-sm dark:border-pink-800/50 dark:bg-black/40">
                                 {filteredFiles.length === 0 ? (
                                     <div className="px-5 py-8 text-center">
@@ -789,6 +800,7 @@ export default function MusicIndex({ musicFiles, playlists, maxFileSize, suggest
                                     </div>
                                 )}
                             </div>
+                            </InfiniteScroll>
                         ) : null}
                     </div>
                 </div>
