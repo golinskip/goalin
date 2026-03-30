@@ -3,6 +3,7 @@
 namespace Domain\Tools\GoalTracker\Models;
 
 use Database\Factories\TagFactory;
+use Domain\Tools\MusicPlayer\Models\MusicFile;
 use Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -24,5 +25,10 @@ class Tag extends Model
     public function activities(): BelongsToMany
     {
         return $this->belongsToMany(Activity::class);
+    }
+
+    public function musicFiles(): BelongsToMany
+    {
+        return $this->belongsToMany(MusicFile::class);
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use Domain\Tools\GoalTracker\Models\Tag;
 use Domain\Tools\MusicPlayer\Models\MusicFile;
 use Domain\User\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -134,4 +135,83 @@ test('users cannot stream another users music file', function () {
     $response = $this->get(route('music.stream', $file));
 
     $response->assertForbidden();
+});
+
+test('users can add tags when updating a music file', function () {
+    $user = User::factory()->create();
+    $file = MusicFile::factory()->for($user)->create(['title' => 'My Song']);
+    $this->actingAs($user);
+
+    $response = $this->put(route('music.update', $file), [
+        'title' => 'My Song',
+        'artist' => null,
+        'tags' => ['timer', 'focus'],
+    ]);
+
+    $response->assertRedirect(route('music.index'));
+    expect($file->fresh()->tags->pluck('name')->toArray())->toBe(['timer', 'focus']);
+    $this->assertDatabaseHas('tags', ['user_id' => $user->id, 'name' => 'timer']);
+    $this->assertDatabaseHas('tags', ['user_id' => $user->id, 'name' => 'focus']);
+});
+
+test('users can remove tags from a music file', function () {
+    $user = User::factory()->create();
+    $file = MusicFile::factory()->for($user)->create(['title' => 'My Song']);
+    $tag = Tag::factory()->for($user)->create(['name' => 'timer']);
+    $file->tags()->attach($tag);
+    $this->actingAs($user);
+
+    $response = $this->put(route('music.update', $file), [
+        'title' => 'My Song',
+        'tags' => [],
+    ]);
+
+    $response->assertRedirect(route('music.index'));
+    expect($file->fresh()->tags)->toHaveCount(0);
+});
+
+test('music index returns tags and suggested tags', function () {
+    $user = User::factory()->create();
+    $file = MusicFile::factory()->for($user)->create();
+    $tag = Tag::factory()->for($user)->create(['name' => 'timer']);
+    $file->tags()->attach($tag);
+    $this->actingAs($user);
+
+    $response = $this->get(route('music.index'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('tools/music-player/index')
+        ->has('suggestedTags')
+        ->has('availableTags')
+        ->where('musicFiles.0.tags', ['timer'])
+    );
+});
+
+test('timer page receives music files tagged with timer', function () {
+    $user = User::factory()->create();
+    $activity = $user->activities()->create([
+        'name' => 'Study',
+        'point_cost' => 10,
+        'color' => '#3a9a4e',
+        'needs_timer' => true,
+        'duration_minutes' => 25,
+        'sort_order' => 1,
+    ]);
+
+    $timerFile = MusicFile::factory()->for($user)->create(['title' => 'Timer Music']);
+    $otherFile = MusicFile::factory()->for($user)->create(['title' => 'Other Music']);
+    $tag = Tag::factory()->for($user)->create(['name' => 'timer']);
+    $timerFile->tags()->attach($tag);
+
+    $this->actingAs($user);
+
+    $response = $this->get(route('activities.timer', $activity));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('tools/goal-tracker/activities/timer')
+        ->has('timerMusic', 1)
+        ->where('timerMusic.0.title', 'Timer Music')
+    );
 });

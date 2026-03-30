@@ -1,7 +1,13 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { BarChart3, Calendar, CheckCircle, Clock, Flame, Gift, History, Star, Target, TrendingUp, Zap } from 'lucide-react';
+import { BarChart3, Calendar, CheckCircle, Clock, Flame, Gift, History, MoreHorizontal, Target, TrendingUp, Zap } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -125,37 +131,44 @@ export default function GoalTracker({ activities, rewardProgression, summary }: 
                 </div>
 
                 <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-4 lg:p-6">
-                    {/* Setup Buttons */}
-                    <div className="flex flex-wrap gap-3">
-                        <Button asChild variant="outline" className="gap-2">
-                            <Link href="/goals">
-                                <Target className="size-4 text-emerald-500" />
-                                Goals
-                            </Link>
-                        </Button>
-                        <Button asChild variant="outline" className="gap-2">
-                            <Link href="/activities">
-                                <Zap className="size-4 text-amber-500" />
-                                Activities
-                            </Link>
-                        </Button>
-                        <Button asChild variant="outline" className="gap-2">
-                            <Link href="/rewards">
-                                <Gift className="size-4 text-purple-500" />
-                                Rewards
-                            </Link>
-                        </Button>
-                        <Button asChild variant="outline" className="gap-2">
-                            <Link href="/statistics">
-                                <BarChart3 className="size-4 text-blue-500" />
-                                Statistics
-                            </Link>
-                        </Button>
-                    </div>
-
-                    {/* Log Activity Section */}
+                    {/* Activities Section */}
                     <div className="rounded-xl border border-green-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm dark:border-green-800/50 dark:bg-black/40">
-                        <h2 className="mb-3 text-lg font-semibold">Log Activity</h2>
+                        <div className="mb-3 flex items-center justify-between">
+                            <h2 className="text-lg font-semibold">Activities</h2>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="size-8">
+                                        <MoreHorizontal className="size-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/goals" className="gap-2">
+                                            <Target className="size-4 text-emerald-500" />
+                                            Goals
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/activities" className="gap-2">
+                                            <Zap className="size-4 text-amber-500" />
+                                            Activities
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/rewards" className="gap-2">
+                                            <Gift className="size-4 text-purple-500" />
+                                            Rewards
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/statistics" className="gap-2">
+                                            <BarChart3 className="size-4 text-blue-500" />
+                                            Statistics
+                                        </Link>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
 
                         {activities.length === 0 ? (
                             <div className="flex items-center justify-between gap-4 py-4">
@@ -343,61 +356,50 @@ export default function GoalTracker({ activities, rewardProgression, summary }: 
                     </div>
 
                     {/* Two-Week Summary */}
-                    <div className="rounded-xl border border-sky-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm dark:border-sky-800/50 dark:bg-black/40">
-                        <h2 className="mb-4 text-lg font-semibold">Last 2 Weeks</h2>
-
-                        <div className="mb-4 grid grid-cols-3 gap-4">
-                            <div className="rounded-lg border border-border/30 bg-white/50 p-3 text-center dark:bg-white/5">
-                                <div className="flex items-center justify-center gap-1.5 text-2xl font-bold text-primary">
-                                    <Zap className="size-5" />
+                    <div className="rounded-xl border border-border/20 bg-white/40 px-4 py-3 backdrop-blur-sm dark:border-border/10 dark:bg-black/20">
+                        <div className="mb-2 flex items-center justify-between">
+                            <h3 className="text-xs font-medium text-muted-foreground">Last 2 Weeks</h3>
+                            <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                    <Zap className="size-3" />
                                     {summary.totalActivities}
-                                </div>
-                                <p className="mt-0.5 text-xs text-muted-foreground">Activities</p>
-                            </div>
-                            <div className="rounded-lg border border-border/30 bg-white/50 p-3 text-center dark:bg-white/5">
-                                <div className="flex items-center justify-center gap-1.5 text-2xl font-bold text-amber-500">
-                                    <TrendingUp className="size-5" />
-                                    {summary.totalPoints}
-                                </div>
-                                <p className="mt-0.5 text-xs text-muted-foreground">Points earned</p>
-                            </div>
-                            <div className="rounded-lg border border-border/30 bg-white/50 p-3 text-center dark:bg-white/5">
-                                <div className="flex items-center justify-center gap-1.5 text-2xl font-bold text-emerald-500">
-                                    <Flame className="size-5" />
-                                    {summary.activeDays}/14
-                                </div>
-                                <p className="mt-0.5 text-xs text-muted-foreground">Active days</p>
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <TrendingUp className="size-3" />
+                                    {summary.totalPoints} pts
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <Flame className="size-3" />
+                                    {summary.activeDays}/14 days
+                                </span>
                             </div>
                         </div>
 
-                        <div className="flex items-end gap-1">
+                        <div className="flex items-end gap-0.5">
                             {summary.dailyBreakdown.map((day) => {
-                                const height = day.points > 0 ? Math.max(8, (day.points / maxDailyPoints) * 100) : 0;
+                                const height = day.points > 0 ? Math.max(10, (day.points / maxDailyPoints) * 100) : 0;
                                 const dateObj = new Date(day.date + 'T12:00:00');
                                 const dayLabel = dateObj.toLocaleDateString('en-US', { weekday: 'narrow' });
                                 const isToday = day.date === today;
 
                                 return (
-                                    <div key={day.date} className="flex flex-1 flex-col items-center gap-1">
-                                        <span className={`text-[10px] tabular-nums ${day.points > 0 ? (isToday ? 'font-semibold text-primary' : 'text-foreground/70') : 'text-muted-foreground/40'}`}>
-                                            {day.points}
-                                        </span>
-                                        <div className="relative flex h-[100px] w-full items-end justify-center">
+                                    <div key={day.date} className="flex flex-1 flex-col items-center gap-0.5">
+                                        <div className="relative flex h-[48px] w-full items-end justify-center">
                                             {day.points > 0 ? (
                                                 <div
-                                                    className={`w-full max-w-[28px] rounded-t transition-all ${isToday ? 'bg-primary' : 'bg-primary/40'}`}
+                                                    className={`w-full max-w-[20px] rounded-sm transition-all ${isToday ? 'bg-primary' : 'bg-primary/30'}`}
                                                     style={{ height: `${height}%` }}
                                                     title={`${day.date}: ${day.count} activities, ${day.points} pts`}
                                                 />
                                             ) : (
                                                 <div
-                                                    className="w-full max-w-[28px] rounded-t bg-muted/50"
-                                                    style={{ height: '4px' }}
+                                                    className="w-full max-w-[20px] rounded-sm bg-muted/30"
+                                                    style={{ height: '3px' }}
                                                 />
                                             )}
                                         </div>
                                         <span
-                                            className={`text-[10px] ${isToday ? 'font-bold text-primary' : 'text-muted-foreground'}`}
+                                            className={`text-[9px] ${isToday ? 'font-bold text-primary' : 'text-muted-foreground/50'}`}
                                         >
                                             {dayLabel}
                                         </span>

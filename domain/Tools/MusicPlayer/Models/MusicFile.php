@@ -3,6 +3,7 @@
 namespace Domain\Tools\MusicPlayer\Models;
 
 use Database\Factories\MusicFileFactory;
+use Domain\Tools\GoalTracker\Models\Tag;
 use Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -32,5 +33,10 @@ class MusicFile extends Model
     public function playlists(): BelongsToMany
     {
         return $this->belongsToMany(Playlist::class)->withPivot('position')->withTimestamps();
+    }
+
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class);
     }
 }

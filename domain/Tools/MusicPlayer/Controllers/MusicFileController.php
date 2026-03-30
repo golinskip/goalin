@@ -5,6 +5,7 @@ namespace Domain\Tools\MusicPlayer\Controllers;
 use App\Http\Controllers\Controller;
 use Domain\Tools\MusicPlayer\Models\MusicFile;
 use Domain\Tools\MusicPlayer\Requests\StoreMusicFileRequest;
+use Domain\User\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,13 +29,16 @@ class MusicFileController extends Controller
 
         return Inertia::render('tools/music-player/index', [
             'maxFileSize' => $uploadMaxBytes,
-            'musicFiles' => $user->musicFiles()->latest()->get()->map(fn (MusicFile $file) => [
+            'suggestedTags' => ['timer'],
+            'availableTags' => $user->tags()->pluck('name')->toArray(),
+            'musicFiles' => $user->musicFiles()->with('tags')->latest()->get()->map(fn (MusicFile $file) => [
                 'id' => $file->id,
                 'title' => $file->title,
                 'artist' => $file->artist,
                 'original_filename' => $file->original_filename,
                 'duration_seconds' => $file->duration_seconds,
                 'file_size' => $file->file_size,
+                'tags' => $file->tags->pluck('name')->toArray(),
                 'created_at' => $file->created_at->toISOString(),
             ]),
             'playlists' => $user->playlists()->withCount('musicFiles')->with('musicFiles:id')->latest()->get()->map(fn ($playlist) => [
@@ -76,9 +80,16 @@ class MusicFileController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'artist' => ['nullable', 'string', 'max:255'],
+            'tags' => ['nullable', 'array'],
+            'tags.*' => ['string', 'max:50'],
         ]);
 
+        $tags = $validated['tags'] ?? [];
+        unset($validated['tags']);
+
         $musicFile->update($validated);
+
+        $this->syncTags($request->user(), $musicFile, $tags);
 
         return to_route('music.index');
     }
@@ -104,6 +115,21 @@ class MusicFileController extends Controller
             'k' => $value * 1024,
             default => $value,
         };
+    }
+
+    /**
+     * @param  array<int, string>  $tagNames
+     */
+    private function syncTags(User $user, MusicFile $musicFile, array $tagNames): void
+    {
+        $tagIds = [];
+
+        foreach ($tagNames as $name) {
+            $tag = $user->tags()->firstOrCreate(['name' => trim($name)]);
+            $tagIds[] = $tag->id;
+        }
+
+        $musicFile->tags()->sync($tagIds);
     }
 
     public function stream(MusicFile $musicFile): StreamedResponse

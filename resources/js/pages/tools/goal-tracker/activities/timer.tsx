@@ -1,10 +1,17 @@
 import { Head, router } from '@inertiajs/react';
-import { CheckCircle2, Pause, Play, RotateCcw, X } from 'lucide-react';
+import { CheckCircle2, Music, Pause, Play, RotateCcw, SkipBack, SkipForward, Volume2, VolumeX, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { index as goalTrackerIndex } from '@/routes/goal-tracker';
 import type { BreadcrumbItem } from '@/types';
+
+type TimerMusicFile = {
+    id: number;
+    title: string;
+    artist: string | null;
+    duration_seconds: number | null;
+};
 
 type Props = {
     activity: {
@@ -15,6 +22,7 @@ type Props = {
         duration_minutes: number;
         point_cost: number;
     };
+    timerMusic: TimerMusicFile[];
 };
 
 type TimerState = 'running' | 'paused' | 'finished';
@@ -54,7 +62,135 @@ function createRingSound(): () => void {
     return () => ctx.close();
 }
 
-export default function ActivityTimer({ activity }: Props) {
+function MiniPlayer({ tracks }: { tracks: TimerMusicFile[] }) {
+    const audioRef = useRef<HTMLAudioElement>(null);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [isMuted, setIsMuted] = useState(false);
+
+    const currentTrack = tracks[currentIndex];
+
+    const play = useCallback(() => {
+        const audio = audioRef.current;
+        if (!audio || !currentTrack) return;
+
+        if (audio.src !== `/music/${currentTrack.id}/stream`) {
+            audio.src = `/music/${currentTrack.id}/stream`;
+        }
+        audio.play();
+        setIsPlaying(true);
+    }, [currentTrack]);
+
+    const pause = useCallback(() => {
+        audioRef.current?.pause();
+        setIsPlaying(false);
+    }, []);
+
+    const togglePlay = useCallback(() => {
+        if (isPlaying) {
+            pause();
+        } else {
+            play();
+        }
+    }, [isPlaying, play, pause]);
+
+    const skipNext = useCallback(() => {
+        const nextIndex = (currentIndex + 1) % tracks.length;
+        setCurrentIndex(nextIndex);
+        const audio = audioRef.current;
+        if (audio) {
+            audio.src = `/music/${tracks[nextIndex].id}/stream`;
+            if (isPlaying) audio.play();
+        }
+    }, [currentIndex, tracks, isPlaying]);
+
+    const skipPrev = useCallback(() => {
+        const audio = audioRef.current;
+        if (audio && audio.currentTime > 3) {
+            audio.currentTime = 0;
+            return;
+        }
+        const prevIndex = (currentIndex - 1 + tracks.length) % tracks.length;
+        setCurrentIndex(prevIndex);
+        if (audio) {
+            audio.src = `/music/${tracks[prevIndex].id}/stream`;
+            if (isPlaying) audio.play();
+        }
+    }, [currentIndex, tracks, isPlaying]);
+
+    const toggleMute = useCallback(() => {
+        const audio = audioRef.current;
+        if (audio) {
+            audio.muted = !audio.muted;
+            setIsMuted(!isMuted);
+        }
+    }, [isMuted]);
+
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (!audio) return;
+
+        const handleEnded = () => {
+            if (tracks.length > 1) {
+                skipNext();
+            } else {
+                audio.currentTime = 0;
+                audio.play();
+            }
+        };
+
+        audio.addEventListener('ended', handleEnded);
+        return () => audio.removeEventListener('ended', handleEnded);
+    }, [skipNext, tracks.length]);
+
+    return (
+        <div className="flex items-center gap-3 rounded-xl border border-border/30 bg-black/5 px-4 py-2.5 backdrop-blur-sm dark:bg-white/5">
+            <audio ref={audioRef} className="hidden" />
+
+            <Music className="size-4 shrink-0 text-muted-foreground/50" />
+
+            <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-medium">{currentTrack.title}</p>
+                {currentTrack.artist && (
+                    <p className="truncate text-[10px] text-muted-foreground">{currentTrack.artist}</p>
+                )}
+            </div>
+
+            <div className="flex shrink-0 items-center gap-1">
+                {tracks.length > 1 && (
+                    <button
+                        onClick={skipPrev}
+                        className="rounded-md p-1 text-muted-foreground/60 hover:text-foreground"
+                    >
+                        <SkipBack className="size-3.5" />
+                    </button>
+                )}
+                <button
+                    onClick={togglePlay}
+                    className="flex size-7 items-center justify-center rounded-full bg-foreground/10 text-foreground transition-colors hover:bg-foreground/20"
+                >
+                    {isPlaying ? <Pause className="size-3.5" /> : <Play className="size-3.5 translate-x-px" />}
+                </button>
+                {tracks.length > 1 && (
+                    <button
+                        onClick={skipNext}
+                        className="rounded-md p-1 text-muted-foreground/60 hover:text-foreground"
+                    >
+                        <SkipForward className="size-3.5" />
+                    </button>
+                )}
+                <button
+                    onClick={toggleMute}
+                    className="rounded-md p-1 text-muted-foreground/60 hover:text-foreground"
+                >
+                    {isMuted ? <VolumeX className="size-3.5" /> : <Volume2 className="size-3.5" />}
+                </button>
+            </div>
+        </div>
+    );
+}
+
+export default function ActivityTimer({ activity, timerMusic }: Props) {
     const totalSeconds = activity.duration_minutes * 60;
     const [secondsLeft, setSecondsLeft] = useState(totalSeconds);
     const [timerState, setTimerState] = useState<TimerState>('running');
@@ -115,7 +251,7 @@ export default function ActivityTimer({ activity }: Props) {
         }
     }, [secondsLeft, timerState, clearTimer]);
 
-    const pause = useCallback(() => {
+    const timerPause = useCallback(() => {
         // Capture elapsed time so far
         elapsedBeforePauseRef.current += (Date.now() - startedAtRef.current) / 1000;
         clearTimer();
@@ -324,7 +460,7 @@ export default function ActivityTimer({ activity }: Props) {
                     {!showConfirm && (
                         <div className="flex items-center gap-3">
                             {timerState === 'running' && (
-                                <Button size="lg" variant="outline" onClick={pause} className="gap-2 px-8">
+                                <Button size="lg" variant="outline" onClick={timerPause} className="gap-2 px-8">
                                     <Pause className="size-5" />
                                     Pause
                                 </Button>
@@ -352,6 +488,20 @@ export default function ActivityTimer({ activity }: Props) {
                             </Button>
                         </div>
                     )}
+
+                    {/* Mini Music Player */}
+                    <div className="w-full max-w-sm">
+                        {timerMusic.length > 0 ? (
+                            <MiniPlayer tracks={timerMusic} />
+                        ) : (
+                            <div className="flex items-center gap-2.5 rounded-xl border border-border/30 bg-black/5 px-4 py-2.5 backdrop-blur-sm dark:bg-white/5">
+                                <Music className="size-4 shrink-0 text-muted-foreground/40" />
+                                <p className="text-xs text-muted-foreground">
+                                    Tag music files with <span className="font-medium">&ldquo;timer&rdquo;</span> in the Music Player to play them here.
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </AppLayout>
