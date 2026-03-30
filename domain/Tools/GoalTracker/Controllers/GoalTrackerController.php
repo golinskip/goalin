@@ -28,9 +28,34 @@ class GoalTrackerController extends Controller
 
         $progression = $pointService->getRewardProgression($user);
 
+        $twoWeeksAgo = now()->subDays(13)->startOfDay();
+        $recentLogs = $user->activityLogs()
+            ->where('completed_at', '>=', $twoWeeksAgo)
+            ->selectRaw('DATE(completed_at) as date, COUNT(*) as count, SUM(points_earned) as points')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        $summary = [
+            'totalActivities' => $recentLogs->sum('count'),
+            'totalPoints' => $recentLogs->sum('points'),
+            'activeDays' => $recentLogs->count(),
+            'dailyBreakdown' => collect(range(0, 13))->map(function (int $daysAgo) use ($recentLogs) {
+                $date = now()->subDays(13 - $daysAgo)->format('Y-m-d');
+                $day = $recentLogs->firstWhere('date', $date);
+
+                return [
+                    'date' => $date,
+                    'count' => $day ? (int) $day->count : 0,
+                    'points' => $day ? (int) $day->points : 0,
+                ];
+            })->all(),
+        ];
+
         return Inertia::render('tools/goal-tracker/index', [
             'activities' => $activities,
             'rewardProgression' => $progression,
+            'summary' => $summary,
         ]);
     }
 }

@@ -1,6 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { BarChart3, Calendar, CheckCircle, Clock, Gift, History, Settings, Star, Target, Zap } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { BarChart3, Calendar, CheckCircle, Clock, Flame, Gift, History, Star, Target, TrendingUp, Zap } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -46,14 +46,28 @@ type RewardProgression = {
     queuedRewards: RewardItem[];
 };
 
+type DailyBreakdown = {
+    date: string;
+    count: number;
+    points: number;
+};
+
+type Summary = {
+    totalActivities: number;
+    totalPoints: number;
+    activeDays: number;
+    dailyBreakdown: DailyBreakdown[];
+};
+
 type Props = {
     activities: Activity[];
     rewardProgression: RewardProgression;
+    summary: Summary;
 };
 
 type LogMode = 'today' | 'postponed' | null;
 
-export default function GoalTracker({ activities, rewardProgression }: Props) {
+export default function GoalTracker({ activities, rewardProgression, summary }: Props) {
     const [logMode, setLogMode] = useState<LogMode>(null);
     const [selectedActivity, setSelectedActivity] = useState<number | null>(null);
     const [quantity, setQuantity] = useState('1');
@@ -94,6 +108,11 @@ export default function GoalTracker({ activities, rewardProgression }: Props) {
 
     const { achievedRewards, currentReward, queuedRewards, availablePoints } = rewardProgression;
     const hasAnyRewards = achievedRewards.length > 0 || currentReward !== null || queuedRewards.length > 0;
+
+    const maxDailyPoints = useMemo(
+        () => Math.max(1, ...summary.dailyBreakdown.map((d) => d.points)),
+        [summary.dailyBreakdown],
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -321,6 +340,71 @@ export default function GoalTracker({ activities, rewardProgression }: Props) {
                                 </div>
                             </div>
                         )}
+                    </div>
+
+                    {/* Two-Week Summary */}
+                    <div className="rounded-xl border border-sky-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm dark:border-sky-800/50 dark:bg-black/40">
+                        <h2 className="mb-4 text-lg font-semibold">Last 2 Weeks</h2>
+
+                        <div className="mb-4 grid grid-cols-3 gap-4">
+                            <div className="rounded-lg border border-border/30 bg-white/50 p-3 text-center dark:bg-white/5">
+                                <div className="flex items-center justify-center gap-1.5 text-2xl font-bold text-primary">
+                                    <Zap className="size-5" />
+                                    {summary.totalActivities}
+                                </div>
+                                <p className="mt-0.5 text-xs text-muted-foreground">Activities</p>
+                            </div>
+                            <div className="rounded-lg border border-border/30 bg-white/50 p-3 text-center dark:bg-white/5">
+                                <div className="flex items-center justify-center gap-1.5 text-2xl font-bold text-amber-500">
+                                    <TrendingUp className="size-5" />
+                                    {summary.totalPoints}
+                                </div>
+                                <p className="mt-0.5 text-xs text-muted-foreground">Points earned</p>
+                            </div>
+                            <div className="rounded-lg border border-border/30 bg-white/50 p-3 text-center dark:bg-white/5">
+                                <div className="flex items-center justify-center gap-1.5 text-2xl font-bold text-emerald-500">
+                                    <Flame className="size-5" />
+                                    {summary.activeDays}/14
+                                </div>
+                                <p className="mt-0.5 text-xs text-muted-foreground">Active days</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-end gap-1">
+                            {summary.dailyBreakdown.map((day) => {
+                                const height = day.points > 0 ? Math.max(8, (day.points / maxDailyPoints) * 100) : 0;
+                                const dateObj = new Date(day.date + 'T12:00:00');
+                                const dayLabel = dateObj.toLocaleDateString('en-US', { weekday: 'narrow' });
+                                const isToday = day.date === today;
+
+                                return (
+                                    <div key={day.date} className="flex flex-1 flex-col items-center gap-1">
+                                        <span className={`text-[10px] tabular-nums ${day.points > 0 ? (isToday ? 'font-semibold text-primary' : 'text-foreground/70') : 'text-muted-foreground/40'}`}>
+                                            {day.points}
+                                        </span>
+                                        <div className="relative flex h-[100px] w-full items-end justify-center">
+                                            {day.points > 0 ? (
+                                                <div
+                                                    className={`w-full max-w-[28px] rounded-t transition-all ${isToday ? 'bg-primary' : 'bg-primary/40'}`}
+                                                    style={{ height: `${height}%` }}
+                                                    title={`${day.date}: ${day.count} activities, ${day.points} pts`}
+                                                />
+                                            ) : (
+                                                <div
+                                                    className="w-full max-w-[28px] rounded-t bg-muted/50"
+                                                    style={{ height: '4px' }}
+                                                />
+                                            )}
+                                        </div>
+                                        <span
+                                            className={`text-[10px] ${isToday ? 'font-bold text-primary' : 'text-muted-foreground'}`}
+                                        >
+                                            {dayLabel}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
 
                     {/* Reward Progression */}
