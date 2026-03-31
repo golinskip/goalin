@@ -2,6 +2,7 @@
 
 use Domain\Tools\GoalTracker\Models\Tag;
 use Domain\Tools\MusicPlayer\Models\MusicFile;
+use Domain\Tools\MusicPlayer\Models\Playlist;
 use Domain\User\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -41,6 +42,28 @@ test('users can upload music files', function () {
         'title' => 'song',
         'original_filename' => 'song.mp3',
     ]);
+});
+
+test('users can upload music files and assign them to a playlist', function () {
+    Storage::fake('local');
+    $user = User::factory()->create();
+    $playlist = Playlist::factory()->for($user)->create();
+    $this->actingAs($user);
+
+    $files = [
+        UploadedFile::fake()->create('track1.mp3', 1024, 'audio/mpeg'),
+        UploadedFile::fake()->create('track2.mp3', 1024, 'audio/mpeg'),
+    ];
+
+    $response = $this->post(route('music.store'), [
+        'files' => $files,
+        'playlist_id' => $playlist->id,
+    ]);
+
+    $response->assertRedirect(route('music.index'));
+    expect($playlist->musicFiles()->count())->toBe(2);
+    expect($playlist->musicFiles()->orderByPivot('position')->pluck('title')->toArray())
+        ->toBe(['track1', 'track2']);
 });
 
 test('upload rejects invalid file types', function () {

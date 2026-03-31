@@ -55,19 +55,31 @@ class MusicFileController extends Controller
     public function store(StoreMusicFileRequest $request): RedirectResponse
     {
         $user = $request->user();
+        $playlist = $request->validated('playlist_id')
+            ? $user->playlists()->findOrFail($request->validated('playlist_id'))
+            : null;
+
+        $maxPosition = $playlist
+            ? (int) $playlist->musicFiles()->max('position')
+            : 0;
 
         foreach ($request->file('files') as $file) {
             $path = $file->store('music/'.$user->id, 'local');
             $originalName = $file->getClientOriginalName();
             $title = pathinfo($originalName, PATHINFO_FILENAME);
 
-            $user->musicFiles()->create([
+            $musicFile = $user->musicFiles()->create([
                 'title' => $title,
                 'original_filename' => $originalName,
                 'disk_path' => $path,
                 'mime_type' => $file->getMimeType(),
                 'file_size' => $file->getSize(),
             ]);
+
+            if ($playlist) {
+                $maxPosition++;
+                $playlist->musicFiles()->attach($musicFile->id, ['position' => $maxPosition]);
+            }
         }
 
         return to_route('music.index');

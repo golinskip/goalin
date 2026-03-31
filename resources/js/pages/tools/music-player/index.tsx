@@ -86,6 +86,7 @@ export default function MusicIndex({ musicFiles, playlists, maxFileSize, suggest
     const [rejectedFiles, setRejectedFiles] = useState<{ name: string; reason: string }[]>([]);
     const [uploading, setUploading] = useState(false);
     const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
+    const [uploadPlaylistId, setUploadPlaylistId] = useState<number | ''>('');
     const [previewingId, setPreviewingId] = useState<number | null>(null);
     const audioRef = useRef<HTMLAudioElement>(null);
     const dragCounter = useRef(0);
@@ -202,6 +203,9 @@ export default function MusicIndex({ musicFiles, playlists, maxFileSize, suggest
 
         const formData = new FormData();
         pendingFiles.forEach((file) => formData.append('files[]', file));
+        if (uploadPlaylistId) {
+            formData.append('playlist_id', String(uploadPlaylistId));
+        }
 
         router.post('/music', formData, {
             forceFormData: true,
@@ -209,6 +213,7 @@ export default function MusicIndex({ musicFiles, playlists, maxFileSize, suggest
                 setPendingFiles([]);
                 setRejectedFiles([]);
                 setUploadErrors({});
+                setUploadPlaylistId('');
                 if (fileInputRef.current) fileInputRef.current.value = '';
             },
             onError: (errors) => setUploadErrors(errors),
@@ -534,17 +539,30 @@ export default function MusicIndex({ musicFiles, playlists, maxFileSize, suggest
                         {/* Pending Files Queue */}
                         {pendingFiles.length > 0 && (
                             <div className="mb-4 rounded-xl border border-pink-200/80 bg-white/70 shadow-sm backdrop-blur-sm dark:border-pink-800/50 dark:bg-black/40">
-                                <div className="flex items-center justify-between border-b border-border/50 px-5 py-3">
+                                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-5 py-3">
                                     <p className="text-sm font-medium">
                                         {pendingFiles.length} file{pendingFiles.length !== 1 ? 's' : ''} ready
                                         <span className="ml-2 text-muted-foreground">({formatFileSize(totalPendingSize)})</span>
                                     </p>
                                     <div className="flex items-center gap-2">
+                                        {playlists.length > 0 && (
+                                            <select
+                                                value={uploadPlaylistId}
+                                                onChange={(e) => setUploadPlaylistId(e.target.value ? Number(e.target.value) : '')}
+                                                className="h-8 rounded-md border border-input bg-background px-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                            >
+                                                <option value="">No playlist</option>
+                                                {playlists.map((p) => (
+                                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                                ))}
+                                            </select>
+                                        )}
                                         <Button
                                             size="sm"
                                             variant="ghost"
                                             onClick={() => {
                                                 setPendingFiles([]);
+                                                setUploadPlaylistId('');
                                                 if (fileInputRef.current) fileInputRef.current.value = '';
                                             }}
                                         >
