@@ -81,6 +81,31 @@ class DiaryController extends Controller
         ]);
     }
 
+    public function table(Request $request): Response
+    {
+        $user = $request->user();
+        $year = (int) $request->input('year', now()->year);
+
+        $startOfYear = Carbon::createFromDate($year, 1, 1)->startOfYear();
+        $endOfYear = $startOfYear->copy()->endOfYear();
+
+        $entries = $user->diaryEntries()
+            ->whereBetween('entry_date', [$startOfYear, $endOfYear])
+            ->orderBy('entry_date')
+            ->get()
+            ->map(fn (DiaryEntry $entry) => [
+                'id' => $entry->id,
+                'entry_date' => $entry->entry_date->format('Y-m-d'),
+                'content' => $entry->content,
+                'fields' => $entry->fields ?? [],
+            ]);
+
+        return Inertia::render('tools/diary/table', [
+            'year' => $year,
+            'entries' => $entries,
+        ]);
+    }
+
     public function store(StoreDiaryEntryRequest $request): RedirectResponse
     {
         $request->user()->diaryEntries()->create($request->validated());

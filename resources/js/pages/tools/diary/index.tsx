@@ -1,5 +1,5 @@
-import { Head, router, useForm } from '@inertiajs/react';
-import { CalendarDays, ChevronLeft, ChevronRight, NotebookPen, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { CalendarDays, ChevronLeft, ChevronRight, NotebookPen, Pencil, Plus, Table, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -436,7 +436,16 @@ export default function Diary({ month, selectedDate, entryDates, selectedEntry, 
                             </div>
 
                             <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                                <span>{totalEntries} entries total</span>
+                                <div className="flex items-center gap-2">
+                                    <span>{totalEntries} entries total</span>
+                                    <Link
+                                        href={`/diary/table?year=${currentYear}`}
+                                        className="rounded p-0.5 text-muted-foreground/40 transition-colors hover:text-amber-600 dark:hover:text-amber-400"
+                                        title="Table view"
+                                    >
+                                        <Table className="size-3.5" />
+                                    </Link>
+                                </div>
                                 <div className="flex items-center gap-2">
                                     <div className="flex items-center gap-1">
                                         <div className="size-2.5 rounded-full bg-amber-500" />

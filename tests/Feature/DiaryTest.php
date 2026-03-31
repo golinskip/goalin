@@ -219,6 +219,23 @@ test('diary index returns field suggestions from existing entries', function () 
     );
 });
 
+test('diary table view shows entries for the year', function () {
+    $user = User::factory()->create();
+    DiaryEntry::factory()->for($user)->create([
+        'entry_date' => now()->startOfYear()->addDays(5),
+        'content' => 'January entry',
+    ]);
+    $this->actingAs($user);
+
+    $response = $this->get(route('diary.table', ['year' => now()->year]));
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('tools/diary/table')
+        ->where('year', now()->year)
+        ->has('entries', 1)
+    );
+});
+
 test('diary entry fields validation rejects empty labels', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
