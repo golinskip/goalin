@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { BookOpen, Layers, Music, NotebookPen, Target } from 'lucide-react';
+import { BookOpen, Compass, Layers, Music, NotebookPen, Target } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
@@ -69,6 +69,20 @@ export default function Dashboard() {
                                     <div>
                                         <p className="font-semibold">Diary</p>
                                         <p className="text-sm text-muted-foreground">Write and reflect on your days</p>
+                                    </div>
+                                </div>
+                            </Link>
+                            <Link
+                                href="/long-term-goals"
+                                className="group rounded-xl border border-violet-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm transition-all hover:shadow-md dark:border-violet-800/50 dark:bg-black/40"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="flex size-10 items-center justify-center rounded-lg bg-violet-500/15 transition-colors group-hover:bg-violet-500/25">
+                                        <Compass className="size-5 text-violet-600 dark:text-violet-400" />
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold">Long Term Goals</p>
+                                        <p className="text-sm text-muted-foreground">Plan and review yearly & monthly goals</p>
                                     </div>
                                 </div>
                             </Link>

@@ -13,6 +13,12 @@ use Domain\Tools\GoalTracker\Models\Reward;
 use Domain\Tools\GoalTracker\Policies\ActivityPolicy;
 use Domain\Tools\GoalTracker\Policies\GoalPolicy;
 use Domain\Tools\GoalTracker\Policies\RewardPolicy;
+use Domain\Tools\LongTermGoals\Models\GoalCategory;
+use Domain\Tools\LongTermGoals\Models\GoalPeriod;
+use Domain\Tools\LongTermGoals\Models\LongTermGoal;
+use Domain\Tools\LongTermGoals\Policies\GoalCategoryPolicy;
+use Domain\Tools\LongTermGoals\Policies\GoalPeriodPolicy;
+use Domain\Tools\LongTermGoals\Policies\LongTermGoalPolicy;
 use Domain\Tools\MusicPlayer\Models\MusicFile;
 use Domain\Tools\MusicPlayer\Models\Playlist;
 use Domain\Tools\MusicPlayer\Policies\MusicFilePolicy;
@@ -68,6 +74,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(DiaryEntry::class, DiaryEntryPolicy::class);
         Gate::policy(MusicFile::class, MusicFilePolicy::class);
         Gate::policy(Playlist::class, PlaylistPolicy::class);
+        Gate::policy(GoalCategory::class, GoalCategoryPolicy::class);
+        Gate::policy(GoalPeriod::class, GoalPeriodPolicy::class);
+        Gate::policy(LongTermGoal::class, LongTermGoalPolicy::class);
     }
 
     /**

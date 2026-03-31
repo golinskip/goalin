@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, ChevronDown, Layers, LayoutGrid, Menu, Music, NotebookPen, Target } from 'lucide-react';
+import { BookOpen, ChevronDown, Compass, Layers, LayoutGrid, Menu, Music, NotebookPen, Target } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -52,6 +52,11 @@ const toolsNavItems: NavItem[] = [
         title: 'Diary',
         href: diaryIndex(),
         icon: NotebookPen,
+    },
+    {
+        title: 'Long Term Goals',
+        href: '/long-term-goals',
+        icon: Compass,
     },
     {
         title: 'Music Player',

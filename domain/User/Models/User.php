@@ -11,6 +11,9 @@ use Domain\Tools\GoalTracker\Models\ActivityLog;
 use Domain\Tools\GoalTracker\Models\Goal;
 use Domain\Tools\GoalTracker\Models\Reward;
 use Domain\Tools\GoalTracker\Models\Tag;
+use Domain\Tools\LongTermGoals\Models\GoalCategory;
+use Domain\Tools\LongTermGoals\Models\GoalPeriod;
+use Domain\Tools\LongTermGoals\Models\LongTermGoal;
 use Domain\Tools\MusicPlayer\Models\MusicFile;
 use Domain\Tools\MusicPlayer\Models\Playlist;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -91,5 +94,20 @@ class User extends Authenticatable
     public function playlists(): HasMany
     {
         return $this->hasMany(Playlist::class);
+    }
+
+    public function goalCategories(): HasMany
+    {
+        return $this->hasMany(GoalCategory::class);
+    }
+
+    public function goalPeriods(): HasMany
+    {
+        return $this->hasMany(GoalPeriod::class);
+    }
+
+    public function longTermGoals(): HasMany
+    {
+        return $this->hasMany(LongTermGoal::class);
     }
 }

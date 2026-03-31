@@ -10,6 +10,10 @@ use Domain\Tools\GoalTracker\Controllers\GoalController;
 use Domain\Tools\GoalTracker\Controllers\GoalTrackerController;
 use Domain\Tools\GoalTracker\Controllers\RewardController;
 use Domain\Tools\GoalTracker\Controllers\StatisticsController;
+use Domain\Tools\LongTermGoals\Controllers\GoalCategoryController;
+use Domain\Tools\LongTermGoals\Controllers\GoalPeriodReviewController;
+use Domain\Tools\LongTermGoals\Controllers\LongTermGoalController;
+use Domain\Tools\LongTermGoals\Controllers\LongTermGoalsController;
 use Domain\Tools\MusicPlayer\Controllers\MusicFileController;
 use Domain\Tools\MusicPlayer\Controllers\PlaylistController;
 use Illuminate\Support\Facades\Route;
@@ -58,6 +62,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('music/{music_file}', [MusicFileController::class, 'update'])->name('music.update');
     Route::delete('music/{music_file}', [MusicFileController::class, 'destroy'])->name('music.destroy');
     Route::get('music/{music_file}/stream', [MusicFileController::class, 'stream'])->name('music.stream');
+
+    // Long Term Goals
+    Route::get('long-term-goals', LongTermGoalsController::class)->name('long-term-goals.index');
+    Route::post('long-term-goals/categories', [GoalCategoryController::class, 'store'])->name('goal-categories.store');
+    Route::put('long-term-goals/categories/{goal_category}', [GoalCategoryController::class, 'update'])->name('goal-categories.update');
+    Route::delete('long-term-goals/categories/{goal_category}', [GoalCategoryController::class, 'destroy'])->name('goal-categories.destroy');
+    Route::post('long-term-goals/goals', [LongTermGoalController::class, 'store'])->name('long-term-goals.store');
+    Route::put('long-term-goals/goals/{long_term_goal}', [LongTermGoalController::class, 'update'])->name('long-term-goals.update');
+    Route::delete('long-term-goals/goals/{long_term_goal}', [LongTermGoalController::class, 'destroy'])->name('long-term-goals.destroy');
+    Route::put('long-term-goals/periods/{goal_period}/review', GoalPeriodReviewController::class)->name('long-term-goals.review');
 
     Route::post('playlists', [PlaylistController::class, 'store'])->name('playlists.store');
     Route::get('playlists/{playlist}', [PlaylistController::class, 'show'])->name('playlists.show');
