@@ -64,6 +64,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function LongTermGoalsIndex({ year, month, categories, yearlyPeriod, monthlyPeriod, statuses }: Props) {
+    const [activeTab, setActiveTab] = useState<'monthly' | 'yearly'>('monthly');
     const [showCategoryForm, setShowCategoryForm] = useState(false);
     const [editingCategory, setEditingCategory] = useState<CategoryType | null>(null);
     const [addingGoalFor, setAddingGoalFor] = useState<'yearly' | 'monthly' | null>(null);
@@ -452,19 +453,21 @@ export default function LongTermGoalsIndex({ year, month, categories, yearlyPeri
                         )}
                     </div>
 
-                    {/* Year Navigation */}
-                    <div className="flex items-center justify-center gap-4">
-                        <button onClick={() => navigateYear(-1)} className="rounded-md p-1 text-muted-foreground hover:text-foreground">
-                            <ChevronLeft className="size-5" />
+                    {/* Tabs */}
+                    <div className="flex items-center gap-1 rounded-lg border border-violet-200/80 bg-white/70 p-1 shadow-sm backdrop-blur-sm dark:border-violet-800/50 dark:bg-black/40">
+                        <button
+                            onClick={() => setActiveTab('monthly')}
+                            className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'monthly' ? 'bg-violet-600 text-white shadow-sm dark:bg-violet-500' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                            Monthly Goals
                         </button>
-                        <h2 className="text-2xl font-bold">{year}</h2>
-                        <button onClick={() => navigateYear(1)} className="rounded-md p-1 text-muted-foreground hover:text-foreground">
-                            <ChevronRight className="size-5" />
+                        <button
+                            onClick={() => setActiveTab('yearly')}
+                            className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'yearly' ? 'bg-violet-600 text-white shadow-sm dark:bg-violet-500' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                            Yearly Goals
                         </button>
                     </div>
-
-                    {/* Add Yearly Goal Form */}
-                    {addingGoalFor === 'yearly' && renderAddGoalForm()}
 
                     {/* Edit Goal Form */}
                     {editingGoal && (
@@ -593,25 +596,46 @@ export default function LongTermGoalsIndex({ year, month, categories, yearlyPeri
                         </div>
                     )}
 
-                    {/* Yearly Goals */}
-                    {renderPeriodSection(`${year} — Yearly Goals`, 'yearly', yearlyPeriod)}
+                    {/* Monthly Tab */}
+                    {activeTab === 'monthly' && (
+                        <>
+                            <div className="flex items-center justify-center gap-4">
+                                <button onClick={() => navigateMonth(month - 1)} className="rounded-md p-1 text-muted-foreground hover:text-foreground">
+                                    <ChevronLeft className="size-5" />
+                                </button>
+                                <div className="text-center">
+                                    <h3 className="min-w-32 text-lg font-semibold">{MONTH_NAMES[month - 1]}</h3>
+                                    <p className="text-sm text-muted-foreground">{year}</p>
+                                </div>
+                                <button onClick={() => navigateMonth(month + 1)} className="rounded-md p-1 text-muted-foreground hover:text-foreground">
+                                    <ChevronRight className="size-5" />
+                                </button>
+                            </div>
 
-                    {/* Month Navigation */}
-                    <div className="flex items-center justify-center gap-4">
-                        <button onClick={() => navigateMonth(month - 1)} className="rounded-md p-1 text-muted-foreground hover:text-foreground">
-                            <ChevronLeft className="size-5" />
-                        </button>
-                        <h3 className="min-w-32 text-center text-lg font-semibold">{MONTH_NAMES[month - 1]}</h3>
-                        <button onClick={() => navigateMonth(month + 1)} className="rounded-md p-1 text-muted-foreground hover:text-foreground">
-                            <ChevronRight className="size-5" />
-                        </button>
-                    </div>
+                            {addingGoalFor === 'monthly' && renderAddGoalForm()}
 
-                    {/* Add Monthly Goal Form */}
-                    {addingGoalFor === 'monthly' && renderAddGoalForm()}
+                            {renderPeriodSection(`${MONTH_NAMES[month - 1]} ${year} — Monthly Goals`, 'monthly', monthlyPeriod)}
+                        </>
+                    )}
 
-                    {/* Monthly Goals */}
-                    {renderPeriodSection(`${MONTH_NAMES[month - 1]} ${year} — Monthly Goals`, 'monthly', monthlyPeriod)}
+                    {/* Yearly Tab */}
+                    {activeTab === 'yearly' && (
+                        <>
+                            <div className="flex items-center justify-center gap-4">
+                                <button onClick={() => navigateYear(-1)} className="rounded-md p-1 text-muted-foreground hover:text-foreground">
+                                    <ChevronLeft className="size-5" />
+                                </button>
+                                <h2 className="text-2xl font-bold">{year}</h2>
+                                <button onClick={() => navigateYear(1)} className="rounded-md p-1 text-muted-foreground hover:text-foreground">
+                                    <ChevronRight className="size-5" />
+                                </button>
+                            </div>
+
+                            {addingGoalFor === 'yearly' && renderAddGoalForm()}
+
+                            {renderPeriodSection(`${year} — Yearly Goals`, 'yearly', yearlyPeriod)}
+                        </>
+                    )}
                 </div>
             </div>
         </AppLayout>
