@@ -25,6 +25,17 @@ domain/
     │   ├── Controllers/          # MemoSet, MemoCard
     │   ├── Requests/             # MemoSet form requests
     │   └── Policies/             # MemoSet policy
+    ├── Diary/                    # Subdomain: personal diary entries
+    │   ├── Models/               # DiaryEntry
+    │   ├── Controllers/          # Diary
+    │   ├── Requests/             # StoreDiaryEntry, UpdateDiaryEntry form requests
+    │   └── Policies/             # DiaryEntry policy
+    ├── LongTermGoals/            # Subdomain: long-term goal planning with periods & categories
+    │   ├── Models/               # LongTermGoal, GoalPeriod, GoalCategory
+    │   ├── Enums/                # GoalPeriodType, GoalStatus
+    │   ├── Controllers/          # LongTermGoals, LongTermGoal, GoalCategory, GoalPeriodReview
+    │   ├── Requests/             # StoreLongTermGoal, UpdateLongTermGoal, StoreGoalCategory, ReviewGoalPeriod form requests
+    │   └── Policies/             # LongTermGoal, GoalPeriod, GoalCategory policies
     └── MusicPlayer/              # Subdomain: music file management & playback
         ├── Models/               # MusicFile, Playlist
         ├── Controllers/          # MusicFile, Playlist
