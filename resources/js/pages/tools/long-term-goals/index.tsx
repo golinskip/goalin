@@ -205,6 +205,62 @@ export default function LongTermGoalsIndex({ year, month, categories, yearlyPeri
         return groups;
     };
 
+    const renderAddGoalForm = () => (
+        <div className="rounded-xl border border-violet-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm dark:border-violet-800/50 dark:bg-black/40">
+            <h3 className="mb-3 font-medium">
+                Add {addingGoalFor === 'yearly' ? 'Yearly' : `${MONTH_NAMES[month - 1]}`} Goal
+            </h3>
+            <form onSubmit={handleCreateGoal} className="space-y-4">
+                <div className="flex flex-wrap items-end gap-4">
+                    <div className="grid min-w-48 flex-1 gap-2">
+                        <Label htmlFor="goal-title">Title</Label>
+                        <Input
+                            id="goal-title"
+                            value={goalForm.data.title}
+                            onChange={(e) => goalForm.setData('title', e.target.value)}
+                            placeholder="What do you want to achieve?"
+                            required
+                        />
+                        <InputError message={goalForm.errors.title} />
+                    </div>
+                    <div className="grid min-w-40 gap-2">
+                        <Label htmlFor="goal-category">Category</Label>
+                        <select
+                            id="goal-category"
+                            value={goalForm.data.goal_category_id}
+                            onChange={(e) => goalForm.setData('goal_category_id', e.target.value ? Number(e.target.value) : '')}
+                            className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                        >
+                            <option value="">Uncategorized</option>
+                            {categories.map((cat) => (
+                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="goal-desc">Description (optional)</Label>
+                    <textarea
+                        id="goal-desc"
+                        value={goalForm.data.description}
+                        onChange={(e) => goalForm.setData('description', e.target.value)}
+                        placeholder="More details about this goal..."
+                        rows={2}
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                    <InputError message={goalForm.errors.description} />
+                </div>
+                <div className="flex gap-2">
+                    <Button type="submit" disabled={goalForm.processing}>
+                        {goalForm.processing && <Spinner />}
+                        Add Goal
+                    </Button>
+                    <Button variant="ghost" type="button" onClick={() => setAddingGoalFor(null)}>Cancel</Button>
+                </div>
+            </form>
+        </div>
+    );
+
     const renderPeriodSection = (title: string, periodType: 'yearly' | 'monthly', period: PeriodType | null) => {
         const goals = period?.goals ?? [];
         const grouped = groupGoalsByCategory(goals);
@@ -414,62 +470,8 @@ export default function LongTermGoalsIndex({ year, month, categories, yearlyPeri
                         </button>
                     </div>
 
-                    {/* Add Goal Form */}
-                    {addingGoalFor && (
-                        <div className="rounded-xl border border-violet-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm dark:border-violet-800/50 dark:bg-black/40">
-                            <h3 className="mb-3 font-medium">
-                                Add {addingGoalFor === 'yearly' ? 'Yearly' : `${MONTH_NAMES[month - 1]}`} Goal
-                            </h3>
-                            <form onSubmit={handleCreateGoal} className="space-y-4">
-                                <div className="flex flex-wrap items-end gap-4">
-                                    <div className="grid min-w-48 flex-1 gap-2">
-                                        <Label htmlFor="goal-title">Title</Label>
-                                        <Input
-                                            id="goal-title"
-                                            value={goalForm.data.title}
-                                            onChange={(e) => goalForm.setData('title', e.target.value)}
-                                            placeholder="What do you want to achieve?"
-                                            required
-                                        />
-                                        <InputError message={goalForm.errors.title} />
-                                    </div>
-                                    <div className="grid min-w-40 gap-2">
-                                        <Label htmlFor="goal-category">Category</Label>
-                                        <select
-                                            id="goal-category"
-                                            value={goalForm.data.goal_category_id}
-                                            onChange={(e) => goalForm.setData('goal_category_id', e.target.value ? Number(e.target.value) : '')}
-                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                                        >
-                                            <option value="">Uncategorized</option>
-                                            {categories.map((cat) => (
-                                                <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="goal-desc">Description (optional)</Label>
-                                    <textarea
-                                        id="goal-desc"
-                                        value={goalForm.data.description}
-                                        onChange={(e) => goalForm.setData('description', e.target.value)}
-                                        placeholder="More details about this goal..."
-                                        rows={2}
-                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                                    />
-                                    <InputError message={goalForm.errors.description} />
-                                </div>
-                                <div className="flex gap-2">
-                                    <Button type="submit" disabled={goalForm.processing}>
-                                        {goalForm.processing && <Spinner />}
-                                        Add Goal
-                                    </Button>
-                                    <Button variant="ghost" type="button" onClick={() => setAddingGoalFor(null)}>Cancel</Button>
-                                </div>
-                            </form>
-                        </div>
-                    )}
+                    {/* Add Yearly Goal Form */}
+                    {addingGoalFor === 'yearly' && renderAddGoalForm()}
 
                     {/* Edit Goal Form */}
                     {editingGoal && (
@@ -611,6 +613,9 @@ export default function LongTermGoalsIndex({ year, month, categories, yearlyPeri
                             <ChevronRight className="size-5" />
                         </button>
                     </div>
+
+                    {/* Add Monthly Goal Form */}
+                    {addingGoalFor === 'monthly' && renderAddGoalForm()}
 
                     {/* Monthly Goals */}
                     {renderPeriodSection(`${MONTH_NAMES[month - 1]} ${year} — Monthly Goals`, 'monthly', monthlyPeriod)}
