@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { ColorPicker } from '@/components/ui/color-picker';
 import InputError from '@/components/input-error';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -387,16 +388,12 @@ export default function LongTermGoalsIndex({ year, month, categories, yearlyPeri
                                         />
                                         <InputError message={categoryForm.errors.name} />
                                     </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="cat-color">Color</Label>
-                                        <input
-                                            id="cat-color"
-                                            type="color"
-                                            value={categoryForm.data.color}
-                                            onChange={(e) => categoryForm.setData('color', e.target.value)}
-                                            className="h-9 w-14 cursor-pointer rounded-md border border-input"
-                                        />
-                                    </div>
+                                    <ColorPicker
+                                        id="cat-color"
+                                        label="Color"
+                                        value={categoryForm.data.color}
+                                        onChange={(color) => categoryForm.setData('color', color)}
+                                    />
                                     <Button type="submit" disabled={categoryForm.processing}>
                                         {categoryForm.processing && <Spinner />}
                                         Create
@@ -418,16 +415,12 @@ export default function LongTermGoalsIndex({ year, month, categories, yearlyPeri
                                             required
                                         />
                                     </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="edit-cat-color">Color</Label>
-                                        <input
-                                            id="edit-cat-color"
-                                            type="color"
-                                            value={editCategoryForm.data.color}
-                                            onChange={(e) => editCategoryForm.setData('color', e.target.value)}
-                                            className="h-9 w-14 cursor-pointer rounded-md border border-input"
-                                        />
-                                    </div>
+                                    <ColorPicker
+                                        id="edit-cat-color"
+                                        label="Color"
+                                        value={editCategoryForm.data.color}
+                                        onChange={(color) => editCategoryForm.setData('color', color)}
+                                    />
                                     <Button type="submit" disabled={editCategoryForm.processing}>
                                         {editCategoryForm.processing && <Spinner />}
                                         Save
