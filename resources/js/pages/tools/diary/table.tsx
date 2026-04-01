@@ -34,11 +34,6 @@ function formatDate(dateStr: string): string {
     return `${weekday}, ${month} ${day}`;
 }
 
-function truncate(text: string, max: number): string {
-    if (text.length <= max) return text;
-    return text.slice(0, max).trimEnd() + '...';
-}
-
 export default function DiaryTable({ year, entries }: Props) {
     const navigateYear = (delta: number) => {
         router.get('/diary/table', { year: year + delta }, { preserveState: true });
@@ -99,7 +94,7 @@ export default function DiaryTable({ year, entries }: Props) {
                                                 </Link>
                                             </td>
                                             <td className="px-4 py-2.5 align-top">
-                                                <p className="whitespace-pre-line">{truncate(entry.content, 200)}</p>
+                                                <p className="whitespace-pre-line">{entry.content}</p>
                                             </td>
                                             <td className="px-4 py-2.5 align-top">
                                                 {entry.fields.length > 0 ? (
