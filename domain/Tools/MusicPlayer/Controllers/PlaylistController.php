@@ -23,6 +23,11 @@ class PlaylistController extends Controller
 
         $user = $request->user();
 
+        $uploadMaxBytes = min(
+            $this->parseSize(ini_get('upload_max_filesize') ?: '2M'),
+            $this->parseSize(ini_get('post_max_size') ?: '8M'),
+        );
+
         return Inertia::render('tools/music-player/playlist', [
             'playlist' => [
                 'id' => $playlist->id,
@@ -30,13 +35,14 @@ class PlaylistController extends Controller
                 'description' => $playlist->description,
                 'color' => $playlist->color,
             ],
-            'tracks' => $playlist->musicFiles()->get()->map(fn (MusicFile $file) => [
+            'tracks' => $playlist->musicFiles()->with('tags')->get()->map(fn (MusicFile $file) => [
                 'id' => $file->id,
                 'title' => $file->title,
                 'artist' => $file->artist,
                 'duration_seconds' => $file->duration_seconds,
                 'file_size' => $file->file_size,
                 'position' => $file->pivot->position,
+                'tags' => $file->tags->pluck('name')->toArray(),
             ]),
             'availableFiles' => $user->musicFiles()
                 ->whereNotIn('id', $playlist->musicFiles()->pluck('music_files.id'))
@@ -47,7 +53,23 @@ class PlaylistController extends Controller
                     'artist' => $file->artist,
                     'duration_seconds' => $file->duration_seconds,
                 ]),
+            'maxFileSize' => $uploadMaxBytes,
+            'suggestedTags' => ['timer'],
+            'availableTags' => $user->tags()->pluck('name')->toArray(),
         ]);
+    }
+
+    private function parseSize(string $size): int
+    {
+        $unit = strtolower(substr($size, -1));
+        $value = (int) $size;
+
+        return match ($unit) {
+            'g' => $value * 1024 * 1024 * 1024,
+            'm' => $value * 1024 * 1024,
+            'k' => $value * 1024,
+            default => $value,
+        };
     }
 
     public function store(StorePlaylistRequest $request): RedirectResponse

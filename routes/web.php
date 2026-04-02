@@ -59,6 +59,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Music Player
     Route::get('music', [MusicFileController::class, 'index'])->name('music.index');
+    Route::get('music/library', [MusicFileController::class, 'library'])->name('music.library');
     Route::post('music', [MusicFileController::class, 'store'])->name('music.store');
     Route::put('music/{music_file}', [MusicFileController::class, 'update'])->name('music.update');
     Route::delete('music/{music_file}', [MusicFileController::class, 'destroy'])->name('music.destroy');

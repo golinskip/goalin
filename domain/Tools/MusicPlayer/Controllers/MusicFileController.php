@@ -22,12 +22,28 @@ class MusicFileController extends Controller
     {
         $user = $request->user();
 
+        return Inertia::render('tools/music-player/index', [
+            'playlists' => $user->playlists()->withCount('musicFiles')->with('musicFiles:id')->latest()->get()->map(fn ($playlist) => [
+                'id' => $playlist->id,
+                'name' => $playlist->name,
+                'description' => $playlist->description,
+                'color' => $playlist->color,
+                'music_files_count' => $playlist->music_files_count,
+                'music_file_ids' => $playlist->musicFiles->pluck('id'),
+            ]),
+        ]);
+    }
+
+    public function library(Request $request): Response
+    {
+        $user = $request->user();
+
         $uploadMaxBytes = min(
             $this->parseSize(ini_get('upload_max_filesize') ?: '2M'),
             $this->parseSize(ini_get('post_max_size') ?: '8M'),
         );
 
-        return Inertia::render('tools/music-player/index', [
+        return Inertia::render('tools/music-player/library', [
             'maxFileSize' => $uploadMaxBytes,
             'suggestedTags' => ['timer'],
             'availableTags' => $user->tags()->pluck('name')->toArray(),
@@ -59,6 +75,8 @@ class MusicFileController extends Controller
             ? $user->playlists()->findOrFail($request->validated('playlist_id'))
             : null;
 
+        $tagNames = $request->validated('tags') ?? [];
+
         $maxPosition = $playlist
             ? (int) $playlist->musicFiles()->max('position')
             : 0;
@@ -76,13 +94,21 @@ class MusicFileController extends Controller
                 'file_size' => $file->getSize(),
             ]);
 
+            if (count($tagNames) > 0) {
+                $this->syncTags($user, $musicFile, $tagNames);
+            }
+
             if ($playlist) {
                 $maxPosition++;
                 $playlist->musicFiles()->attach($musicFile->id, ['position' => $maxPosition]);
             }
         }
 
-        return to_route('music.index');
+        if ($playlist) {
+            return to_route('playlists.show', $playlist);
+        }
+
+        return to_route('music.library');
     }
 
     public function update(Request $request, MusicFile $musicFile): RedirectResponse
@@ -94,16 +120,22 @@ class MusicFileController extends Controller
             'artist' => ['nullable', 'string', 'max:255'],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:50'],
+            'redirect_to_playlist' => ['nullable', 'integer', 'exists:playlists,id'],
         ]);
 
+        $redirectPlaylistId = $validated['redirect_to_playlist'] ?? null;
         $tags = $validated['tags'] ?? [];
-        unset($validated['tags']);
+        unset($validated['tags'], $validated['redirect_to_playlist']);
 
         $musicFile->update($validated);
 
         $this->syncTags($request->user(), $musicFile, $tags);
 
-        return to_route('music.index');
+        if ($redirectPlaylistId) {
+            return to_route('playlists.show', $redirectPlaylistId);
+        }
+
+        return to_route('music.library');
     }
 
     public function destroy(MusicFile $musicFile): RedirectResponse

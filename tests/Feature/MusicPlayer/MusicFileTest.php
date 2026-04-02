@@ -20,6 +20,18 @@ test('authenticated users can visit the music index', function () {
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('tools/music-player/index')
+        ->has('playlists')
+    );
+});
+
+test('authenticated users can visit the music library', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->get(route('music.library'));
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('tools/music-player/library')
         ->has('musicFiles')
         ->has('playlists')
     );
@@ -36,7 +48,7 @@ test('users can upload music files', function () {
         'files' => [$file],
     ]);
 
-    $response->assertRedirect(route('music.index'));
+    $response->assertRedirect(route('music.library'));
     $this->assertDatabaseHas('music_files', [
         'user_id' => $user->id,
         'title' => 'song',
@@ -60,7 +72,7 @@ test('users can upload music files and assign them to a playlist', function () {
         'playlist_id' => $playlist->id,
     ]);
 
-    $response->assertRedirect(route('music.index'));
+    $response->assertRedirect(route('playlists.show', $playlist));
     expect($playlist->musicFiles()->count())->toBe(2);
     expect($playlist->musicFiles()->orderByPivot('position')->pluck('title')->toArray())
         ->toBe(['track1', 'track2']);
@@ -90,7 +102,7 @@ test('users can update their own music file', function () {
         'artist' => 'New Artist',
     ]);
 
-    $response->assertRedirect(route('music.index'));
+    $response->assertRedirect(route('music.library'));
     expect($file->fresh()->title)->toBe('New Title');
     expect($file->fresh()->artist)->toBe('New Artist');
 });
@@ -171,7 +183,7 @@ test('users can add tags when updating a music file', function () {
         'tags' => ['timer', 'focus'],
     ]);
 
-    $response->assertRedirect(route('music.index'));
+    $response->assertRedirect(route('music.library'));
     expect($file->fresh()->tags->pluck('name')->toArray())->toBe(['timer', 'focus']);
     $this->assertDatabaseHas('tags', ['user_id' => $user->id, 'name' => 'timer']);
     $this->assertDatabaseHas('tags', ['user_id' => $user->id, 'name' => 'focus']);
@@ -189,22 +201,22 @@ test('users can remove tags from a music file', function () {
         'tags' => [],
     ]);
 
-    $response->assertRedirect(route('music.index'));
+    $response->assertRedirect(route('music.library'));
     expect($file->fresh()->tags)->toHaveCount(0);
 });
 
-test('music index returns tags and suggested tags', function () {
+test('music library returns tags and suggested tags', function () {
     $user = User::factory()->create();
     $file = MusicFile::factory()->for($user)->create();
     $tag = Tag::factory()->for($user)->create(['name' => 'timer']);
     $file->tags()->attach($tag);
     $this->actingAs($user);
 
-    $response = $this->get(route('music.index'));
+    $response = $this->get(route('music.library'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('tools/music-player/index')
+        ->component('tools/music-player/library')
         ->has('suggestedTags')
         ->has('availableTags')
         ->where('musicFiles.data.0.tags', ['timer'])
