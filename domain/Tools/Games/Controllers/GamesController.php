@@ -14,13 +14,17 @@ class GamesController extends Controller
     {
         $user = $request->user();
 
+        $higherIsBetter = ['volleyball'];
+
         $bestResults = $user->gameResults()
-            ->selectRaw('game, MIN(result) as best_result, COUNT(*) as plays')
+            ->selectRaw('game, MIN(result) as min_result, MAX(result) as max_result, COUNT(*) as plays')
             ->groupBy('game')
             ->get()
             ->keyBy('game')
             ->map(fn (GameResult $row): array => [
-                'best_result' => (float) $row->getAttribute('best_result'),
+                'best_result' => in_array($row->getAttribute('game'), $higherIsBetter, true)
+                    ? (float) $row->getAttribute('max_result')
+                    : (float) $row->getAttribute('min_result'),
                 'plays' => (int) $row->getAttribute('plays'),
             ])
             ->toArray();

@@ -7,6 +7,7 @@ use Domain\Tools\Games\Controllers\GameResultController;
 use Domain\Tools\Games\Controllers\GamesController;
 use Domain\Tools\Games\Games\Addition\AdditionController;
 use Domain\Tools\Games\Games\Reflex\ReflexController;
+use Domain\Tools\Games\Games\Volleyball\VolleyballController;
 use Domain\Tools\GoalTracker\Controllers\ActivityController;
 use Domain\Tools\GoalTracker\Controllers\ActivityLogController;
 use Domain\Tools\GoalTracker\Controllers\DashboardController;
@@ -83,6 +84,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('games', GamesController::class)->name('games.index');
     Route::get('games/reflex', ReflexController::class)->name('games.reflex');
     Route::get('games/addition', AdditionController::class)->name('games.addition');
+    Route::get('games/volleyball', VolleyballController::class)->name('games.volleyball');
     Route::post('games/results', [GameResultController::class, 'store'])->name('games.results.store');
 
     Route::post('playlists', [PlaylistController::class, 'store'])->name('playlists.store');

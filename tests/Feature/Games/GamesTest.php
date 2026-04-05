@@ -37,6 +37,35 @@ test('games index shows best results per game', function () {
     );
 });
 
+test('games index uses max for games where higher is better', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    GameResult::factory()->for($user)->create(['game' => 'volleyball', 'result' => 150]);
+    GameResult::factory()->for($user)->create(['game' => 'volleyball', 'result' => 320.5]);
+    GameResult::factory()->for($user)->create(['game' => 'volleyball', 'result' => 210]);
+
+    $response = $this->get(route('games.index'));
+
+    $response->assertInertia(fn ($page) => $page
+        ->where('bestResults.volleyball.best_result', 320.5)
+        ->where('bestResults.volleyball.plays', 3)
+    );
+});
+
+test('authenticated users can visit the volleyball game page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->get(route('games.volleyball'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('tools/games/volleyball/index')
+        ->has('recent')
+    );
+});
+
 test('authenticated users can visit the addition game page', function () {
     $user = User::factory()->create();
     $this->actingAs($user);

@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { Gamepad2, Plus, Zap } from 'lucide-react';
+import { Gamepad2, Plus, Volleyball as VolleyballIcon, Zap } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -17,6 +17,7 @@ type Props = {
 export default function GamesIndex({ bestResults }: Props) {
     const reflexBest = bestResults.reflex;
     const additionBest = bestResults.addition;
+    const volleyballBest = bestResults.volleyball;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -70,6 +71,27 @@ export default function GamesIndex({ bestResults }: Props) {
                             <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
                                 <span>Best: <strong className="text-foreground">{(additionBest.best_result / 1000).toFixed(2)}s</strong></span>
                                 <span>Plays: <strong className="text-foreground">{additionBest.plays}</strong></span>
+                            </div>
+                        )}
+                    </Link>
+
+                    <Link
+                        href="/games/volleyball"
+                        className="group rounded-xl border border-orange-200/80 bg-white/70 p-5 shadow-sm transition-all hover:shadow-md dark:border-orange-800/50 dark:bg-black/40"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="flex size-10 items-center justify-center rounded-lg bg-orange-500/15 transition-colors group-hover:bg-orange-500/25">
+                                <VolleyballIcon className="size-5 text-orange-600 dark:text-orange-400" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="font-semibold">Volleyball Spike</p>
+                                <p className="text-sm text-muted-foreground">Jump and spike the falling ball as far as you can</p>
+                            </div>
+                        </div>
+                        {volleyballBest && (
+                            <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
+                                <span>Longest: <strong className="text-foreground">{volleyballBest.best_result.toFixed(0)}</strong></span>
+                                <span>Plays: <strong className="text-foreground">{volleyballBest.plays}</strong></span>
                             </div>
                         )}
                     </Link>

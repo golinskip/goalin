@@ -49,8 +49,10 @@ domain/
         └── Games/                # Each game lives in its own directory here
             ├── Reflex/           # Reflex game — Phaser-based reaction-time test
             │   └── ReflexController.php
-            └── Addition/         # Addition speed — add two 2-digit numbers
-                └── AdditionController.php
+            ├── Addition/         # Addition speed — add two 2-digit numbers
+            │   └── AdditionController.php
+            └── Volleyball/       # Volleyball spike — jump & hit falling ball, max distance
+                └── VolleyballController.php
 ```
 
 ## Adding New Games
