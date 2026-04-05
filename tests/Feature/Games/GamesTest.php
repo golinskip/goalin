@@ -53,6 +53,19 @@ test('games index uses max for games where higher is better', function () {
     );
 });
 
+test('authenticated users can visit the aim trainer page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->get(route('games.aim-trainer'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('tools/games/aim-trainer/index')
+        ->has('recent')
+    );
+});
+
 test('authenticated users can visit the serve game page', function () {
     $user = User::factory()->create();
     $this->actingAs($user);

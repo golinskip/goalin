@@ -53,8 +53,10 @@ domain/
             │   └── AdditionController.php
             ├── Volleyball/       # Volleyball spike — jump & hit falling ball, max distance
             │   └── VolleyballController.php
-            └── Serve/            # Volleyball serve — toss + run + jump + hit, max distance
-                └── ServeController.php
+            ├── Serve/            # Volleyball serve — toss + run + jump + hit, max distance
+            │   └── ServeController.php
+            └── AimTrainer/       # Aim trainer — click targets in 30s, max hits
+                └── AimTrainerController.php
 ```
 
 ## Adding New Games

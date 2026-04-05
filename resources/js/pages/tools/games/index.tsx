@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { Gamepad2, Plus, Send, Volleyball as VolleyballIcon, Zap } from 'lucide-react';
+import { Crosshair, Gamepad2, Plus, Send, Volleyball as VolleyballIcon, Zap } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -19,6 +19,7 @@ export default function GamesIndex({ bestResults }: Props) {
     const additionBest = bestResults.addition;
     const volleyballBest = bestResults.volleyball;
     const serveBest = bestResults.serve;
+    const aimBest = bestResults.aim_trainer;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -114,6 +115,27 @@ export default function GamesIndex({ bestResults }: Props) {
                             <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
                                 <span>Longest: <strong className="text-foreground">{serveBest.best_result.toFixed(0)}</strong></span>
                                 <span>Plays: <strong className="text-foreground">{serveBest.plays}</strong></span>
+                            </div>
+                        )}
+                    </Link>
+
+                    <Link
+                        href="/games/aim-trainer"
+                        className="group rounded-xl border border-rose-200/80 bg-white/70 p-5 shadow-sm transition-all hover:shadow-md dark:border-rose-800/50 dark:bg-black/40"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="flex size-10 items-center justify-center rounded-lg bg-rose-500/15 transition-colors group-hover:bg-rose-500/25">
+                                <Crosshair className="size-5 text-rose-600 dark:text-rose-400" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="font-semibold">Aim Trainer</p>
+                                <p className="text-sm text-muted-foreground">Click as many targets as you can in 30s</p>
+                            </div>
+                        </div>
+                        {aimBest && (
+                            <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
+                                <span>Best: <strong className="text-foreground">{aimBest.best_result.toFixed(0)} hits</strong></span>
+                                <span>Plays: <strong className="text-foreground">{aimBest.plays}</strong></span>
                             </div>
                         )}
                     </Link>
