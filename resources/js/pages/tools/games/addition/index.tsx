@@ -163,7 +163,7 @@ export default function AdditionGame({ recent, best }: Props) {
                                     <div className="font-mono text-5xl font-bold tabular-nums">
                                         {a} + {b}
                                     </div>
-                                    <form onSubmit={handleSubmit} className="w-full">
+                                    <form onSubmit={handleSubmit} className="flex w-full flex-col gap-3">
                                         <input
                                             ref={inputRef}
                                             type="text"
@@ -175,6 +175,13 @@ export default function AdditionGame({ recent, best }: Props) {
                                             className="w-full rounded-lg border border-border bg-background px-4 py-3 text-center font-mono text-3xl focus:border-primary focus:outline-none"
                                             placeholder="?"
                                         />
+                                        <button
+                                            type="submit"
+                                            disabled={answer === ''}
+                                            className="rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            Apply
+                                        </button>
                                     </form>
                                 </>
                             )}
