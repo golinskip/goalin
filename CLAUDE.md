@@ -47,8 +47,10 @@ domain/
         ├── Requests/             # StoreGameResult form request
         ├── Policies/             # GameResult policy
         └── Games/                # Each game lives in its own directory here
-            └── Reflex/           # Reflex game — Phaser-based reaction-time test
-                └── ReflexController.php
+            ├── Reflex/           # Reflex game — Phaser-based reaction-time test
+            │   └── ReflexController.php
+            └── Addition/         # Addition speed — add two 2-digit numbers
+                └── AdditionController.php
 ```
 
 ## Adding New Games

@@ -5,6 +5,7 @@ use Domain\Tools\Flashcards\Controllers\MemoCardController;
 use Domain\Tools\Flashcards\Controllers\MemoSetController;
 use Domain\Tools\Games\Controllers\GameResultController;
 use Domain\Tools\Games\Controllers\GamesController;
+use Domain\Tools\Games\Games\Addition\AdditionController;
 use Domain\Tools\Games\Games\Reflex\ReflexController;
 use Domain\Tools\GoalTracker\Controllers\ActivityController;
 use Domain\Tools\GoalTracker\Controllers\ActivityLogController;
@@ -81,6 +82,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Games
     Route::get('games', GamesController::class)->name('games.index');
     Route::get('games/reflex', ReflexController::class)->name('games.reflex');
+    Route::get('games/addition', AdditionController::class)->name('games.addition');
     Route::post('games/results', [GameResultController::class, 'store'])->name('games.results.store');
 
     Route::post('playlists', [PlaylistController::class, 'store'])->name('playlists.store');

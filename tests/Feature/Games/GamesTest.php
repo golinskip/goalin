@@ -37,6 +37,19 @@ test('games index shows best results per game', function () {
     );
 });
 
+test('authenticated users can visit the addition game page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->get(route('games.addition'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('tools/games/addition/index')
+        ->has('recent')
+    );
+});
+
 test('authenticated users can visit the reflex game page', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
