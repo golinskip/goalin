@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { BookOpen, Compass, Layers, Music, NotebookPen, Target } from 'lucide-react';
+import { BookOpen, Compass, Gamepad2, Layers, Music, NotebookPen, Target } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
@@ -102,6 +102,20 @@ export default function Dashboard() {
                                     </div>
                                 </div>
                             </a>
+                            <Link
+                                href="/games"
+                                className="group rounded-xl border border-red-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm transition-all hover:shadow-md dark:border-red-800/50 dark:bg-black/40"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="flex size-10 items-center justify-center rounded-lg bg-red-500/15 transition-colors group-hover:bg-red-500/25">
+                                        <Gamepad2 className="size-5 text-red-600 dark:text-red-400" />
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold">Games</p>
+                                        <p className="text-sm text-muted-foreground">Play games and test your skills</p>
+                                    </div>
+                                </div>
+                            </Link>
                         </div>
                     </div>
                 </div>

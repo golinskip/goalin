@@ -7,6 +7,8 @@ use Domain\Tools\Diary\Models\DiaryEntry;
 use Domain\Tools\Diary\Policies\DiaryEntryPolicy;
 use Domain\Tools\Flashcards\Models\MemoSet;
 use Domain\Tools\Flashcards\Policies\MemoSetPolicy;
+use Domain\Tools\Games\Models\GameResult;
+use Domain\Tools\Games\Policies\GameResultPolicy;
 use Domain\Tools\GoalTracker\Models\Activity;
 use Domain\Tools\GoalTracker\Models\Goal;
 use Domain\Tools\GoalTracker\Models\Reward;
@@ -77,6 +79,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(GoalCategory::class, GoalCategoryPolicy::class);
         Gate::policy(GoalPeriod::class, GoalPeriodPolicy::class);
         Gate::policy(LongTermGoal::class, LongTermGoalPolicy::class);
+        Gate::policy(GameResult::class, GameResultPolicy::class);
     }
 
     /**

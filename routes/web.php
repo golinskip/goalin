@@ -3,6 +3,9 @@
 use Domain\Tools\Diary\Controllers\DiaryController;
 use Domain\Tools\Flashcards\Controllers\MemoCardController;
 use Domain\Tools\Flashcards\Controllers\MemoSetController;
+use Domain\Tools\Games\Controllers\GameResultController;
+use Domain\Tools\Games\Controllers\GamesController;
+use Domain\Tools\Games\Games\Reflex\ReflexController;
 use Domain\Tools\GoalTracker\Controllers\ActivityController;
 use Domain\Tools\GoalTracker\Controllers\ActivityLogController;
 use Domain\Tools\GoalTracker\Controllers\DashboardController;
@@ -74,6 +77,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('long-term-goals/goals/{long_term_goal}', [LongTermGoalController::class, 'update'])->name('long-term-goals.update');
     Route::delete('long-term-goals/goals/{long_term_goal}', [LongTermGoalController::class, 'destroy'])->name('long-term-goals.destroy');
     Route::put('long-term-goals/periods/{goal_period}/review', GoalPeriodReviewController::class)->name('long-term-goals.review');
+
+    // Games
+    Route::get('games', GamesController::class)->name('games.index');
+    Route::get('games/reflex', ReflexController::class)->name('games.reflex');
+    Route::post('games/results', [GameResultController::class, 'store'])->name('games.results.store');
 
     Route::post('playlists', [PlaylistController::class, 'store'])->name('playlists.store');
     Route::get('playlists/{playlist}', [PlaylistController::class, 'show'])->name('playlists.show');

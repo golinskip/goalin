@@ -6,6 +6,7 @@ namespace Domain\User\Models;
 use Database\Factories\UserFactory;
 use Domain\Tools\Diary\Models\DiaryEntry;
 use Domain\Tools\Flashcards\Models\MemoSet;
+use Domain\Tools\Games\Models\GameResult;
 use Domain\Tools\GoalTracker\Models\Activity;
 use Domain\Tools\GoalTracker\Models\ActivityLog;
 use Domain\Tools\GoalTracker\Models\Goal;
@@ -109,5 +110,10 @@ class User extends Authenticatable
     public function longTermGoals(): HasMany
     {
         return $this->hasMany(LongTermGoal::class);
+    }
+
+    public function gameResults(): HasMany
+    {
+        return $this->hasMany(GameResult::class);
     }
 }

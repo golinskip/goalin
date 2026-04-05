@@ -36,12 +36,24 @@ domain/
     │   ├── Controllers/          # LongTermGoals, LongTermGoal, GoalCategory, GoalPeriodReview
     │   ├── Requests/             # StoreLongTermGoal, UpdateLongTermGoal, StoreGoalCategory, ReviewGoalPeriod form requests
     │   └── Policies/             # LongTermGoal, GoalPeriod, GoalCategory policies
-    └── MusicPlayer/              # Subdomain: music file management & playback
-        ├── Models/               # MusicFile, Playlist
-        ├── Controllers/          # MusicFile, Playlist
-        ├── Requests/             # MusicFile, Playlist form requests
-        └── Policies/             # MusicFile, Playlist policies
+    ├── MusicPlayer/              # Subdomain: music file management & playback
+    │   ├── Models/               # MusicFile, Playlist
+    │   ├── Controllers/          # MusicFile, Playlist
+    │   ├── Requests/             # MusicFile, Playlist form requests
+    │   └── Policies/             # MusicFile, Playlist policies
+    └── Games/                    # Subdomain: games with shared results tracking
+        ├── Models/               # GameResult (shared results table: game, result, played_at)
+        ├── Controllers/          # Games (index), GameResult (store results API)
+        ├── Requests/             # StoreGameResult form request
+        ├── Policies/             # GameResult policy
+        └── Games/                # Each game lives in its own directory here
+            └── Reflex/           # Reflex game — Phaser-based reaction-time test
+                └── ReflexController.php
 ```
+
+## Adding New Games
+
+Each game lives in its own directory under `domain/Tools/Games/Games/{GameName}/` with its own controller. The Phaser scene and page for the game lives under `resources/js/pages/tools/games/{game-slug}/`. Results are persisted via the shared `POST /games/results` endpoint (`GameResultController::store`) which accepts `{ game: string, result: number }` and writes to the `game_results` table (`user_id`, `game`, `result`, `played_at`). Games are listed on `/games` and added to the dashboard tile grid + `toolsNavItems`.
 
 ## Namespace Convention
 
