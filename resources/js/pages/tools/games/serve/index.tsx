@@ -32,15 +32,15 @@ const PLAYER_WIDTH = 26;
 const PLAYER_HEIGHT = 52;
 const RUN_SPEED = 240;
 const GRAVITY = 900;
-const JUMP_VELOCITY = -520;
+const JUMP_VELOCITY = -780;
 const BALL_RADIUS = 14;
 const ARM_LENGTH = 48;
 const ARM_START_ANGLE = -2.35;
 const ARM_END_ANGLE = -0.4;
 const ARM_SWING_MS = 260;
 const MAX_TOSS_MS = 900;
-const MIN_TOSS_VY = -280;
-const MAX_TOSS_VY = -720;
+const MIN_TOSS_VY = -220;
+const MAX_TOSS_VY = -560;
 const TOSS_VX = 220;
 
 function getXsrfToken(): string {

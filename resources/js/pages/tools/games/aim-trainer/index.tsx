@@ -53,7 +53,6 @@ function createAimScene(
 
             this.target = this.add.circle(GAME_WIDTH / 2, GAME_HEIGHT / 2, TARGET_RADIUS, 0xef4444);
             this.target.setStrokeStyle(3, 0xffffff);
-            this.target.setInteractive(new Phaser.Geom.Circle(0, 0, TARGET_RADIUS), Phaser.Geom.Circle.Contains);
             this.target.setVisible(false);
 
             this.message = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'Click anywhere to start', {
@@ -63,19 +62,20 @@ function createAimScene(
             });
             this.message.setOrigin(0.5);
 
-            this.target.on('pointerdown', (pointer: PhaserNamespace.Input.Pointer, _lx: number, _ly: number, event: PhaserNamespace.Types.Input.EventData) => {
+            this.input.on('pointerdown', (pointer: PhaserNamespace.Input.Pointer) => {
+                if (this.state === 'idle' || this.state === 'done') {
+                    this.startRound();
+                    return;
+                }
                 if (this.state !== 'playing') {
                     return;
                 }
-                event.stopPropagation();
-                this.hits += 1;
-                this.spawnTarget();
-                this.emitTick();
-            });
-
-            this.input.on('pointerdown', () => {
-                if (this.state === 'idle' || this.state === 'done') {
-                    this.startRound();
+                const dx = pointer.x - this.target.x;
+                const dy = pointer.y - this.target.y;
+                if (dx * dx + dy * dy <= TARGET_RADIUS * TARGET_RADIUS) {
+                    this.hits += 1;
+                    this.spawnTarget();
+                    this.emitTick();
                 }
             });
         }
