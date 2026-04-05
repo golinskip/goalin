@@ -55,8 +55,10 @@ domain/
             │   └── VolleyballController.php
             ├── Serve/            # Volleyball serve — toss + run + jump + hit, max distance
             │   └── ServeController.php
-            └── AimTrainer/       # Aim trainer — click targets in 30s, max hits
-                └── AimTrainerController.php
+            ├── AimTrainer/       # Aim trainer — click targets in 30s, max hits
+            │   └── AimTrainerController.php
+            └── Memory/           # Memory sequence — pick 5 memorized symbols from 4×4 grid
+                └── MemoryController.php
 ```
 
 ## Adding New Games

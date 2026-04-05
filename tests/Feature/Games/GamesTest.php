@@ -69,6 +69,19 @@ test('games index uses min for volleyball where shorter is better', function () 
     );
 });
 
+test('authenticated users can visit the memory game page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->get(route('games.memory'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('tools/games/memory/index')
+        ->has('recent')
+    );
+});
+
 test('authenticated users can visit the aim trainer page', function () {
     $user = User::factory()->create();
     $this->actingAs($user);

@@ -7,6 +7,7 @@ use Domain\Tools\Games\Controllers\GameResultController;
 use Domain\Tools\Games\Controllers\GamesController;
 use Domain\Tools\Games\Games\Addition\AdditionController;
 use Domain\Tools\Games\Games\AimTrainer\AimTrainerController;
+use Domain\Tools\Games\Games\Memory\MemoryController;
 use Domain\Tools\Games\Games\Reflex\ReflexController;
 use Domain\Tools\Games\Games\Serve\ServeController;
 use Domain\Tools\Games\Games\Volleyball\VolleyballController;
@@ -89,6 +90,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('games/volleyball', VolleyballController::class)->name('games.volleyball');
     Route::get('games/serve', ServeController::class)->name('games.serve');
     Route::get('games/aim-trainer', AimTrainerController::class)->name('games.aim-trainer');
+    Route::get('games/memory', MemoryController::class)->name('games.memory');
     Route::post('games/results', [GameResultController::class, 'store'])->name('games.results.store');
 
     Route::post('playlists', [PlaylistController::class, 'store'])->name('playlists.store');

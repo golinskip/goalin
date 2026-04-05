@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { Crosshair, Gamepad2, Plus, Send, Volleyball as VolleyballIcon, Zap } from 'lucide-react';
+import { Brain, Crosshair, Gamepad2, Plus, Send, Volleyball as VolleyballIcon, Zap } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -20,6 +20,7 @@ export default function GamesIndex({ bestResults }: Props) {
     const volleyballBest = bestResults.volleyball;
     const serveBest = bestResults.serve;
     const aimBest = bestResults.aim_trainer;
+    const memoryBest = bestResults.memory;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -136,6 +137,27 @@ export default function GamesIndex({ bestResults }: Props) {
                             <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
                                 <span>Best: <strong className="text-foreground">{aimBest.best_result.toFixed(0)} hits</strong></span>
                                 <span>Plays: <strong className="text-foreground">{aimBest.plays}</strong></span>
+                            </div>
+                        )}
+                    </Link>
+
+                    <Link
+                        href="/games/memory"
+                        className="group rounded-xl border border-purple-200/80 bg-white/70 p-5 shadow-sm transition-all hover:shadow-md dark:border-purple-800/50 dark:bg-black/40"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="flex size-10 items-center justify-center rounded-lg bg-purple-500/15 transition-colors group-hover:bg-purple-500/25">
+                                <Brain className="size-5 text-purple-600 dark:text-purple-400" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="font-semibold">Memory Sequence</p>
+                                <p className="text-sm text-muted-foreground">Memorize 5 symbols, pick them from a 4×4 grid in order</p>
+                            </div>
+                        </div>
+                        {memoryBest && (
+                            <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
+                                <span>Best: <strong className="text-foreground">{memoryBest.best_result.toFixed(0)} / 5</strong></span>
+                                <span>Plays: <strong className="text-foreground">{memoryBest.plays}</strong></span>
                             </div>
                         )}
                     </Link>
