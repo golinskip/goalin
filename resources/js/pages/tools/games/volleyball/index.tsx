@@ -337,7 +337,7 @@ export default function VolleyballGame({ recent, best }: Props) {
                 setResults((prev) =>
                     [{ id: data.id, result: data.result, played_at: data.played_at }, ...prev].slice(0, 10),
                 );
-                setBestResult((prev) => (prev === null || distance > prev ? distance : prev));
+                setBestResult((prev) => (prev === null || distance < prev ? distance : prev));
             }
         } finally {
             setSaving(false);
@@ -390,7 +390,7 @@ export default function VolleyballGame({ recent, best }: Props) {
                             Volleyball Spike
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Toss, jump, swing your arm. Spike the ball over the net — low spikes get blocked.
+                            Toss, jump, swing. Land the ball as close to the net as possible on the other side.
                         </p>
                     </div>
                     <Link
@@ -411,7 +411,7 @@ export default function VolleyballGame({ recent, best }: Props) {
 
                     <div className="flex flex-col gap-4">
                         <div className="rounded-xl border border-border bg-white/70 p-4 shadow-sm dark:bg-black/40">
-                            <p className="text-xs uppercase tracking-wider text-muted-foreground">Longest Spike</p>
+                            <p className="text-xs uppercase tracking-wider text-muted-foreground">Shortest Spike</p>
                             <p className="mt-1 text-3xl font-bold">
                                 {bestResult !== null ? `${bestResult.toFixed(0)}` : '—'}
                             </p>

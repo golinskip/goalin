@@ -41,14 +41,30 @@ test('games index uses max for games where higher is better', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    GameResult::factory()->for($user)->create(['game' => 'volleyball', 'result' => 150]);
-    GameResult::factory()->for($user)->create(['game' => 'volleyball', 'result' => 320.5]);
+    GameResult::factory()->for($user)->create(['game' => 'serve', 'result' => 150]);
+    GameResult::factory()->for($user)->create(['game' => 'serve', 'result' => 320.5]);
+    GameResult::factory()->for($user)->create(['game' => 'serve', 'result' => 210]);
+
+    $response = $this->get(route('games.index'));
+
+    $response->assertInertia(fn ($page) => $page
+        ->where('bestResults.serve.best_result', 320.5)
+        ->where('bestResults.serve.plays', 3)
+    );
+});
+
+test('games index uses min for volleyball where shorter is better', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    GameResult::factory()->for($user)->create(['game' => 'volleyball', 'result' => 150.5]);
+    GameResult::factory()->for($user)->create(['game' => 'volleyball', 'result' => 80.25]);
     GameResult::factory()->for($user)->create(['game' => 'volleyball', 'result' => 210]);
 
     $response = $this->get(route('games.index'));
 
     $response->assertInertia(fn ($page) => $page
-        ->where('bestResults.volleyball.best_result', 320.5)
+        ->where('bestResults.volleyball.best_result', 80.25)
         ->where('bestResults.volleyball.plays', 3)
     );
 });

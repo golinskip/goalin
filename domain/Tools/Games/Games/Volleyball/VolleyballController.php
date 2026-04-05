@@ -24,7 +24,7 @@ class VolleyballController extends Controller
 
         $best = $request->user()->gameResults()
             ->where('game', 'volleyball')
-            ->max('result');
+            ->min('result');
 
         return Inertia::render('tools/games/volleyball/index', [
             'recent' => $recent,

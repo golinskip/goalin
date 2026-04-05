@@ -87,12 +87,12 @@ export default function GamesIndex({ bestResults }: Props) {
                             </div>
                             <div className="flex-1">
                                 <p className="font-semibold">Volleyball Spike</p>
-                                <p className="text-sm text-muted-foreground">Jump and spike the falling ball as far as you can</p>
+                                <p className="text-sm text-muted-foreground">Spike the ball close to the net on the other side</p>
                             </div>
                         </div>
                         {volleyballBest && (
                             <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
-                                <span>Longest: <strong className="text-foreground">{volleyballBest.best_result.toFixed(0)}</strong></span>
+                                <span>Closest: <strong className="text-foreground">{volleyballBest.best_result.toFixed(0)}</strong></span>
                                 <span>Plays: <strong className="text-foreground">{volleyballBest.plays}</strong></span>
                             </div>
                         )}

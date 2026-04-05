@@ -41,6 +41,7 @@ const ARM_SWING_MS = 260;
 const MAX_TOSS_MS = 900;
 const MIN_TOSS_VY = -280;
 const MAX_TOSS_VY = -720;
+const TOSS_VX = 220;
 
 function getXsrfToken(): string {
     const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
@@ -183,7 +184,7 @@ function createServeScene(
             const held = Phaser.Math.Clamp(this.time.now - this.chargeStart, 0, MAX_TOSS_MS);
             const power = held / MAX_TOSS_MS;
             this.ballVy = Phaser.Math.Linear(MIN_TOSS_VY, MAX_TOSS_VY, power);
-            this.ballVx = 60;
+            this.ballVx = TOSS_VX;
             this.state = 'tossed';
             this.powerBarBg.setVisible(false);
             this.powerBar.setVisible(false);
@@ -434,7 +435,7 @@ export default function ServeGame({ recent, best }: Props) {
                             Volleyball Serve
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Hold to charge the toss, then click to run, jump, and swing. Serve it over the net.
+                            Hold to charge toss height — the ball flies toward the net. Then click to run, jump, and swing.
                         </p>
                     </div>
                     <Link
