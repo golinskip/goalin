@@ -14,7 +14,7 @@ class GamesController extends Controller
     {
         $user = $request->user();
 
-        $higherIsBetter = ['volleyball'];
+        $higherIsBetter = ['volleyball', 'serve'];
 
         $bestResults = $user->gameResults()
             ->selectRaw('game, MIN(result) as min_result, MAX(result) as max_result, COUNT(*) as plays')

@@ -53,6 +53,19 @@ test('games index uses max for games where higher is better', function () {
     );
 });
 
+test('authenticated users can visit the serve game page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->get(route('games.serve'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('tools/games/serve/index')
+        ->has('recent')
+    );
+});
+
 test('authenticated users can visit the volleyball game page', function () {
     $user = User::factory()->create();
     $this->actingAs($user);

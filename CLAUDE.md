@@ -51,8 +51,10 @@ domain/
             │   └── ReflexController.php
             ├── Addition/         # Addition speed — add two 2-digit numbers
             │   └── AdditionController.php
-            └── Volleyball/       # Volleyball spike — jump & hit falling ball, max distance
-                └── VolleyballController.php
+            ├── Volleyball/       # Volleyball spike — jump & hit falling ball, max distance
+            │   └── VolleyballController.php
+            └── Serve/            # Volleyball serve — toss + run + jump + hit, max distance
+                └── ServeController.php
 ```
 
 ## Adding New Games
