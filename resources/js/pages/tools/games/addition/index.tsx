@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { GameFullscreenWrapper } from '@/components/game-fullscreen-wrapper';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -137,9 +138,11 @@ export default function AdditionGame({ recent, best }: Props) {
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-[auto,1fr]">
-                    <div className="mx-auto w-full max-w-md">
+                    <GameFullscreenWrapper>
+                        {(isFullscreen) => (
+                    <div className={`mx-auto w-full max-w-md ${isFullscreen ? 'flex items-center justify-center' : ''}`}>
                         <div
-                            className={`flex flex-col items-center gap-6 rounded-xl border p-8 shadow-sm transition-colors ${
+                            className={`flex w-full flex-col items-center gap-6 rounded-xl border p-8 shadow-sm transition-colors ${
                                 error
                                     ? 'border-red-400 bg-red-50 dark:bg-red-950/40'
                                     : 'border-border bg-white/70 dark:bg-black/40'
@@ -208,6 +211,8 @@ export default function AdditionGame({ recent, best }: Props) {
                             )}
                         </div>
                     </div>
+                        )}
+                    </GameFullscreenWrapper>
 
                     <div className="flex flex-col gap-4">
                         <div className="rounded-xl border border-border bg-white/70 p-4 shadow-sm dark:bg-black/40">

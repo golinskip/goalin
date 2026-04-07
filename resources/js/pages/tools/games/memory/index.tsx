@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Brain } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { GameFullscreenWrapper } from '@/components/game-fullscreen-wrapper';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -161,7 +162,9 @@ export default function MemoryGame({ recent, best }: Props) {
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-[auto,1fr]">
-                    <div className="mx-auto flex flex-col items-center gap-4">
+                    <GameFullscreenWrapper>
+                        {(isFullscreen) => (
+                    <div className={`mx-auto flex flex-col items-center gap-4 ${isFullscreen ? 'justify-center' : ''}`}>
                         {state === 'idle' && (
                             <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-white/70 p-8 shadow-sm dark:bg-black/40">
                                 <p className="text-center text-muted-foreground">
@@ -259,6 +262,8 @@ export default function MemoryGame({ recent, best }: Props) {
                             </div>
                         )}
                     </div>
+                        )}
+                    </GameFullscreenWrapper>
 
                     <div className="flex flex-col gap-4">
                         <div className="rounded-xl border border-border bg-white/70 p-4 shadow-sm dark:bg-black/40">

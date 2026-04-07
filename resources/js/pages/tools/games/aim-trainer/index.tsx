@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Crosshair } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { GameFullscreenWrapper } from '@/components/game-fullscreen-wrapper';
 import type PhaserNamespace from 'phaser';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -233,11 +234,18 @@ export default function AimTrainerGame({ recent, best }: Props) {
                             <span>Hits: <strong>{hits}</strong></span>
                             <span>Time: <strong>{secondsLeft}s</strong></span>
                         </div>
-                        <div
-                            ref={containerRef}
-                            className="mx-auto w-full overflow-hidden rounded-xl border border-border shadow-sm"
-                            style={{ maxWidth: GAME_WIDTH, aspectRatio: `${GAME_WIDTH} / ${GAME_HEIGHT}` }}
-                        />
+                        <GameFullscreenWrapper>
+                            {(isFullscreen) => (
+                                <div
+                                    ref={containerRef}
+                                    className="mx-auto w-full overflow-hidden rounded-xl border border-border shadow-sm"
+                                    style={isFullscreen
+                                        ? { width: '100%', height: '100%' }
+                                        : { maxWidth: GAME_WIDTH, aspectRatio: `${GAME_WIDTH} / ${GAME_HEIGHT}` }
+                                    }
+                                />
+                            )}
+                        </GameFullscreenWrapper>
                     </div>
 
                     <div className="flex flex-col gap-4">

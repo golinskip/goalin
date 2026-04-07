@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { GameFullscreenWrapper } from '@/components/game-fullscreen-wrapper';
 import type PhaserNamespace from 'phaser';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -219,11 +220,18 @@ export default function ReflexGame({ recent, best }: Props) {
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-[auto,1fr]">
-                    <div
-                        ref={containerRef}
-                        className="mx-auto w-full overflow-hidden rounded-xl border border-border shadow-sm"
-                        style={{ maxWidth: GAME_WIDTH, aspectRatio: `${GAME_WIDTH} / ${GAME_HEIGHT}` }}
-                    />
+                    <GameFullscreenWrapper>
+                        {(isFullscreen) => (
+                            <div
+                                ref={containerRef}
+                                className="mx-auto w-full overflow-hidden rounded-xl border border-border shadow-sm"
+                                style={isFullscreen
+                                    ? { width: '100%', height: '100%' }
+                                    : { maxWidth: GAME_WIDTH, aspectRatio: `${GAME_WIDTH} / ${GAME_HEIGHT}` }
+                                }
+                            />
+                        )}
+                    </GameFullscreenWrapper>
 
                     <div className="flex flex-col gap-4">
                         <div className="rounded-xl border border-border bg-white/70 p-4 shadow-sm dark:bg-black/40">
