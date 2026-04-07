@@ -82,6 +82,7 @@ function isAudioFile(file: File): boolean {
 export default function MusicLibrary({ musicFiles, playlists, maxFileSize, suggestedTags, availableTags }: Props) {
     const [editingFile, setEditingFile] = useState<MusicFileType | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [filterTags, setFilterTags] = useState<string[]>([]);
     const [isDragging, setIsDragging] = useState(false);
     const [pendingFiles, setPendingFiles] = useState<File[]>([]);
     const [rejectedFiles, setRejectedFiles] = useState<{ name: string; reason: string }[]>([]);
@@ -295,13 +296,32 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
         router.post(`/playlists/${playlistId}/tracks`, { music_file_id: musicFileId }, { preserveScroll: true });
     }, []);
 
+    const toggleFilterTag = useCallback((tag: string) => {
+        setFilterTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
+    }, []);
+
+    const removeFilterTag = useCallback((tag: string) => {
+        setFilterTags((prev) => prev.filter((t) => t !== tag));
+    }, []);
+
+    const usedTags = useMemo(() => {
+        const set = new Set<string>();
+        musicFiles.data.forEach((f) => f.tags.forEach((t) => set.add(t)));
+        return Array.from(set).sort();
+    }, [musicFiles.data]);
+
     const filteredFiles = useMemo(() => {
-        if (!searchQuery.trim()) return musicFiles.data;
-        const q = searchQuery.toLowerCase();
-        return musicFiles.data.filter(
-            (f) => f.title.toLowerCase().includes(q) || (f.artist && f.artist.toLowerCase().includes(q)) || f.tags.some((t) => t.toLowerCase().includes(q)),
-        );
-    }, [musicFiles.data, searchQuery]);
+        return musicFiles.data.filter((f) => {
+            if (filterTags.length > 0 && !filterTags.every((t) => f.tags.includes(t))) {
+                return false;
+            }
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase();
+                return f.title.toLowerCase().includes(q) || (f.artist && f.artist.toLowerCase().includes(q)) || f.tags.some((t) => t.toLowerCase().includes(q));
+            }
+            return true;
+        });
+    }, [musicFiles.data, searchQuery, filterTags]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -353,6 +373,51 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
                             </div>
                         )}
                     </div>
+
+                    {/* Tag Filter */}
+                    {usedTags.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Tag className="size-3.5 text-muted-foreground/50" />
+                            {usedTags.map((tag) => {
+                                const active = filterTags.includes(tag);
+                                return (
+                                    <button
+                                        key={tag}
+                                        type="button"
+                                        onClick={() => toggleFilterTag(tag)}
+                                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                                            active
+                                                ? 'bg-pink-500 text-white'
+                                                : 'bg-pink-500/10 text-pink-700 hover:bg-pink-500/20 dark:text-pink-300'
+                                        }`}
+                                    >
+                                        {tag}
+                                        {active && (
+                                            <span
+                                                role="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    removeFilterTag(tag);
+                                                }}
+                                                className="ml-0.5 rounded-full p-0.5 hover:bg-white/20"
+                                            >
+                                                <X className="size-3" />
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                            {filterTags.length > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setFilterTags([])}
+                                    className="text-xs text-muted-foreground hover:text-foreground"
+                                >
+                                    Clear filters
+                                </button>
+                            )}
+                        </div>
+                    )}
 
                     {/* Drop Zone / Upload Area */}
                     <div
@@ -640,12 +705,21 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
                                                         <>
                                                             <span className="text-muted-foreground/30">&middot;</span>
                                                             {file.tags.map((tag) => (
-                                                                <span
+                                                                <button
                                                                     key={tag}
-                                                                    className="rounded-full bg-pink-500/10 px-1.5 py-0.5 text-[10px] font-medium text-pink-600 dark:text-pink-400"
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        toggleFilterTag(tag);
+                                                                    }}
+                                                                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
+                                                                        filterTags.includes(tag)
+                                                                            ? 'bg-pink-500 text-white'
+                                                                            : 'bg-pink-500/10 text-pink-600 hover:bg-pink-500/20 dark:text-pink-400'
+                                                                    }`}
                                                                 >
                                                                     {tag}
-                                                                </span>
+                                                                </button>
                                                             ))}
                                                         </>
                                                     )}
