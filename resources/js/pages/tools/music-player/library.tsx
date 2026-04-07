@@ -296,6 +296,14 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
         router.post(`/playlists/${playlistId}/tracks`, { music_file_id: musicFileId }, { preserveScroll: true });
     }, []);
 
+    const detachTag = useCallback((fileId: number, file: MusicFileType, tag: string) => {
+        router.put(`/music/${fileId}`, {
+            title: file.title,
+            artist: file.artist ?? '',
+            tags: file.tags.filter((t) => t !== tag),
+        }, { preserveScroll: true });
+    }, []);
+
     const toggleFilterTag = useCallback((tag: string) => {
         setFilterTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
     }, []);
@@ -705,21 +713,23 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
                                                         <>
                                                             <span className="text-muted-foreground/30">&middot;</span>
                                                             {file.tags.map((tag) => (
-                                                                <button
+                                                                <span
                                                                     key={tag}
-                                                                    type="button"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        toggleFilterTag(tag);
-                                                                    }}
-                                                                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
-                                                                        filterTags.includes(tag)
-                                                                            ? 'bg-pink-500 text-white'
-                                                                            : 'bg-pink-500/10 text-pink-600 hover:bg-pink-500/20 dark:text-pink-400'
-                                                                    }`}
+                                                                    className="inline-flex items-center gap-0.5 rounded-full bg-pink-500/10 py-0.5 pr-0.5 pl-1.5 text-[10px] font-medium text-pink-600 dark:text-pink-400"
                                                                 >
                                                                     {tag}
-                                                                </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            detachTag(file.id, file, tag);
+                                                                        }}
+                                                                        className="rounded-full p-0.5 hover:bg-pink-500/20"
+                                                                        title={`Remove "${tag}" tag`}
+                                                                    >
+                                                                        <X className="size-2.5" />
+                                                                    </button>
+                                                                </span>
                                                             ))}
                                                         </>
                                                     )}
