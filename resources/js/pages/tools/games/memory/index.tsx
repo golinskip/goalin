@@ -182,11 +182,11 @@ export default function MemoryGame({ recent, best }: Props) {
                                 <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                                     Memorize ({memorizeLeft}s)
                                 </p>
-                                <div className="flex gap-3">
+                                <div className="flex gap-2 sm:gap-3">
                                     {sequence.map((symbol, i) => (
                                         <div
                                             key={i}
-                                            className="flex size-16 items-center justify-center rounded-lg border border-border bg-background text-3xl"
+                                            className="flex size-12 items-center justify-center rounded-lg border border-border bg-background text-2xl sm:size-16 sm:text-3xl"
                                         >
                                             {symbol}
                                         </div>
@@ -194,7 +194,7 @@ export default function MemoryGame({ recent, best }: Props) {
                                 </div>
                                 <div className="flex gap-2 text-xs text-muted-foreground">
                                     {sequence.map((_, i) => (
-                                        <span key={i} className="w-16 text-center">#{i + 1}</span>
+                                        <span key={i} className="w-12 text-center sm:w-16">#{i + 1}</span>
                                     ))}
                                 </div>
                             </div>
@@ -205,7 +205,7 @@ export default function MemoryGame({ recent, best }: Props) {
                                 <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                                     Pick symbol #{currentRound + 1} of {SEQUENCE_LENGTH}
                                 </p>
-                                <div className="grid grid-cols-4 gap-2">
+                                <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
                                     {gridOrder.map((symbol, i) => {
                                         const isFeedback = feedback && feedback.index === i;
                                         return (
@@ -214,7 +214,7 @@ export default function MemoryGame({ recent, best }: Props) {
                                                 type="button"
                                                 onClick={() => handlePick(symbol)}
                                                 disabled={!!feedback}
-                                                className={`flex size-16 items-center justify-center rounded-lg border text-3xl transition-colors ${
+                                                className={`flex size-12 items-center justify-center rounded-lg border text-2xl transition-colors sm:size-16 sm:text-3xl ${
                                                     isFeedback
                                                         ? feedback.correct
                                                             ? 'border-green-500 bg-green-100 dark:bg-green-900/40'
@@ -239,11 +239,11 @@ export default function MemoryGame({ recent, best }: Props) {
                                     Finished
                                 </p>
                                 <p className="font-mono text-5xl font-bold">{score} / {SEQUENCE_LENGTH}</p>
-                                <div className="flex gap-2">
+                                <div className="flex gap-1.5 sm:gap-2">
                                     {sequence.map((symbol, i) => (
                                         <div
                                             key={i}
-                                            className="flex size-12 items-center justify-center rounded-lg border border-border bg-background text-2xl"
+                                            className="flex size-10 items-center justify-center rounded-lg border border-border bg-background text-xl sm:size-12 sm:text-2xl"
                                         >
                                             {symbol}
                                         </div>

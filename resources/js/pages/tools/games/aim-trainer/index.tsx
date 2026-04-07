@@ -183,9 +183,13 @@ export default function AimTrainerGame({ recent, best }: Props) {
 
             gameRef.current = new Phaser.Game({
                 type: Phaser.AUTO,
-                width: GAME_WIDTH,
-                height: GAME_HEIGHT,
-                parent: containerRef.current,
+                scale: {
+                    mode: Phaser.Scale.FIT,
+                    parent: containerRef.current,
+                    autoCenter: Phaser.Scale.CENTER_HORIZONTALLY,
+                    width: GAME_WIDTH,
+                    height: GAME_HEIGHT,
+                },
                 backgroundColor: '#0f172a',
                 scene,
             });
@@ -231,8 +235,8 @@ export default function AimTrainerGame({ recent, best }: Props) {
                         </div>
                         <div
                             ref={containerRef}
-                            className="mx-auto overflow-hidden rounded-xl border border-border shadow-sm"
-                            style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}
+                            className="mx-auto w-full overflow-hidden rounded-xl border border-border shadow-sm"
+                            style={{ maxWidth: GAME_WIDTH, aspectRatio: `${GAME_WIDTH} / ${GAME_HEIGHT}` }}
                         />
                     </div>
 
