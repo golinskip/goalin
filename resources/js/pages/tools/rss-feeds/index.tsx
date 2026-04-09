@@ -1,5 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { CalendarDays, ChevronDown, ExternalLink, Loader2, Plus, RefreshCw, Rss, Trash2, X } from 'lucide-react';
+import { CalendarDays, Check, ChevronDown, Circle, ExternalLink, Loader2, Plus, RefreshCw, Rss, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,6 +32,7 @@ type Article = {
     description: string | null;
     author: string | null;
     published_at: string | null;
+    read_at: string | null;
     feed_name: string;
     feed_color: string;
 };
@@ -140,6 +141,14 @@ export default function RssFeeds({ feeds, articles, currentFeedId, filters }: Pr
 
     const handleDateToChange = (value: string) => {
         navigate({ date_to: value || null, today: false });
+    };
+
+    const handleToggleRead = (e: React.MouseEvent, articleId: number) => {
+        e.preventDefault();
+        e.stopPropagation();
+        router.post(`/rss-articles/${articleId}/toggle-read`, {}, {
+            preserveScroll: true,
+        });
     };
 
     const formatDate = (dateStr: string | null) => {
@@ -356,35 +365,49 @@ export default function RssFeeds({ feeds, articles, currentFeedId, filters }: Pr
                 ) : (
                     <div className="space-y-3">
                         {articles.map((article) => (
-                            <a
-                                key={article.id}
-                                href={article.link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="group block rounded-lg border bg-card p-4 transition-colors hover:bg-accent/50"
-                            >
-                                <div className="mb-1.5 flex items-center gap-2 text-xs text-muted-foreground">
-                                    <span className="size-2 rounded-full" style={{ backgroundColor: article.feed_color }} />
-                                    <span>{article.feed_name}</span>
-                                    {article.author && (
-                                        <>
-                                            <span className="text-muted-foreground/40">·</span>
-                                            <span>{article.author}</span>
-                                        </>
+                            <div key={article.id} className="group relative flex items-start gap-3">
+                                <button
+                                    onClick={(e) => handleToggleRead(e, article.id)}
+                                    className="mt-4 shrink-0 p-0.5"
+                                    title={article.read_at ? 'Mark as unread' : 'Mark as read'}
+                                >
+                                    {article.read_at ? (
+                                        <Check className="size-4 text-green-500" />
+                                    ) : (
+                                        <Circle className="size-4 fill-orange-400 text-orange-400" />
                                     )}
-                                    {article.published_at && (
-                                        <>
-                                            <span className="text-muted-foreground/40">·</span>
-                                            <span>{formatDate(article.published_at)}</span>
-                                        </>
+                                </button>
+                                <a
+                                    href={article.link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`block flex-1 rounded-lg border p-4 transition-colors hover:bg-accent/50 ${
+                                        article.read_at ? 'bg-muted/30 opacity-60' : 'bg-card'
+                                    }`}
+                                >
+                                    <div className="mb-1.5 flex items-center gap-2 text-xs text-muted-foreground">
+                                        <span className="size-2 rounded-full" style={{ backgroundColor: article.feed_color }} />
+                                        <span>{article.feed_name}</span>
+                                        {article.author && (
+                                            <>
+                                                <span className="text-muted-foreground/40">·</span>
+                                                <span>{article.author}</span>
+                                            </>
+                                        )}
+                                        {article.published_at && (
+                                            <>
+                                                <span className="text-muted-foreground/40">·</span>
+                                                <span>{formatDate(article.published_at)}</span>
+                                            </>
+                                        )}
+                                        <ExternalLink className="ml-auto size-3 opacity-0 transition-opacity group-hover:opacity-100" />
+                                    </div>
+                                    <h3 className={`leading-snug ${article.read_at ? 'font-medium' : 'font-semibold'}`}>{article.title}</h3>
+                                    {article.description && (
+                                        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{article.description}</p>
                                     )}
-                                    <ExternalLink className="ml-auto size-3 opacity-0 transition-opacity group-hover:opacity-100" />
-                                </div>
-                                <h3 className="font-semibold leading-snug">{article.title}</h3>
-                                {article.description && (
-                                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{article.description}</p>
-                                )}
-                            </a>
+                                </a>
+                            </div>
                         ))}
 
                         {articles.length === 0 && feeds.length > 0 && (

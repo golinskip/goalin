@@ -101,6 +101,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('rss-feeds/{rss_feed}', [RssFeedController::class, 'destroy'])->name('rss-feeds.destroy');
     Route::post('rss-feeds/{rss_feed}/refresh', [RssFeedController::class, 'refresh'])->name('rss-feeds.refresh');
     Route::post('rss-feeds/refresh-all', [RssFeedController::class, 'refreshAll'])->name('rss-feeds.refresh-all');
+    Route::post('rss-articles/{rss_article}/toggle-read', [RssFeedController::class, 'toggleRead'])->name('rss-articles.toggle-read');
 
     Route::post('playlists', [PlaylistController::class, 'store'])->name('playlists.store');
     Route::get('playlists/{playlist}', [PlaylistController::class, 'show'])->name('playlists.show');

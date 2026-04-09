@@ -237,3 +237,39 @@ test('users cannot see other users feeds', function () {
 
     $response->assertInertia(fn ($page) => $page->has('feeds', 0));
 });
+
+test('users can mark an article as read', function () {
+    $user = User::factory()->create();
+    $feed = RssFeed::factory()->for($user)->create();
+    $article = RssArticle::factory()->for($feed, 'feed')->create(['read_at' => null]);
+    $this->actingAs($user);
+
+    $response = $this->post(route('rss-articles.toggle-read', $article));
+
+    $response->assertRedirect();
+    $this->assertNotNull($article->fresh()->read_at);
+});
+
+test('users can mark a read article as unread', function () {
+    $user = User::factory()->create();
+    $feed = RssFeed::factory()->for($user)->create();
+    $article = RssArticle::factory()->for($feed, 'feed')->create(['read_at' => now()]);
+    $this->actingAs($user);
+
+    $response = $this->post(route('rss-articles.toggle-read', $article));
+
+    $response->assertRedirect();
+    $this->assertNull($article->fresh()->read_at);
+});
+
+test('users cannot toggle read on another users article', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $feed = RssFeed::factory()->for($otherUser)->create();
+    $article = RssArticle::factory()->for($feed, 'feed')->create();
+    $this->actingAs($user);
+
+    $response = $this->post(route('rss-articles.toggle-read', $article));
+
+    $response->assertForbidden();
+});

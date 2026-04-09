@@ -3,6 +3,7 @@
 namespace Domain\Tools\RssFeeds\Controllers;
 
 use App\Http\Controllers\Controller;
+use Domain\Tools\RssFeeds\Models\RssArticle;
 use Domain\Tools\RssFeeds\Models\RssFeed;
 use Domain\Tools\RssFeeds\Requests\StoreRssFeedRequest;
 use Domain\Tools\RssFeeds\Requests\UpdateRssFeedRequest;
@@ -148,5 +149,18 @@ class RssFeedController extends Controller
         }
 
         return to_route('rss-feeds.index');
+    }
+
+    public function toggleRead(Request $request, RssArticle $rssArticle): RedirectResponse
+    {
+        $feed = $rssArticle->feed;
+
+        abort_unless($feed->user_id === $request->user()->id, 403);
+
+        $rssArticle->update([
+            'read_at' => $rssArticle->read_at ? null : now(),
+        ]);
+
+        return back();
     }
 }

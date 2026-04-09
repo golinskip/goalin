@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['title', 'link', 'description', 'author', 'guid', 'published_at'])]
+#[Fillable(['title', 'link', 'description', 'author', 'guid', 'published_at', 'read_at'])]
 class RssArticle extends Model
 {
     /** @use HasFactory<RssArticleFactory> */
@@ -18,6 +18,7 @@ class RssArticle extends Model
     {
         return [
             'published_at' => 'datetime',
+            'read_at' => 'datetime',
         ];
     }
 
