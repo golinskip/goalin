@@ -1,7 +1,14 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { CalendarDays, ExternalLink, Loader2, Plus, RefreshCw, Rss, Trash2, X } from 'lucide-react';
+import { CalendarDays, ChevronDown, ExternalLink, Loader2, Plus, RefreshCw, Rss, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
@@ -61,6 +68,8 @@ export default function RssFeeds({ feeds, articles, currentFeedId, filters }: Pr
     const [refreshingFeedId, setRefreshingFeedId] = useState<number | null>(null);
     const [refreshingAll, setRefreshingAll] = useState(false);
     const sentinelRef = useRef<HTMLDivElement>(null);
+
+    const selectedFeed = currentFeedId ? feeds.find((f) => f.id === currentFeedId) ?? null : null;
 
     const addForm = useForm<{ feed_url: string; name: string; color: string }>({
         feed_url: '',
@@ -292,50 +301,75 @@ export default function RssFeeds({ feeds, articles, currentFeedId, filters }: Pr
                     </div>
                 )}
 
-                {/* Feed Filter Pills */}
+                {/* Feed Filter Dropdown */}
                 {feeds.length > 0 && (
-                    <div className="mb-4 flex flex-wrap gap-2">
-                        <button
-                            onClick={() => handleFilterFeed(null)}
-                            className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
-                                !currentFeedId
-                                    ? 'bg-foreground text-background'
-                                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                            }`}
-                        >
-                            All ({feeds.reduce((sum, f) => sum + f.articles_count, 0)})
-                        </button>
-                        {feeds.map((feed) => (
-                            <div key={feed.id} className="group relative flex items-center">
-                                <button
-                                    onClick={() => handleFilterFeed(feed.id)}
-                                    className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium transition-colors ${
-                                        currentFeedId === feed.id
-                                            ? 'bg-foreground text-background'
-                                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                                    }`}
+                    <div className="mb-4 flex items-center gap-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm" className="gap-2">
+                                    {selectedFeed ? (
+                                        <>
+                                            <span className="size-2.5 rounded-full" style={{ backgroundColor: selectedFeed.color }} />
+                                            {selectedFeed.name}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Rss className="size-3.5" />
+                                            All Feeds
+                                        </>
+                                    )}
+                                    <ChevronDown className="size-3.5 opacity-50" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-56">
+                                <DropdownMenuItem
+                                    onClick={() => handleFilterFeed(null)}
+                                    className="gap-2"
                                 >
-                                    <span className="size-2 rounded-full" style={{ backgroundColor: feed.color }} />
-                                    {feed.name} ({feed.articles_count})
-                                </button>
-                                <div className="ml-0.5 hidden items-center gap-0.5 group-hover:flex">
-                                    <button
-                                        onClick={() => handleRefreshFeed(feed.id)}
-                                        className="rounded p-0.5 text-muted-foreground hover:text-foreground"
-                                        title="Refresh feed"
+                                    <Rss className="size-3.5 text-muted-foreground" />
+                                    All Feeds
+                                    <span className="ml-auto text-xs text-muted-foreground">
+                                        {feeds.reduce((sum, f) => sum + f.articles_count, 0)}
+                                    </span>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                {feeds.map((feed) => (
+                                    <DropdownMenuItem
+                                        key={feed.id}
+                                        onClick={() => handleFilterFeed(feed.id)}
+                                        className="gap-2"
                                     >
-                                        <RefreshCw className={`size-3 ${refreshingFeedId === feed.id ? 'animate-spin' : ''}`} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteFeed(feed.id)}
-                                        className="rounded p-0.5 text-muted-foreground hover:text-destructive"
-                                        title="Remove feed"
-                                    >
-                                        <Trash2 className="size-3" />
-                                    </button>
-                                </div>
+                                        <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: feed.color }} />
+                                        <span className="truncate">{feed.name}</span>
+                                        <span className="ml-auto text-xs text-muted-foreground">{feed.articles_count}</span>
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        {selectedFeed && (
+                            <div className="flex items-center gap-1">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-7"
+                                    onClick={() => handleRefreshFeed(selectedFeed.id)}
+                                    disabled={refreshingFeedId === selectedFeed.id}
+                                    title="Refresh feed"
+                                >
+                                    <RefreshCw className={`size-3.5 ${refreshingFeedId === selectedFeed.id ? 'animate-spin' : ''}`} />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-7 text-muted-foreground hover:text-destructive"
+                                    onClick={() => handleDeleteFeed(selectedFeed.id)}
+                                    title="Remove feed"
+                                >
+                                    <Trash2 className="size-3.5" />
+                                </Button>
                             </div>
-                        ))}
+                        )}
                     </div>
                 )}
 
