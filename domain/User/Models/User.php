@@ -17,6 +17,7 @@ use Domain\Tools\LongTermGoals\Models\GoalPeriod;
 use Domain\Tools\LongTermGoals\Models\LongTermGoal;
 use Domain\Tools\MusicPlayer\Models\MusicFile;
 use Domain\Tools\MusicPlayer\Models\Playlist;
+use Domain\Tools\RssFeeds\Models\RssFeed;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -115,5 +116,10 @@ class User extends Authenticatable
     public function gameResults(): HasMany
     {
         return $this->hasMany(GameResult::class);
+    }
+
+    public function rssFeeds(): HasMany
+    {
+        return $this->hasMany(RssFeed::class);
     }
 }

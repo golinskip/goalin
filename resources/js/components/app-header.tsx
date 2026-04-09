@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, ChevronDown, Compass, Gamepad2, Layers, LayoutGrid, Menu, Music, NotebookPen, Target } from 'lucide-react';
+import { BookOpen, ChevronDown, Compass, Gamepad2, Layers, LayoutGrid, Menu, Music, NotebookPen, Rss, Target } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -63,6 +63,11 @@ const toolsNavItems: NavItem[] = [
         href: musicIndex(),
         icon: Music,
         external: true,
+    },
+    {
+        title: 'RSS Feeds',
+        href: '/rss-feeds',
+        icon: Rss,
     },
     {
         title: 'Games',

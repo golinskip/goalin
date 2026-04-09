@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { BookOpen, Compass, Gamepad2, Layers, Music, NotebookPen, Target } from 'lucide-react';
+import { BookOpen, Compass, Gamepad2, Layers, Music, NotebookPen, Rss, Target } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
@@ -102,6 +102,20 @@ export default function Dashboard() {
                                     </div>
                                 </div>
                             </a>
+                            <Link
+                                href="/rss-feeds"
+                                className="group rounded-xl border border-orange-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm transition-all hover:shadow-md dark:border-orange-800/50 dark:bg-black/40"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="flex size-10 items-center justify-center rounded-lg bg-orange-500/15 transition-colors group-hover:bg-orange-500/25">
+                                        <Rss className="size-5 text-orange-600 dark:text-orange-400" />
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold">RSS Feeds</p>
+                                        <p className="text-sm text-muted-foreground">Subscribe and read news from RSS channels</p>
+                                    </div>
+                                </div>
+                            </Link>
                             <Link
                                 href="/games"
                                 className="group rounded-xl border border-red-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm transition-all hover:shadow-md dark:border-red-800/50 dark:bg-black/40"

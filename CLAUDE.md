@@ -41,6 +41,12 @@ domain/
     │   ├── Controllers/          # MusicFile, Playlist
     │   ├── Requests/             # MusicFile, Playlist form requests
     │   └── Policies/             # MusicFile, Playlist policies
+    ├── RssFeeds/                 # Subdomain: RSS feed subscriptions & article reader
+    │   ├── Models/               # RssFeed, RssArticle
+    │   ├── Controllers/          # RssFeed
+    │   ├── Requests/             # StoreRssFeed, UpdateRssFeed form requests
+    │   ├── Services/             # FeedParserService (RSS 1.0/2.0/Atom parsing)
+    │   └── Policies/             # RssFeed policy
     └── Games/                    # Subdomain: games with shared results tracking
         ├── Models/               # GameResult (shared results table: game, result, played_at)
         ├── Controllers/          # Games (index), GameResult (store results API)

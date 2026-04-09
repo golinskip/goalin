@@ -25,6 +25,8 @@ use Domain\Tools\MusicPlayer\Models\MusicFile;
 use Domain\Tools\MusicPlayer\Models\Playlist;
 use Domain\Tools\MusicPlayer\Policies\MusicFilePolicy;
 use Domain\Tools\MusicPlayer\Policies\PlaylistPolicy;
+use Domain\Tools\RssFeeds\Models\RssFeed;
+use Domain\Tools\RssFeeds\Policies\RssFeedPolicy;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -80,6 +82,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(GoalPeriod::class, GoalPeriodPolicy::class);
         Gate::policy(LongTermGoal::class, LongTermGoalPolicy::class);
         Gate::policy(GameResult::class, GameResultPolicy::class);
+        Gate::policy(RssFeed::class, RssFeedPolicy::class);
     }
 
     /**

@@ -24,6 +24,7 @@ use Domain\Tools\LongTermGoals\Controllers\LongTermGoalController;
 use Domain\Tools\LongTermGoals\Controllers\LongTermGoalsController;
 use Domain\Tools\MusicPlayer\Controllers\MusicFileController;
 use Domain\Tools\MusicPlayer\Controllers\PlaylistController;
+use Domain\Tools\RssFeeds\Controllers\RssFeedController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -92,6 +93,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('games/aim-trainer', AimTrainerController::class)->name('games.aim-trainer');
     Route::get('games/memory', MemoryController::class)->name('games.memory');
     Route::post('games/results', [GameResultController::class, 'store'])->name('games.results.store');
+
+    // RSS Feeds
+    Route::get('rss-feeds', [RssFeedController::class, 'index'])->name('rss-feeds.index');
+    Route::post('rss-feeds', [RssFeedController::class, 'store'])->name('rss-feeds.store');
+    Route::put('rss-feeds/{rss_feed}', [RssFeedController::class, 'update'])->name('rss-feeds.update');
+    Route::delete('rss-feeds/{rss_feed}', [RssFeedController::class, 'destroy'])->name('rss-feeds.destroy');
+    Route::post('rss-feeds/{rss_feed}/refresh', [RssFeedController::class, 'refresh'])->name('rss-feeds.refresh');
+    Route::post('rss-feeds/refresh-all', [RssFeedController::class, 'refreshAll'])->name('rss-feeds.refresh-all');
 
     Route::post('playlists', [PlaylistController::class, 'store'])->name('playlists.store');
     Route::get('playlists/{playlist}', [PlaylistController::class, 'show'])->name('playlists.show');
