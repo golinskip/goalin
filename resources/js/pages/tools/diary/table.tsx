@@ -1,5 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import PageBackground from '@/components/page-background';
 import AppLayout from '@/layouts/app-layout';
 import { index as diaryIndex } from '@/routes/diary';
 import type { BreadcrumbItem } from '@/types';
@@ -31,6 +32,7 @@ function formatDate(dateStr: string): string {
     const day = date.getDate();
     const month = date.toLocaleDateString('en-US', { month: 'short' });
     const weekday = date.toLocaleDateString('en-US', { weekday: 'short' });
+
     return `${weekday}, ${month} ${day}`;
 }
 
@@ -44,10 +46,7 @@ export default function DiaryTable({ year, entries }: Props) {
             <Head title={`Diary ${year} — Table`} />
 
             <div className="relative flex h-full flex-1 flex-col">
-                <div className="pointer-events-none fixed inset-0 z-0">
-                    <img src="/img/background.png" alt="" className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-white/60 dark:bg-black/65" />
-                </div>
+                <PageBackground />
 
                 <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 p-4 lg:p-6">
                     {/* Header */}

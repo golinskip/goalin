@@ -93,3 +93,37 @@ test('changing multiplier recalculates all reward points', function () {
     expect($reward1->refresh()->cost_in_points)->toBe(30);
     expect($reward2->refresh()->cost_in_points)->toBe(77);
 });
+
+test('user can update background', function () {
+    $user = User::factory()->create();
+    UserSetting::factory()->create(['user_id' => $user->id]);
+
+    $backgrounds = collect(glob(public_path('img/backgrounds/*.png')))
+        ->map(fn (string $path) => pathinfo($path, PATHINFO_FILENAME))
+        ->values();
+
+    $this->actingAs($user)
+        ->patch(route('general.update'), [
+            'currency' => 'EUR',
+            'multiplier' => 1.00,
+            'background' => $backgrounds->first(),
+        ])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('general.edit'));
+
+    $user->refresh();
+    expect($user->setting->background)->toBe($backgrounds->first());
+});
+
+test('invalid background is rejected', function () {
+    $user = User::factory()->create();
+    UserSetting::factory()->create(['user_id' => $user->id]);
+
+    $this->actingAs($user)
+        ->patch(route('general.update'), [
+            'currency' => 'EUR',
+            'multiplier' => 1.00,
+            'background' => 'nonexistent_background',
+        ])
+        ->assertSessionHasErrors('background');
+});

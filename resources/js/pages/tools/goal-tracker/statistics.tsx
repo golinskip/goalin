@@ -1,6 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import { BarChart3, CalendarDays, ChevronLeft, ChevronRight, Clock, Flame, Star, Trophy, Zap } from 'lucide-react';
 import { useCallback } from 'react';
+import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { statistics } from '@/routes';
@@ -51,6 +52,7 @@ type Props = {
 function getMonthLabel(month: string): string {
     const [year, m] = month.split('-');
     const date = new Date(parseInt(year), parseInt(m) - 1);
+
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
 
@@ -67,6 +69,7 @@ function getCalendarGrid(month: string): (string | null)[][] {
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${m}-${String(day).padStart(2, '0')}`;
         currentWeek.push(dateStr);
+
         if (currentWeek.length === 7) {
             weeks.push(currentWeek);
             currentWeek = [];
@@ -77,6 +80,7 @@ function getCalendarGrid(month: string): (string | null)[][] {
         while (currentWeek.length < 7) {
             currentWeek.push(null);
         }
+
         weeks.push(currentWeek);
     }
 
@@ -86,6 +90,7 @@ function getCalendarGrid(month: string): (string | null)[][] {
 function shiftMonth(month: string, delta: number): string {
     const [year, m] = month.split('-');
     const date = new Date(parseInt(year), parseInt(m) - 1 + delta, 1);
+
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
@@ -148,10 +153,7 @@ export default function Statistics({
             <Head title="Statistics" />
 
             <div className="relative flex h-full flex-1 flex-col">
-                <div className="pointer-events-none fixed inset-0 z-0">
-                    <img src="/img/background.png" alt="" className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-white/60 dark:bg-black/65" />
-                </div>
+                <PageBackground />
 
                 <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-4 lg:p-6">
                     {/* Overview Stats */}

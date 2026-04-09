@@ -17,12 +17,13 @@ import {
     X,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import InputError from '@/components/input-error';
+import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import InputError from '@/components/input-error';
+import { Spinner } from '@/components/ui/spinner';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -60,20 +61,28 @@ type Props = {
 };
 
 function formatDuration(seconds: number | null): string {
-    if (!seconds) return '--:--';
+    if (!seconds) {
+return '--:--';
+}
+
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
+
     return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 function formatTime(seconds: number): string {
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60);
+
     return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 function formatFileSize(bytes: number): string {
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+    if (bytes < 1024 * 1024) {
+return `${(bytes / 1024).toFixed(0)} KB`;
+}
+
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
@@ -81,8 +90,12 @@ const ACCEPTED_AUDIO_TYPES = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/fla
 const ACCEPTED_EXTENSIONS = ['.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a'];
 
 function isAudioFile(file: File): boolean {
-    if (ACCEPTED_AUDIO_TYPES.includes(file.type)) return true;
+    if (ACCEPTED_AUDIO_TYPES.includes(file.type)) {
+return true;
+}
+
     const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+
     return ACCEPTED_EXTENSIONS.includes(ext);
 }
 
@@ -108,9 +121,13 @@ function Player({
 
     useEffect(() => {
         const audio = audioRef.current;
-        if (!audio || !currentTrack) return;
+
+        if (!audio || !currentTrack) {
+return;
+}
 
         audio.src = `/music/${currentTrack.id}/stream`;
+
         if (isPlaying) {
             audio.play().catch(() => setIsPlaying(false));
         }
@@ -118,7 +135,10 @@ function Player({
 
     useEffect(() => {
         const audio = audioRef.current;
-        if (!audio) return;
+
+        if (!audio) {
+return;
+}
 
         const onTimeUpdate = () => setCurrentTime(audio.currentTime);
         const onDurationChange = () => setDuration(audio.duration || 0);
@@ -143,7 +163,10 @@ function Player({
 
     const togglePlay = useCallback(() => {
         const audio = audioRef.current;
-        if (!audio || !currentTrack) return;
+
+        if (!audio || !currentTrack) {
+return;
+}
 
         if (isPlaying) {
             audio.pause();
@@ -154,16 +177,24 @@ function Player({
     }, [isPlaying, currentTrack]);
 
     const skipPrev = useCallback(() => {
-        if (currentIndex > 0) setCurrentIndex((i) => i - 1);
+        if (currentIndex > 0) {
+setCurrentIndex((i) => i - 1);
+}
     }, [currentIndex]);
 
     const skipNext = useCallback(() => {
-        if (currentIndex < tracks.length - 1) setCurrentIndex((i) => i + 1);
+        if (currentIndex < tracks.length - 1) {
+setCurrentIndex((i) => i + 1);
+}
     }, [currentIndex, tracks.length]);
 
     const seek = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         const audio = audioRef.current;
-        if (!audio || !duration) return;
+
+        if (!audio || !duration) {
+return;
+}
+
         const rect = e.currentTarget.getBoundingClientRect();
         const ratio = (e.clientX - rect.left) / rect.width;
         audio.currentTime = ratio * duration;
@@ -171,7 +202,11 @@ function Player({
 
     const toggleMute = useCallback(() => {
         const audio = audioRef.current;
-        if (!audio) return;
+
+        if (!audio) {
+return;
+}
+
         if (isMuted) {
             audio.volume = volume;
             setIsMuted(false);
@@ -183,7 +218,11 @@ function Player({
 
     const changeVolume = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const audio = audioRef.current;
-        if (!audio) return;
+
+        if (!audio) {
+return;
+}
+
         const v = parseFloat(e.target.value);
         setVolume(v);
         audio.volume = v;
@@ -195,7 +234,9 @@ function Player({
         setIsPlaying(true);
     }, []);
 
-    if (tracks.length === 0) return null;
+    if (tracks.length === 0) {
+return null;
+}
 
     const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
@@ -365,13 +406,18 @@ export default function PlaylistShow({ playlist, tracks, availableFiles, maxFile
 
     const allTagOptions = useMemo(() => {
         const combined = new Set([...suggestedTags, ...availableTags]);
+
         return Array.from(combined);
     }, [suggestedTags, availableTags]);
 
     // Edit tag helpers
     const filteredTagSuggestions = useMemo(() => {
-        if (!tagInput && !showTagSuggestions) return [];
+        if (!tagInput && !showTagSuggestions) {
+return [];
+}
+
         const q = tagInput.toLowerCase();
+
         return allTagOptions.filter(
             (tag) => (!q || tag.toLowerCase().includes(q)) && !editForm.data.tags.includes(tag),
         );
@@ -380,9 +426,11 @@ export default function PlaylistShow({ playlist, tracks, availableFiles, maxFile
     const addTag = useCallback(
         (tag: string) => {
             const trimmed = tag.trim();
+
             if (trimmed && !editForm.data.tags.includes(trimmed)) {
                 editForm.setData('tags', [...editForm.data.tags, trimmed]);
             }
+
             setTagInput('');
             setShowTagSuggestions(false);
             tagInputRef.current?.focus();
@@ -400,8 +448,12 @@ export default function PlaylistShow({ playlist, tracks, availableFiles, maxFile
     function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
         if (e.key === 'Enter') {
             e.preventDefault();
-            if (tagInput.trim()) addTag(tagInput);
+
+            if (tagInput.trim()) {
+addTag(tagInput);
+}
         }
+
         if (e.key === 'Backspace' && !tagInput && editForm.data.tags.length > 0) {
             removeTag(editForm.data.tags[editForm.data.tags.length - 1]);
         }
@@ -409,8 +461,12 @@ export default function PlaylistShow({ playlist, tracks, availableFiles, maxFile
 
     // Upload tag helpers
     const filteredUploadTagSuggestions = useMemo(() => {
-        if (!uploadTagInput && !showUploadTagSuggestions) return [];
+        if (!uploadTagInput && !showUploadTagSuggestions) {
+return [];
+}
+
         const q = uploadTagInput.toLowerCase();
+
         return allTagOptions.filter(
             (tag) => (!q || tag.toLowerCase().includes(q)) && !uploadTags.includes(tag),
         );
@@ -419,9 +475,11 @@ export default function PlaylistShow({ playlist, tracks, availableFiles, maxFile
     const addUploadTag = useCallback(
         (tag: string) => {
             const trimmed = tag.trim();
+
             if (trimmed && !uploadTags.includes(trimmed)) {
                 setUploadTags((prev) => [...prev, trimmed]);
             }
+
             setUploadTagInput('');
             setShowUploadTagSuggestions(false);
             uploadTagInputRef.current?.focus();
@@ -436,8 +494,12 @@ export default function PlaylistShow({ playlist, tracks, availableFiles, maxFile
     function handleUploadTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
         if (e.key === 'Enter') {
             e.preventDefault();
-            if (uploadTagInput.trim()) addUploadTag(uploadTagInput);
+
+            if (uploadTagInput.trim()) {
+addUploadTag(uploadTagInput);
+}
         }
+
         if (e.key === 'Backspace' && !uploadTagInput && uploadTags.length > 0) {
             removeUploadTag(uploadTags[uploadTags.length - 1]);
         }
@@ -464,6 +526,7 @@ export default function PlaylistShow({ playlist, tracks, availableFiles, maxFile
             setPendingFiles((prev) => {
                 const existing = new Set(prev.map((f) => f.name + f.size));
                 const unique = accepted.filter((f) => !existing.has(f.name + f.size));
+
                 return [...prev, ...unique];
             });
         }
@@ -474,7 +537,10 @@ export default function PlaylistShow({ playlist, tracks, availableFiles, maxFile
     }, []);
 
     const handleUpload = useCallback(() => {
-        if (pendingFiles.length === 0 || uploading) return;
+        if (pendingFiles.length === 0 || uploading) {
+return;
+}
+
         setUploading(true);
         setUploadErrors({});
 
@@ -491,7 +557,10 @@ export default function PlaylistShow({ playlist, tracks, availableFiles, maxFile
                 setUploadErrors({});
                 setUploadTags([]);
                 setUploadTagInput('');
-                if (fileInputRef.current) fileInputRef.current.value = '';
+
+                if (fileInputRef.current) {
+fileInputRef.current.value = '';
+}
             },
             onError: (errors) => setUploadErrors(errors),
             onFinish: () => setUploading(false),
@@ -507,14 +576,20 @@ export default function PlaylistShow({ playlist, tracks, availableFiles, maxFile
         e.preventDefault();
         e.stopPropagation();
         dragCounter.current++;
-        if (e.dataTransfer.types.includes('Files')) setIsDragging(true);
+
+        if (e.dataTransfer.types.includes('Files')) {
+setIsDragging(true);
+}
     }, []);
 
     const handleDragLeave = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
         dragCounter.current--;
-        if (dragCounter.current === 0) setIsDragging(false);
+
+        if (dragCounter.current === 0) {
+setIsDragging(false);
+}
     }, []);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -541,7 +616,10 @@ export default function PlaylistShow({ playlist, tracks, availableFiles, maxFile
     const handleAddTrack = useCallback(
         (e: React.FormEvent) => {
             e.preventDefault();
-            if (!selectedFileId) return;
+
+            if (!selectedFileId) {
+return;
+}
 
             addForm.setData('music_file_id', selectedFileId);
 
@@ -558,7 +636,10 @@ export default function PlaylistShow({ playlist, tracks, availableFiles, maxFile
 
     const handleRemoveTrack = useCallback(
         (trackId: number) => {
-            if (!confirm('Remove this track from the playlist?')) return;
+            if (!confirm('Remove this track from the playlist?')) {
+return;
+}
+
             router.delete(`/playlists/${playlist.id}/tracks/${trackId}`, { preserveScroll: true });
         },
         [playlist.id],
@@ -581,7 +662,11 @@ export default function PlaylistShow({ playlist, tracks, availableFiles, maxFile
     const submitEdit = useCallback(
         (e: React.FormEvent) => {
             e.preventDefault();
-            if (!editingTrack) return;
+
+            if (!editingTrack) {
+return;
+}
+
             editForm.put(`/music/${editingTrack.id}`, {
                 onSuccess: () => setEditingTrack(null),
             });
@@ -600,10 +685,7 @@ export default function PlaylistShow({ playlist, tracks, availableFiles, maxFile
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
             >
-                <div className="pointer-events-none fixed inset-0 z-0">
-                    <img src="/img/background.png" alt="" className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-white/60 dark:bg-black/65" />
-                </div>
+                <PageBackground />
 
                 <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 p-4 lg:p-6">
                     {/* Header */}
@@ -646,7 +728,10 @@ export default function PlaylistShow({ playlist, tracks, availableFiles, maxFile
                             onChange={(e) => {
                                 const files = e.target.files ? Array.from(e.target.files) : [];
                                 addFiles(files);
-                                if (fileInputRef.current) fileInputRef.current.value = '';
+
+                                if (fileInputRef.current) {
+fileInputRef.current.value = '';
+}
                             }}
                             className="hidden"
                             id="playlist-file-input"
@@ -706,7 +791,10 @@ export default function PlaylistShow({ playlist, tracks, availableFiles, maxFile
                                             setPendingFiles([]);
                                             setUploadTags([]);
                                             setUploadTagInput('');
-                                            if (fileInputRef.current) fileInputRef.current.value = '';
+
+                                            if (fileInputRef.current) {
+fileInputRef.current.value = '';
+}
                                         }}
                                     >
                                         Clear

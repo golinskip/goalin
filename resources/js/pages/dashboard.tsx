@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { BookOpen, Compass, Gamepad2, Layers, Music, NotebookPen, Rss, Target } from 'lucide-react';
+import PageBackground from '@/components/page-background';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
@@ -17,10 +18,7 @@ export default function Dashboard() {
             <Head title="Dashboard" />
 
             <div className="relative flex h-full flex-1 flex-col">
-                <div className="pointer-events-none fixed inset-0 z-0">
-                    <img src="/img/background.png" alt="" className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-white/60 dark:bg-black/65" />
-                </div>
+                <PageBackground />
 
                 <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-4 lg:p-6">
                     {/* Tools */}

@@ -1,11 +1,12 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { Library, ListMusic, Plus, Trash2, X } from 'lucide-react';
 import { useCallback, useState } from 'react';
+import InputError from '@/components/input-error';
+import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import InputError from '@/components/input-error';
 import AppLayout from '@/layouts/app-layout';
 import { randomColor } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
@@ -44,7 +45,10 @@ export default function MusicIndex({ playlists }: Props) {
     );
 
     const handleDeletePlaylist = useCallback((id: number) => {
-        if (!confirm('Delete this playlist?')) return;
+        if (!confirm('Delete this playlist?')) {
+return;
+}
+
         router.delete(`/playlists/${id}`, { preserveScroll: true });
     }, []);
 
@@ -53,10 +57,7 @@ export default function MusicIndex({ playlists }: Props) {
             <Head title="Music Player" />
 
             <div className="relative flex h-full flex-1 flex-col">
-                <div className="pointer-events-none fixed inset-0 z-0">
-                    <img src="/img/background.png" alt="" className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-white/60 dark:bg-black/65" />
-                </div>
+                <PageBackground />
 
                 <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-4 lg:p-6">
                     {/* Music Library Button */}

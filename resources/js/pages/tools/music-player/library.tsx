@@ -1,6 +1,8 @@
 import { Head, InfiniteScroll, router, useForm } from '@inertiajs/react';
 import { Check, ChevronLeft, ListPlus, Music, Pause, Pencil, Play, Search, Tag, Trash2, Upload, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import InputError from '@/components/input-error';
+import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -11,7 +13,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import InputError from '@/components/input-error';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -59,14 +60,21 @@ type Props = {
 };
 
 function formatDuration(seconds: number | null): string {
-    if (!seconds) return '--:--';
+    if (!seconds) {
+return '--:--';
+}
+
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
+
     return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 function formatFileSize(bytes: number): string {
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+    if (bytes < 1024 * 1024) {
+return `${(bytes / 1024).toFixed(0)} KB`;
+}
+
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
@@ -74,8 +82,12 @@ const ACCEPTED_AUDIO_TYPES = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/fla
 const ACCEPTED_EXTENSIONS = ['.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a'];
 
 function isAudioFile(file: File): boolean {
-    if (ACCEPTED_AUDIO_TYPES.includes(file.type)) return true;
+    if (ACCEPTED_AUDIO_TYPES.includes(file.type)) {
+return true;
+}
+
     const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+
     return ACCEPTED_EXTENSIONS.includes(ext);
 }
 
@@ -96,11 +108,15 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
 
     const togglePreview = useCallback((fileId: number) => {
         const audio = audioRef.current;
-        if (!audio) return;
+
+        if (!audio) {
+return;
+}
 
         if (previewingId === fileId) {
             audio.pause();
             setPreviewingId(null);
+
             return;
         }
 
@@ -111,10 +127,14 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
 
     useEffect(() => {
         const audio = audioRef.current;
-        if (!audio) return;
+
+        if (!audio) {
+return;
+}
 
         const handleEnded = () => setPreviewingId(null);
         audio.addEventListener('ended', handleEnded);
+
         return () => audio.removeEventListener('ended', handleEnded);
     }, []);
 
@@ -125,12 +145,17 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
 
     const allTagOptions = useMemo(() => {
         const combined = new Set([...suggestedTags, ...availableTags]);
+
         return Array.from(combined);
     }, [suggestedTags, availableTags]);
 
     const filteredTagSuggestions = useMemo(() => {
-        if (!tagInput && !showTagSuggestions) return [];
+        if (!tagInput && !showTagSuggestions) {
+return [];
+}
+
         const q = tagInput.toLowerCase();
+
         return allTagOptions.filter(
             (tag) => (!q || tag.toLowerCase().includes(q)) && !editForm.data.tags.includes(tag),
         );
@@ -139,9 +164,11 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
     const addTag = useCallback(
         (tag: string) => {
             const trimmed = tag.trim();
+
             if (trimmed && !editForm.data.tags.includes(trimmed)) {
                 editForm.setData('tags', [...editForm.data.tags, trimmed]);
             }
+
             setTagInput('');
             setShowTagSuggestions(false);
             tagInputRef.current?.focus();
@@ -159,10 +186,12 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
     function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
         if (e.key === 'Enter') {
             e.preventDefault();
+
             if (tagInput.trim()) {
                 addTag(tagInput);
             }
         }
+
         if (e.key === 'Backspace' && !tagInput && editForm.data.tags.length > 0) {
             removeTag(editForm.data.tags[editForm.data.tags.length - 1]);
         }
@@ -188,6 +217,7 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
             setPendingFiles((prev) => {
                 const existing = new Set(prev.map((f) => f.name + f.size));
                 const unique = accepted.filter((f) => !existing.has(f.name + f.size));
+
                 return [...prev, ...unique];
             });
         }
@@ -198,12 +228,16 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
     }, []);
 
     const handleUpload = useCallback(() => {
-        if (pendingFiles.length === 0 || uploading) return;
+        if (pendingFiles.length === 0 || uploading) {
+return;
+}
+
         setUploading(true);
         setUploadErrors({});
 
         const formData = new FormData();
         pendingFiles.forEach((file) => formData.append('files[]', file));
+
         if (uploadPlaylistId) {
             formData.append('playlist_id', String(uploadPlaylistId));
         }
@@ -215,7 +249,10 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
                 setRejectedFiles([]);
                 setUploadErrors({});
                 setUploadPlaylistId('');
-                if (fileInputRef.current) fileInputRef.current.value = '';
+
+                if (fileInputRef.current) {
+fileInputRef.current.value = '';
+}
             },
             onError: (errors) => setUploadErrors(errors),
             onFinish: () => setUploading(false),
@@ -226,6 +263,7 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
         e.preventDefault();
         e.stopPropagation();
         dragCounter.current++;
+
         if (e.dataTransfer.types.includes('Files')) {
             setIsDragging(true);
         }
@@ -235,6 +273,7 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
         e.preventDefault();
         e.stopPropagation();
         dragCounter.current--;
+
         if (dragCounter.current === 0) {
             setIsDragging(false);
         }
@@ -275,7 +314,11 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
     const submitEdit = useCallback(
         (e: React.FormEvent) => {
             e.preventDefault();
-            if (!editingFile) return;
+
+            if (!editingFile) {
+return;
+}
+
             editForm.put(`/music/${editingFile.id}`, {
                 onSuccess: () => setEditingFile(null),
             });
@@ -284,11 +327,15 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
     );
 
     const handleDelete = useCallback((id: number) => {
-        if (!confirm('Delete this music file?')) return;
+        if (!confirm('Delete this music file?')) {
+return;
+}
+
         if (previewingId === id) {
             audioRef.current?.pause();
             setPreviewingId(null);
         }
+
         router.delete(`/music/${id}`, { preserveScroll: true });
     }, [previewingId]);
 
@@ -315,6 +362,7 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
     const usedTags = useMemo(() => {
         const set = new Set<string>();
         musicFiles.data.forEach((f) => f.tags.forEach((t) => set.add(t)));
+
         return Array.from(set).sort();
     }, [musicFiles.data]);
 
@@ -323,10 +371,13 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
             if (filterTags.length > 0 && !filterTags.every((t) => f.tags.includes(t))) {
                 return false;
             }
+
             if (searchQuery.trim()) {
                 const q = searchQuery.toLowerCase();
+
                 return f.title.toLowerCase().includes(q) || (f.artist && f.artist.toLowerCase().includes(q)) || f.tags.some((t) => t.toLowerCase().includes(q));
             }
+
             return true;
         });
     }, [musicFiles.data, searchQuery, filterTags]);
@@ -337,10 +388,7 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
             <audio ref={audioRef} className="hidden" />
 
             <div className="relative flex h-full flex-1 flex-col">
-                <div className="pointer-events-none fixed inset-0 z-0">
-                    <img src="/img/background.png" alt="" className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-white/60 dark:bg-black/65" />
-                </div>
+                <PageBackground />
 
                 <div
                     className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-4 lg:p-6"
@@ -388,6 +436,7 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
                             <Tag className="size-3.5 text-muted-foreground/50" />
                             {usedTags.map((tag) => {
                                 const active = filterTags.includes(tag);
+
                                 return (
                                     <button
                                         key={tag}
@@ -443,7 +492,10 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
                             onChange={(e) => {
                                 const files = e.target.files ? Array.from(e.target.files) : [];
                                 addFiles(files);
-                                if (fileInputRef.current) fileInputRef.current.value = '';
+
+                                if (fileInputRef.current) {
+fileInputRef.current.value = '';
+}
                             }}
                             className="hidden"
                             id="music-file-input"
@@ -518,7 +570,10 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
                                         onClick={() => {
                                             setPendingFiles([]);
                                             setUploadPlaylistId('');
-                                            if (fileInputRef.current) fileInputRef.current.value = '';
+
+                                            if (fileInputRef.current) {
+fileInputRef.current.value = '';
+}
                                         }}
                                     >
                                         Clear
@@ -749,6 +804,7 @@ export default function MusicLibrary({ musicFiles, playlists, maxFileSize, sugge
                                                     <DropdownMenuContent align="end" className="w-48">
                                                         {playlists.map((playlist) => {
                                                             const alreadyAdded = playlist.music_file_ids.includes(file.id);
+
                                                             return (
                                                                 <DropdownMenuItem
                                                                     key={playlist.id}

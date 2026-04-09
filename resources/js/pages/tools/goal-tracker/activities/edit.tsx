@@ -1,11 +1,12 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { X } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
+import InputError from '@/components/input-error';
+import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import InputError from '@/components/input-error';
 import AppLayout from '@/layouts/app-layout';
 import { index as activitiesIndex } from '@/routes/activities';
 import type { BreadcrumbItem } from '@/types';
@@ -64,9 +65,11 @@ export default function ActivityEdit({ activity, availableTags, availableGoals }
     const addTag = useCallback(
         (tag: string) => {
             const trimmed = tag.trim();
+
             if (trimmed && !data.tags.includes(trimmed)) {
                 setData('tags', [...data.tags, trimmed]);
             }
+
             setTagInput('');
             setShowSuggestions(false);
             tagInputRef.current?.focus();
@@ -87,10 +90,12 @@ export default function ActivityEdit({ activity, availableTags, availableGoals }
     function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
         if (e.key === 'Enter') {
             e.preventDefault();
+
             if (tagInput.trim()) {
                 addTag(tagInput);
             }
         }
+
         if (e.key === 'Backspace' && !tagInput && data.tags.length > 0) {
             removeTag(data.tags[data.tags.length - 1]);
         }
@@ -106,10 +111,7 @@ export default function ActivityEdit({ activity, availableTags, availableGoals }
             <Head title="Edit Activity" />
 
             <div className="relative flex h-full flex-1 flex-col">
-                <div className="pointer-events-none fixed inset-0 z-0">
-                    <img src="/img/background.png" alt="" className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-white/60 dark:bg-black/65" />
-                </div>
+                <PageBackground />
 
                 <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 p-4 lg:p-6">
                     <h1 className="text-2xl font-semibold">Edit Activity</h1>
@@ -280,6 +282,7 @@ export default function ActivityEdit({ activity, availableTags, availableGoals }
                                         checked={data.needs_timer}
                                         onChange={(e) => {
                                             setData('needs_timer', e.target.checked);
+
                                             if (!e.target.checked) {
                                                 setData('duration_minutes', '');
                                             }

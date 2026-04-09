@@ -1,6 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import { CheckCircle2, ChevronDown, Loader2, Music, Pause, Play, RotateCcw, SkipBack, SkipForward, Volume2, VolumeX, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { index as goalTrackerIndex } from '@/routes/goal-tracker';
@@ -82,6 +83,7 @@ function MiniPlayer({ tracks }: { tracks: TimerMusicFile[] }) {
         setCurrentIndex(0);
         setIsPlaying(false);
         const audio = audioRef.current;
+
         if (audio) {
             audio.pause();
             audio.removeAttribute('src');
@@ -91,11 +93,15 @@ function MiniPlayer({ tracks }: { tracks: TimerMusicFile[] }) {
 
     const play = useCallback(() => {
         const audio = audioRef.current;
-        if (!audio || !currentTrack) return;
+
+        if (!audio || !currentTrack) {
+return;
+}
 
         if (audio.src !== `/music/${currentTrack.id}/stream`) {
             audio.src = `/music/${currentTrack.id}/stream`;
         }
+
         audio.play();
         setIsPlaying(true);
     }, [currentTrack]);
@@ -117,28 +123,40 @@ function MiniPlayer({ tracks }: { tracks: TimerMusicFile[] }) {
         const nextIndex = (currentIndex + 1) % tracks.length;
         setCurrentIndex(nextIndex);
         const audio = audioRef.current;
+
         if (audio) {
             audio.src = `/music/${tracks[nextIndex].id}/stream`;
-            if (isPlaying) audio.play();
+
+            if (isPlaying) {
+audio.play();
+}
         }
     }, [currentIndex, tracks, isPlaying]);
 
     const skipPrev = useCallback(() => {
         const audio = audioRef.current;
+
         if (audio && audio.currentTime > 3) {
             audio.currentTime = 0;
+
             return;
         }
+
         const prevIndex = (currentIndex - 1 + tracks.length) % tracks.length;
         setCurrentIndex(prevIndex);
+
         if (audio) {
             audio.src = `/music/${tracks[prevIndex].id}/stream`;
-            if (isPlaying) audio.play();
+
+            if (isPlaying) {
+audio.play();
+}
         }
     }, [currentIndex, tracks, isPlaying]);
 
     const toggleMute = useCallback(() => {
         const audio = audioRef.current;
+
         if (audio) {
             audio.muted = !audio.muted;
             setIsMuted(!isMuted);
@@ -147,7 +165,10 @@ function MiniPlayer({ tracks }: { tracks: TimerMusicFile[] }) {
 
     useEffect(() => {
         const audio = audioRef.current;
-        if (!audio) return;
+
+        if (!audio) {
+return;
+}
 
         const handleEnded = () => {
             if (tracks.length > 1) {
@@ -159,6 +180,7 @@ function MiniPlayer({ tracks }: { tracks: TimerMusicFile[] }) {
         };
 
         audio.addEventListener('ended', handleEnded);
+
         return () => audio.removeEventListener('ended', handleEnded);
     }, [skipNext, tracks.length]);
 
@@ -166,6 +188,7 @@ function MiniPlayer({ tracks }: { tracks: TimerMusicFile[] }) {
     useEffect(() => {
         return () => {
             const audio = audioRef.current;
+
             if (audio) {
                 audio.pause();
                 audio.removeAttribute('src');
@@ -174,7 +197,9 @@ function MiniPlayer({ tracks }: { tracks: TimerMusicFile[] }) {
         };
     }, []);
 
-    if (!currentTrack) return null;
+    if (!currentTrack) {
+return null;
+}
 
     return (
         <div className="flex items-center gap-3 rounded-xl border border-border/30 bg-black/5 px-4 py-2.5 backdrop-blur-sm dark:bg-white/5">
@@ -239,16 +264,24 @@ function PlaylistMusicPlayer({ playlists }: { playlists: PlaylistInfo[] }) {
         abortControllerRef.current = controller;
 
         setLoading(true);
+
         try {
             const response = await fetch(`/playlists/${playlistId}/tracks`, {
                 signal: controller.signal,
                 headers: { Accept: 'application/json' },
             });
-            if (!response.ok) throw new Error('Failed to load tracks');
+
+            if (!response.ok) {
+throw new Error('Failed to load tracks');
+}
+
             const data: TimerMusicFile[] = await response.json();
             setTracks(data);
         } catch (e) {
-            if (e instanceof DOMException && e.name === 'AbortError') return;
+            if (e instanceof DOMException && e.name === 'AbortError') {
+return;
+}
+
             setTracks([]);
         } finally {
             setLoading(false);
@@ -259,6 +292,7 @@ function PlaylistMusicPlayer({ playlists }: { playlists: PlaylistInfo[] }) {
         (playlistId: number | null) => {
             setSelectedPlaylistId(playlistId);
             setDropdownOpen(false);
+
             if (playlistId) {
                 loadTracks(playlistId);
             } else {
@@ -375,6 +409,7 @@ export default function ActivityTimer({ activity, playlists }: Props) {
 
     const computeSecondsLeft = useCallback(() => {
         const elapsed = elapsedBeforePauseRef.current + (Date.now() - startedAtRef.current) / 1000;
+
         return Math.max(0, Math.round(totalSeconds - elapsed));
     }, [totalSeconds]);
 
@@ -395,6 +430,7 @@ export default function ActivityTimer({ activity, playlists }: Props) {
     // Auto-start on mount
     useEffect(() => {
         startInterval();
+
         return () => clearTimer();
     }, [startInterval, clearTimer]);
 
@@ -406,6 +442,7 @@ export default function ActivityTimer({ activity, playlists }: Props) {
             }
         };
         document.addEventListener('visibilitychange', handleVisibility);
+
         return () => document.removeEventListener('visibilitychange', handleVisibility);
     }, [timerState, computeSecondsLeft]);
 
@@ -514,10 +551,7 @@ export default function ActivityTimer({ activity, playlists }: Props) {
             <Head title={tabTitle} />
 
             <div className="relative flex h-full flex-1 flex-col">
-                <div className="pointer-events-none fixed inset-0 z-0">
-                    <img src="/img/background.png" alt="" className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-white/60 dark:bg-black/65" />
-                </div>
+                <PageBackground />
 
                 <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-8 p-4 lg:p-6">
                     {/* Activity info */}

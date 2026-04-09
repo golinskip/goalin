@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { Trophy, Gift, Target } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,8 @@ type Props = {
 };
 
 export default function Welcome({ auth, canRegister }: Props) {
+    const { background } = usePage().props;
+
     return (
         <>
             <Head title="Welcome" />
@@ -18,7 +20,7 @@ export default function Welcome({ auth, canRegister }: Props) {
                 {/* Background */}
                 <div className="absolute inset-0 z-0">
                     <img
-                        src="/img/background.png"
+                        src={background}
                         alt=""
                         className="h-full w-full object-cover"
                     />

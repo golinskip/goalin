@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, Check, Eye, RotateCcw, X } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
+import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { index as memoSetsIndex } from '@/routes/memo-sets';
@@ -28,14 +29,20 @@ type Props = {
 
 function weightedRandomPick(cards: Card[], excludeId?: number): Card | null {
     const available = cards.filter((c) => c.id !== excludeId);
-    if (available.length === 0) return cards[0] ?? null;
+
+    if (available.length === 0) {
+return cards[0] ?? null;
+}
 
     const totalWeight = available.reduce((sum, c) => sum + c.weight, 0);
     let random = Math.random() * totalWeight;
 
     for (const card of available) {
         random -= card.weight;
-        if (random <= 0) return card;
+
+        if (random <= 0) {
+return card;
+}
     }
 
     return available[available.length - 1];
@@ -63,7 +70,9 @@ export default function MemoSetLearn({ memoSet, cards: initialCards }: Props) {
 
     const handleAnswer = useCallback(
         (correct: boolean) => {
-            if (!currentCard) return;
+            if (!currentCard) {
+return;
+}
 
             router.post(
                 `/memo-cards/${currentCard.id}/review`,
@@ -72,9 +81,13 @@ export default function MemoSetLearn({ memoSet, cards: initialCards }: Props) {
             );
 
             const updatedCards = cards.map((c) => {
-                if (c.id !== currentCard.id) return c;
+                if (c.id !== currentCard.id) {
+return c;
+}
+
                 const newCorrect = c.correct_count + (correct ? 1 : 0);
                 const newIncorrect = c.incorrect_count + (correct ? 0 : 1);
+
                 return {
                     ...c,
                     correct_count: newCorrect,
@@ -117,10 +130,7 @@ export default function MemoSetLearn({ memoSet, cards: initialCards }: Props) {
             <Head title={`Learn - ${memoSet.name}`} />
 
             <div className="relative flex h-full flex-1 flex-col">
-                <div className="pointer-events-none fixed inset-0 z-0">
-                    <img src="/img/background.png" alt="" className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-white/60 dark:bg-black/65" />
-                </div>
+                <PageBackground />
 
                 <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 p-4 lg:p-6">
                     {/* Header */}

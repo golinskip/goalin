@@ -1,11 +1,12 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { BookOpen, Check, Download, Pencil, Play, Plus, Trash2, Upload, X } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
+import InputError from '@/components/input-error';
+import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import InputError from '@/components/input-error';
 import AppLayout from '@/layouts/app-layout';
 import { index as memoSetsIndex } from '@/routes/memo-sets';
 import type { BreadcrumbItem } from '@/types';
@@ -67,13 +68,19 @@ export default function MemoSetShow({ memoSet, cards }: Props) {
     }
 
     const handleDelete = useCallback((id: number) => {
-        if (!confirm('Delete this card?')) return;
+        if (!confirm('Delete this card?')) {
+return;
+}
+
         router.delete(`/memo-cards/${id}`, { preserveScroll: true });
     }, []);
 
     function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
-        if (!file) return;
+
+        if (!file) {
+return;
+}
 
         importForm.setData('csv_file', file);
         importForm.post(`/memo-sets/${memoSet.id}/import`, {
@@ -81,7 +88,10 @@ export default function MemoSetShow({ memoSet, cards }: Props) {
             onSuccess: () => {
                 setShowImport(false);
                 importForm.reset();
-                if (fileInputRef.current) fileInputRef.current.value = '';
+
+                if (fileInputRef.current) {
+fileInputRef.current.value = '';
+}
             },
         });
     }
@@ -108,10 +118,7 @@ export default function MemoSetShow({ memoSet, cards }: Props) {
             <Head title={memoSet.name} />
 
             <div className="relative flex h-full flex-1 flex-col">
-                <div className="pointer-events-none fixed inset-0 z-0">
-                    <img src="/img/background.png" alt="" className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-white/60 dark:bg-black/65" />
-                </div>
+                <PageBackground />
 
                 <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 p-4 lg:p-6">
                     <div className="flex items-center justify-between">

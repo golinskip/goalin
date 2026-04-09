@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['currency', 'multiplier'])]
+#[Fillable(['currency', 'multiplier', 'background'])]
 class UserSetting extends Model
 {
     /** @use HasFactory<UserSettingFactory> */

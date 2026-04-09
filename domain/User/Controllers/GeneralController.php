@@ -19,16 +19,22 @@ class GeneralController extends Controller
             'multiplier' => 1.00,
         ]);
 
+        $backgrounds = collect(glob(public_path('img/backgrounds/*.png')))
+            ->map(fn (string $path) => pathinfo($path, PATHINFO_FILENAME))
+            ->values();
+
         return Inertia::render('settings/general', [
             'setting' => [
                 'currency' => $setting->currency->value,
                 'multiplier' => $setting->multiplier,
+                'background' => $setting->background,
             ],
             'currencies' => collect(Currency::cases())->map(fn (Currency $currency) => [
                 'value' => $currency->value,
                 'label' => $currency->label(),
                 'symbol' => $currency->symbol(),
             ]),
+            'backgrounds' => $backgrounds,
         ]);
     }
 

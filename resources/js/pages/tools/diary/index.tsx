@@ -1,11 +1,12 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { CalendarDays, ChevronLeft, ChevronRight, NotebookPen, Pencil, Plus, Table, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { store, update, destroy } from '@/actions/Domain/Tools/Diary/Controllers/DiaryController';
+import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { index as diaryIndex } from '@/routes/diary';
-import { store, update, destroy } from '@/actions/Domain/Tools/Diary/Controllers/DiaryController';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Diary', href: diaryIndex() }];
@@ -54,8 +55,12 @@ function AutocompleteInput({
     const inputRef = useRef<HTMLInputElement>(null);
 
     const filtered = useMemo(() => {
-        if (!value) return suggestions;
+        if (!value) {
+return suggestions;
+}
+
         const lower = value.toLowerCase();
+
         return suggestions.filter((s) => s.toLowerCase().includes(lower) && s.toLowerCase() !== lower);
     }, [value, suggestions]);
 
@@ -70,11 +75,15 @@ function AutocompleteInput({
             }
         }
         document.addEventListener('mousedown', handleClickOutside);
+
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (!open || filtered.length === 0) return;
+        if (!open || filtered.length === 0) {
+return;
+}
+
         if (e.key === 'ArrowDown') {
             e.preventDefault();
             setActiveIndex((i) => (i < filtered.length - 1 ? i + 1 : 0));
@@ -196,6 +205,7 @@ function getCalendarGrid(month: string): (string | null)[][] {
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${m}-${String(day).padStart(2, '0')}`;
         currentWeek.push(dateStr);
+
         if (currentWeek.length === 7) {
             weeks.push(currentWeek);
             currentWeek = [];
@@ -206,6 +216,7 @@ function getCalendarGrid(month: string): (string | null)[][] {
         while (currentWeek.length < 7) {
             currentWeek.push(null);
         }
+
         weeks.push(currentWeek);
     }
 
@@ -215,6 +226,7 @@ function getCalendarGrid(month: string): (string | null)[][] {
 function shiftMonth(month: string, delta: number): string {
     const [year, m] = month.split('-');
     const date = new Date(parseInt(year), parseInt(m) - 1 + delta, 1);
+
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
@@ -233,9 +245,11 @@ export default function Diary({ month, selectedDate, entryDates, selectedEntry, 
     const todayYear = new Date().getFullYear();
     const yearOptions = useMemo(() => {
         const years: number[] = [];
+
         for (let y = todayYear - 10; y <= todayYear + 1; y++) {
             years.push(y);
         }
+
         return years;
     }, [todayYear]);
 
@@ -299,7 +313,10 @@ export default function Diary({ month, selectedDate, entryDates, selectedEntry, 
     };
 
     const submitEdit = () => {
-        if (!selectedEntry) return;
+        if (!selectedEntry) {
+return;
+}
+
         editForm.transform((data) => ({
             ...data,
             fields: data.fields.filter((f) => f.label.trim() && f.value.trim()),
@@ -311,8 +328,14 @@ export default function Diary({ month, selectedDate, entryDates, selectedEntry, 
     };
 
     const handleDelete = () => {
-        if (!selectedEntry) return;
-        if (!confirm('Are you sure you want to delete this diary entry?')) return;
+        if (!selectedEntry) {
+return;
+}
+
+        if (!confirm('Are you sure you want to delete this diary entry?')) {
+return;
+}
+
         router.delete(destroy.url(selectedEntry.id), {
             preserveScroll: true,
         });
@@ -333,10 +356,7 @@ export default function Diary({ month, selectedDate, entryDates, selectedEntry, 
             <Head title="Diary" />
 
             <div className="relative flex h-full flex-1 flex-col">
-                <div className="pointer-events-none fixed inset-0 z-0">
-                    <img src="/img/background.png" alt="" className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-white/60 dark:bg-black/65" />
-                </div>
+                <PageBackground />
 
                 <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-4 lg:p-6">
                     <div className="grid gap-6 lg:grid-cols-3">

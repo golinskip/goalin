@@ -1,10 +1,11 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useMemo } from 'react';
+import InputError from '@/components/input-error';
+import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import InputError from '@/components/input-error';
 import AppLayout from '@/layouts/app-layout';
 import { index as rewardsIndex } from '@/routes/rewards';
 import type { BreadcrumbItem } from '@/types';
@@ -46,9 +47,11 @@ export default function RewardEdit({ reward, currencySymbol, multiplier }: Props
     const costInPoints = useMemo(() => {
         const money = parseFloat(data.cost_in_money);
         const mult = parseFloat(multiplier);
+
         if (isNaN(money) || isNaN(mult)) {
             return 0;
         }
+
         return Math.round(money * mult);
     }, [data.cost_in_money, multiplier]);
 
@@ -64,10 +67,7 @@ export default function RewardEdit({ reward, currencySymbol, multiplier }: Props
             <Head title="Edit Reward" />
 
             <div className="relative flex h-full flex-1 flex-col">
-                <div className="pointer-events-none fixed inset-0 z-0">
-                    <img src="/img/background.png" alt="" className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-white/60 dark:bg-black/65" />
-                </div>
+                <PageBackground />
 
                 <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 p-4 lg:p-6">
                     <h1 className="text-2xl font-semibold">Edit Reward</h1>

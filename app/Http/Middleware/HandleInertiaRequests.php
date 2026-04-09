@@ -35,6 +35,8 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $background = $request->user()?->setting?->background;
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -43,6 +45,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'background' => $background ? "/img/backgrounds/{$background}.png" : '/img/backgrounds/spring.png',
         ];
     }
 }

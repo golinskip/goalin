@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Clock, GripVertical, Pencil, Plus, Trash2, Zap } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
+import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { index as activitiesIndex, create as activitiesCreate } from '@/routes/activities';
@@ -42,15 +43,19 @@ function timeAgo(dateString: string): string {
     if (diffMins < 1) {
         return 'just now';
     }
+
     if (diffMins < 60) {
         return `${diffMins}m ago`;
     }
+
     if (diffHours < 24) {
         return `${diffHours}h ago`;
     }
+
     if (diffDays === 1) {
         return 'yesterday';
     }
+
     return `${diffDays}d ago`;
 }
 
@@ -58,8 +63,10 @@ function formatDuration(minutes: number): string {
     if (minutes < 60) {
         return `${minutes}min`;
     }
+
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
+
     return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
 }
 
@@ -111,6 +118,7 @@ export default function ActivitiesIndex({ activities: initialActivities }: Props
         if (!confirm('Are you sure you want to delete this activity?')) {
             return;
         }
+
         router.delete(`/activities/${id}`, { preserveScroll: true });
     }, []);
 
@@ -119,10 +127,7 @@ export default function ActivitiesIndex({ activities: initialActivities }: Props
             <Head title="Activities" />
 
             <div className="relative flex h-full flex-1 flex-col">
-                <div className="pointer-events-none fixed inset-0 z-0">
-                    <img src="/img/background.png" alt="" className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-white/60 dark:bg-black/65" />
-                </div>
+                <PageBackground />
 
                 <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-4 lg:p-6">
                     <div className="flex items-center justify-between">

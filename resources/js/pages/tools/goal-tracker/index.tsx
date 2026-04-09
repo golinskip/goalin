@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { BarChart3, Calendar, CheckCircle, Clock, Coffee, Flame, Gift, History, MoreHorizontal, Pause, Play, Target, TrendingUp, Zap } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -131,6 +132,7 @@ function BreakTimer() {
         setBreakMinutes(null);
         setRunning(false);
         setRemainingSeconds(0);
+
         if (alarmCleanupRef.current) {
             alarmCleanupRef.current();
             alarmCleanupRef.current = null;
@@ -140,6 +142,7 @@ function BreakTimer() {
     useEffect(() => {
         if (!running) {
             clearTimer();
+
             return;
         }
 
@@ -161,12 +164,15 @@ function BreakTimer() {
     }, [running, clearTimer]);
 
     useEffect(() => {
-        if (!running) return;
+        if (!running) {
+return;
+}
 
         const handleVisibility = () => {
             if (!document.hidden) {
                 const diff = Math.max(0, Math.ceil((endTimeRef.current - Date.now()) / 1000));
                 setRemainingSeconds(diff);
+
                 if (diff <= 0) {
                     clearTimer();
                     setRunning(false);
@@ -176,6 +182,7 @@ function BreakTimer() {
         };
 
         document.addEventListener('visibilitychange', handleVisibility);
+
         return () => document.removeEventListener('visibilitychange', handleVisibility);
     }, [running, clearTimer]);
 
@@ -234,7 +241,9 @@ export default function GoalTracker({ activities, rewardProgression, summary }: 
     const today = new Date().toISOString().split('T')[0];
 
     const handleLogActivity = useCallback(() => {
-        if (!selectedActivity || submitting) return;
+        if (!selectedActivity || submitting) {
+return;
+}
 
         setSubmitting(true);
         router.post(
@@ -273,10 +282,7 @@ export default function GoalTracker({ activities, rewardProgression, summary }: 
             <Head title="Goal Tracker" />
 
             <div className="relative flex h-full flex-1 flex-col">
-                <div className="pointer-events-none fixed inset-0 z-0">
-                    <img src="/img/background.png" alt="" className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-white/60 dark:bg-black/65" />
-                </div>
+                <PageBackground />
 
                 <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-4 lg:p-6">
                     {/* Activities Section */}

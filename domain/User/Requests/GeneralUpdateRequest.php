@@ -16,9 +16,14 @@ class GeneralUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
+        $backgrounds = collect(glob(public_path('img/backgrounds/*.png')))
+            ->map(fn (string $path) => pathinfo($path, PATHINFO_FILENAME))
+            ->all();
+
         return [
             'currency' => ['required', 'string', Rule::enum(Currency::class)],
             'multiplier' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
+            'background' => ['nullable', 'string', Rule::in($backgrounds)],
         ];
     }
 }

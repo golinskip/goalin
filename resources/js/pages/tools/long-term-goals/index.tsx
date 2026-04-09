@@ -1,12 +1,13 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { Check, ChevronLeft, ChevronRight, ClipboardCheck, Compass, FolderOpen, MessageSquare, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useCallback, useState } from 'react';
+import InputError from '@/components/input-error';
+import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { ColorPicker } from '@/components/ui/color-picker';
-import InputError from '@/components/input-error';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -82,15 +83,24 @@ export default function LongTermGoalsIndex({ year, month, categories, yearlyPeri
 
     const navigateMonth = useCallback((newMonth: number) => {
         let newYear = year;
-        if (newMonth < 1) { newMonth = 12; newYear--; }
-        if (newMonth > 12) { newMonth = 1; newYear++; }
+
+        if (newMonth < 1) {
+ newMonth = 12; newYear--; 
+}
+
+        if (newMonth > 12) {
+ newMonth = 1; newYear++; 
+}
+
         router.get('/long-term-goals', { year: newYear, month: newMonth }, { preserveState: true });
     }, [year]);
 
     const handleCreateCategory = useCallback((e: React.FormEvent) => {
         e.preventDefault();
         categoryForm.post('/long-term-goals/categories', {
-            onSuccess: () => { setShowCategoryForm(false); categoryForm.reset(); },
+            onSuccess: () => {
+ setShowCategoryForm(false); categoryForm.reset(); 
+},
         });
     }, [categoryForm]);
 
@@ -101,14 +111,21 @@ export default function LongTermGoalsIndex({ year, month, categories, yearlyPeri
 
     const handleUpdateCategory = useCallback((e: React.FormEvent) => {
         e.preventDefault();
-        if (!editingCategory) return;
+
+        if (!editingCategory) {
+return;
+}
+
         editCategoryForm.put(`/long-term-goals/categories/${editingCategory.id}`, {
             onSuccess: () => setEditingCategory(null),
         });
     }, [editCategoryForm, editingCategory]);
 
     const handleDeleteCategory = useCallback((id: number) => {
-        if (!confirm('Delete this category? Goals in this category will become uncategorized.')) return;
+        if (!confirm('Delete this category? Goals in this category will become uncategorized.')) {
+return;
+}
+
         router.delete(`/long-term-goals/categories/${id}`, { preserveScroll: true });
     }, []);
 
@@ -123,7 +140,9 @@ export default function LongTermGoalsIndex({ year, month, categories, yearlyPeri
     const handleCreateGoal = useCallback((e: React.FormEvent) => {
         e.preventDefault();
         goalForm.post('/long-term-goals/goals', {
-            onSuccess: () => { setAddingGoalFor(null); goalForm.reset(); },
+            onSuccess: () => {
+ setAddingGoalFor(null); goalForm.reset(); 
+},
         });
     }, [goalForm]);
 
@@ -140,14 +159,21 @@ export default function LongTermGoalsIndex({ year, month, categories, yearlyPeri
 
     const handleUpdateGoal = useCallback((e: React.FormEvent) => {
         e.preventDefault();
-        if (!editingGoal) return;
+
+        if (!editingGoal) {
+return;
+}
+
         editGoalForm.put(`/long-term-goals/goals/${editingGoal.id}`, {
             onSuccess: () => setEditingGoal(null),
         });
     }, [editGoalForm, editingGoal]);
 
     const handleDeleteGoal = useCallback((id: number) => {
-        if (!confirm('Delete this goal?')) return;
+        if (!confirm('Delete this goal?')) {
+return;
+}
+
         router.delete(`/long-term-goals/goals/${id}`, { preserveScroll: true });
     }, []);
 
@@ -158,7 +184,11 @@ export default function LongTermGoalsIndex({ year, month, categories, yearlyPeri
 
     const openReview = useCallback((periodType: 'yearly' | 'monthly') => {
         const period = periodType === 'yearly' ? yearlyPeriod : monthlyPeriod;
-        if (!period) return;
+
+        if (!period) {
+return;
+}
+
         setReviewingPeriod(periodType);
         setReviewComment(period.review_comment ?? '');
         setReviewGoals(period.goals.map(g => ({
@@ -175,7 +205,11 @@ export default function LongTermGoalsIndex({ year, month, categories, yearlyPeri
     const handleSubmitReview = useCallback((e: React.FormEvent) => {
         e.preventDefault();
         const period = reviewingPeriod === 'yearly' ? yearlyPeriod : monthlyPeriod;
-        if (!period) return;
+
+        if (!period) {
+return;
+}
+
         setReviewSubmitting(true);
         router.put(`/long-term-goals/periods/${period.id}/review`, {
             review_comment: reviewComment,
@@ -192,17 +226,27 @@ export default function LongTermGoalsIndex({ year, month, categories, yearlyPeri
 
         for (const goal of goals) {
             const key = goal.goal_category_id ?? 'uncategorized';
-            if (!categoryMap.has(key)) categoryMap.set(key, []);
+
+            if (!categoryMap.has(key)) {
+categoryMap.set(key, []);
+}
+
             categoryMap.get(key)!.push(goal);
         }
 
         for (const cat of categories) {
             const catGoals = categoryMap.get(cat.id);
-            if (catGoals) groups.push({ category: cat, goals: catGoals });
+
+            if (catGoals) {
+groups.push({ category: cat, goals: catGoals });
+}
         }
 
         const uncategorized = categoryMap.get('uncategorized');
-        if (uncategorized) groups.push({ category: null, goals: uncategorized });
+
+        if (uncategorized) {
+groups.push({ category: null, goals: uncategorized });
+}
 
         return groups;
     };
@@ -356,10 +400,7 @@ export default function LongTermGoalsIndex({ year, month, categories, yearlyPeri
             <Head title="Long Term Goals" />
 
             <div className="relative flex h-full flex-1 flex-col">
-                <div className="pointer-events-none fixed inset-0 z-0">
-                    <img src="/img/background.png" alt="" className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-white/60 dark:bg-black/65" />
-                </div>
+                <PageBackground />
 
                 <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-4 lg:p-6">
                     {/* Categories Section */}
@@ -558,7 +599,11 @@ export default function LongTermGoalsIndex({ year, month, categories, yearlyPeri
                                     {reviewGoals.map((rg) => {
                                         const period = reviewingPeriod === 'yearly' ? yearlyPeriod : monthlyPeriod;
                                         const originalGoal = period?.goals.find(g => g.id === rg.id);
-                                        if (!originalGoal) return null;
+
+                                        if (!originalGoal) {
+return null;
+}
+
                                         return (
                                             <div key={rg.id} className="rounded-lg border border-border/50 bg-muted/20 p-4">
                                                 <div className="mb-2 flex items-center gap-3">

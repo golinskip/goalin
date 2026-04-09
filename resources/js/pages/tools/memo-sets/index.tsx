@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { BookOpen, Layers, Pencil, Play, Plus, Trash2 } from 'lucide-react';
 import { useCallback } from 'react';
+import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { index as memoSetsIndex, create as memoSetsCreate } from '@/routes/memo-sets';
@@ -31,16 +32,31 @@ function timeAgo(dateString: string): string {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays === 1) return 'yesterday';
+    if (diffMins < 1) {
+return 'just now';
+}
+
+    if (diffMins < 60) {
+return `${diffMins}m ago`;
+}
+
+    if (diffHours < 24) {
+return `${diffHours}h ago`;
+}
+
+    if (diffDays === 1) {
+return 'yesterday';
+}
+
     return `${diffDays}d ago`;
 }
 
 export default function MemoSetsIndex({ memoSets }: Props) {
     const handleDelete = useCallback((id: number) => {
-        if (!confirm('Are you sure you want to delete this memo set and all its cards?')) return;
+        if (!confirm('Are you sure you want to delete this memo set and all its cards?')) {
+return;
+}
+
         router.delete(`/memo-sets/${id}`, { preserveScroll: true });
     }, []);
 
@@ -49,10 +65,7 @@ export default function MemoSetsIndex({ memoSets }: Props) {
             <Head title="Memo Cards" />
 
             <div className="relative flex h-full flex-1 flex-col">
-                <div className="pointer-events-none fixed inset-0 z-0">
-                    <img src="/img/background.png" alt="" className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-white/60 dark:bg-black/65" />
-                </div>
+                <PageBackground />
 
                 <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-4 lg:p-6">
                     <div className="flex items-center justify-between">
