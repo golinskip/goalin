@@ -1,6 +1,6 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { CalendarDays, ChevronDown, ExternalLink, Loader2, Plus, RefreshCw, Rss, Trash2, X } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -36,22 +36,15 @@ type Article = {
     feed_color: string;
 };
 
-type PaginatedArticles = {
-    data: Article[];
-    current_page: number;
-    last_page: number;
-    next_page_url: string | null;
-};
-
 type DateFilters = {
     today: boolean;
-    date_from: string | null;
+    date_from: string;
     date_to: string | null;
 };
 
 type Props = {
     feeds: Feed[];
-    articles: PaginatedArticles;
+    articles: Article[];
     currentFeedId: number | null;
     filters: DateFilters;
 };
@@ -62,12 +55,8 @@ const FEED_COLORS = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b
 
 export default function RssFeeds({ feeds, articles, currentFeedId, filters }: Props) {
     const [showAddForm, setShowAddForm] = useState(false);
-    const [allArticles, setAllArticles] = useState<Article[]>(articles.data);
-    const [nextPageUrl, setNextPageUrl] = useState(articles.next_page_url);
-    const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [refreshingFeedId, setRefreshingFeedId] = useState<number | null>(null);
     const [refreshingAll, setRefreshingAll] = useState(false);
-    const sentinelRef = useRef<HTMLDivElement>(null);
 
     const selectedFeed = currentFeedId ? feeds.find((f) => f.id === currentFeedId) ?? null : null;
 
@@ -76,54 +65,6 @@ export default function RssFeeds({ feeds, articles, currentFeedId, filters }: Pr
         name: '',
         color: FEED_COLORS[feeds.length % FEED_COLORS.length],
     });
-
-    // Reset articles when server data changes (feed filter, refresh)
-    useEffect(() => {
-        setAllArticles(articles.data);
-        setNextPageUrl(articles.next_page_url);
-    }, [articles]);
-
-    // Infinite scroll observer
-    useEffect(() => {
-        if (!sentinelRef.current) return;
-
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting && nextPageUrl && !isLoadingMore) {
-                    loadMore();
-                }
-            },
-            { rootMargin: '200px' },
-        );
-
-        observer.observe(sentinelRef.current);
-
-        return () => observer.disconnect();
-    }, [nextPageUrl, isLoadingMore]);
-
-    const loadMore = useCallback(() => {
-        if (!nextPageUrl || isLoadingMore) return;
-
-        setIsLoadingMore(true);
-
-        fetch(nextPageUrl, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                Accept: 'application/json',
-                'X-Inertia': 'true',
-                'X-Inertia-Version': (document.querySelector('meta[name="inertia-version"]') as HTMLMetaElement)?.content || '',
-            },
-        })
-            .then((res) => res.json())
-            .then((json) => {
-                const page = json.props?.articles ?? json.articles;
-                if (page) {
-                    setAllArticles((prev) => [...prev, ...page.data]);
-                    setNextPageUrl(page.next_page_url);
-                }
-            })
-            .finally(() => setIsLoadingMore(false));
-    }, [nextPageUrl, isLoadingMore]);
 
     const handleAddFeed = () => {
         addForm.post('/rss-feeds', {
@@ -200,12 +141,6 @@ export default function RssFeeds({ feeds, articles, currentFeedId, filters }: Pr
     const handleDateToChange = (value: string) => {
         navigate({ date_to: value || null, today: false });
     };
-
-    const handleClearDateFilters = () => {
-        navigate({ today: false, date_from: null, date_to: null });
-    };
-
-    const hasDateFilter = filters.today || filters.date_from || filters.date_to;
 
     const formatDate = (dateStr: string | null) => {
         if (!dateStr) return '';
@@ -390,7 +325,7 @@ export default function RssFeeds({ feeds, articles, currentFeedId, filters }: Pr
                         <div className="flex items-center gap-1.5">
                             <Input
                                 type="date"
-                                value={filters.date_from ?? ''}
+                                value={filters.today ? '' : filters.date_from}
                                 onChange={(e) => handleDateFromChange(e.target.value)}
                                 className="h-7 w-auto text-xs"
                                 disabled={filters.today}
@@ -404,15 +339,6 @@ export default function RssFeeds({ feeds, articles, currentFeedId, filters }: Pr
                                 disabled={filters.today}
                             />
                         </div>
-                        {hasDateFilter && (
-                            <button
-                                onClick={handleClearDateFilters}
-                                className="rounded-full p-1 text-muted-foreground hover:text-foreground"
-                                title="Clear date filters"
-                            >
-                                <X className="size-3.5" />
-                            </button>
-                        )}
                     </div>
                 )}
 
@@ -429,7 +355,7 @@ export default function RssFeeds({ feeds, articles, currentFeedId, filters }: Pr
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {allArticles.map((article) => (
+                        {articles.map((article) => (
                             <a
                                 key={article.id}
                                 href={article.link}
@@ -461,22 +387,9 @@ export default function RssFeeds({ feeds, articles, currentFeedId, filters }: Pr
                             </a>
                         ))}
 
-                        {/* Infinite scroll sentinel */}
-                        <div ref={sentinelRef} className="py-4 text-center">
-                            {isLoadingMore && (
-                                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                                    <Loader2 className="size-4 animate-spin" />
-                                    Loading more articles...
-                                </div>
-                            )}
-                            {!nextPageUrl && allArticles.length > 0 && (
-                                <p className="text-sm text-muted-foreground">No more articles</p>
-                            )}
-                        </div>
-
-                        {allArticles.length === 0 && feeds.length > 0 && (
+                        {articles.length === 0 && feeds.length > 0 && (
                             <div className="py-12 text-center">
-                                <p className="text-muted-foreground">No articles yet. Try refreshing your feeds.</p>
+                                <p className="text-muted-foreground">No articles in this date range. Try changing the date filter or refreshing your feeds.</p>
                             </div>
                         )}
                     </div>

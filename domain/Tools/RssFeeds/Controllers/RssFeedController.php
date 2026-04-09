@@ -21,10 +21,9 @@ class RssFeedController extends Controller
     {
         $user = $request->user();
         $feedId = $request->integer('feed');
-        $dateFrom = $request->string('date_from')->toString() ?: null;
+        $dateFrom = $request->string('date_from')->toString() ?: today()->subDays(7)->format('Y-m-d');
         $dateTo = $request->string('date_to')->toString() ?: null;
         $todayOnly = $request->boolean('today');
-        $perPage = 20;
 
         $feeds = $user->rssFeeds()
             ->withCount('articles')
@@ -44,15 +43,13 @@ class RssFeedController extends Controller
         if ($todayOnly) {
             $articlesQuery->whereDate('rss_articles.published_at', today());
         } else {
-            if ($dateFrom) {
-                $articlesQuery->whereDate('rss_articles.published_at', '>=', $dateFrom);
-            }
+            $articlesQuery->whereDate('rss_articles.published_at', '>=', $dateFrom);
             if ($dateTo) {
                 $articlesQuery->whereDate('rss_articles.published_at', '<=', $dateTo);
             }
         }
 
-        $articles = $articlesQuery->paginate($perPage)->withQueryString();
+        $articles = $articlesQuery->get();
 
         return Inertia::render('tools/rss-feeds/index', [
             'feeds' => $feeds->map(fn (RssFeed $feed) => [

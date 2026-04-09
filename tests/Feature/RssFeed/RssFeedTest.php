@@ -26,7 +26,7 @@ test('users can view rss feeds index', function () {
 test('users can see their feeds and articles', function () {
     $user = User::factory()->create();
     $feed = RssFeed::factory()->for($user)->create();
-    RssArticle::factory()->for($feed, 'feed')->count(3)->create();
+    RssArticle::factory()->for($feed, 'feed')->count(3)->create(['published_at' => now()]);
     $this->actingAs($user);
 
     $response = $this->get(route('rss-feeds.index'));
@@ -35,7 +35,7 @@ test('users can see their feeds and articles', function () {
     $response->assertInertia(fn ($page) => $page
         ->component('tools/rss-feeds/index')
         ->has('feeds', 1)
-        ->has('articles.data', 3)
+        ->has('articles', 3)
     );
 });
 
@@ -43,15 +43,15 @@ test('users can filter articles by feed', function () {
     $user = User::factory()->create();
     $feed1 = RssFeed::factory()->for($user)->create();
     $feed2 = RssFeed::factory()->for($user)->create();
-    RssArticle::factory()->for($feed1, 'feed')->count(2)->create();
-    RssArticle::factory()->for($feed2, 'feed')->count(3)->create();
+    RssArticle::factory()->for($feed1, 'feed')->count(2)->create(['published_at' => now()]);
+    RssArticle::factory()->for($feed2, 'feed')->count(3)->create(['published_at' => now()]);
     $this->actingAs($user);
 
     $response = $this->get(route('rss-feeds.index', ['feed' => $feed1->id]));
 
     $response->assertSuccessful();
     $response->assertInertia(fn ($page) => $page
-        ->has('articles.data', 2)
+        ->has('articles', 2)
         ->where('currentFeedId', $feed1->id)
     );
 });
@@ -68,7 +68,7 @@ test('users can filter articles by today only', function () {
 
     $response->assertSuccessful();
     $response->assertInertia(fn ($page) => $page
-        ->has('articles.data', 1)
+        ->has('articles', 1)
         ->where('filters.today', true)
     );
 });
@@ -88,9 +88,25 @@ test('users can filter articles by date range', function () {
 
     $response->assertSuccessful();
     $response->assertInertia(fn ($page) => $page
-        ->has('articles.data', 2)
+        ->has('articles', 2)
         ->where('filters.date_from', now()->subDays(6)->format('Y-m-d'))
         ->where('filters.date_to', now()->subDay()->format('Y-m-d'))
+    );
+});
+
+test('default date_from is 7 days ago when not specified', function () {
+    $user = User::factory()->create();
+    $feed = RssFeed::factory()->for($user)->create();
+    RssArticle::factory()->for($feed, 'feed')->create(['published_at' => now()->subDays(3)]);
+    RssArticle::factory()->for($feed, 'feed')->create(['published_at' => now()->subDays(10)]);
+    $this->actingAs($user);
+
+    $response = $this->get(route('rss-feeds.index'));
+
+    $response->assertSuccessful();
+    $response->assertInertia(fn ($page) => $page
+        ->has('articles', 1)
+        ->where('filters.date_from', today()->subDays(7)->format('Y-m-d'))
     );
 });
 
