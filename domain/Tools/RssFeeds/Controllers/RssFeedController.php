@@ -26,7 +26,16 @@ class RssFeedController extends Controller
         $todayOnly = $request->boolean('today');
 
         $feeds = $user->rssFeeds()
-            ->withCount('articles')
+            ->withCount(['articles' => function ($query) use ($todayOnly, $dateFrom, $dateTo): void {
+                if ($todayOnly) {
+                    $query->whereDate('published_at', today());
+                } else {
+                    $query->whereDate('published_at', '>=', $dateFrom);
+                    if ($dateTo) {
+                        $query->whereDate('published_at', '<=', $dateTo);
+                    }
+                }
+            }])
             ->orderBy('name')
             ->get();
 
