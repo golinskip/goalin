@@ -97,6 +97,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('playlists/{playlist}', [PlaylistController::class, 'show'])->name('playlists.show');
     Route::put('playlists/{playlist}', [PlaylistController::class, 'update'])->name('playlists.update');
     Route::delete('playlists/{playlist}', [PlaylistController::class, 'destroy'])->name('playlists.destroy');
+    Route::get('playlists/{playlist}/tracks', [PlaylistController::class, 'tracks'])->name('playlists.tracks');
     Route::post('playlists/{playlist}/tracks', [PlaylistController::class, 'addTrack'])->name('playlists.add-track');
     Route::delete('playlists/{playlist}/tracks/{music_file}', [PlaylistController::class, 'removeTrack'])->name('playlists.remove-track');
 });

@@ -5,7 +5,7 @@ namespace Domain\Tools\GoalTracker\Controllers;
 use App\Http\Controllers\Controller;
 use Domain\Tools\GoalTracker\Models\Activity;
 use Domain\Tools\GoalTracker\Requests\StoreActivityLogRequest;
-use Domain\Tools\MusicPlayer\Models\MusicFile;
+use Domain\Tools\MusicPlayer\Models\Playlist;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -40,14 +40,14 @@ class ActivityLogController extends Controller
             abort(403);
         }
 
-        $timerMusic = $user->musicFiles()
-            ->whereHas('tags', fn ($q) => $q->where('name', 'timer'))
+        $playlists = $user->playlists()
+            ->withCount('musicFiles')
             ->get()
-            ->map(fn (MusicFile $file) => [
-                'id' => $file->id,
-                'title' => $file->title,
-                'artist' => $file->artist,
-                'duration_seconds' => $file->duration_seconds,
+            ->map(fn (Playlist $playlist) => [
+                'id' => $playlist->id,
+                'name' => $playlist->name,
+                'color' => $playlist->color,
+                'track_count' => $playlist->music_files_count,
             ]);
 
         return Inertia::render('tools/goal-tracker/activities/timer', [
@@ -59,7 +59,7 @@ class ActivityLogController extends Controller
                 'duration_minutes' => $activity->duration_minutes,
                 'point_cost' => $activity->point_cost,
             ],
-            'timerMusic' => $timerMusic,
+            'playlists' => $playlists,
         ]);
     }
 }

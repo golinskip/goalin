@@ -137,6 +137,35 @@ test('users can remove a track from their playlist', function () {
     expect($playlist->musicFiles()->count())->toBe(0);
 });
 
+test('users can fetch tracks for their own playlist as json', function () {
+    $user = User::factory()->create();
+    $playlist = Playlist::factory()->for($user)->create();
+    $file = MusicFile::factory()->for($user)->create(['title' => 'Test Song', 'artist' => 'Test Artist']);
+    $playlist->musicFiles()->attach($file->id, ['position' => 0]);
+    $this->actingAs($user);
+
+    $response = $this->getJson(route('playlists.tracks', $playlist));
+
+    $response->assertOk();
+    $response->assertJsonCount(1);
+    $response->assertJsonFragment([
+        'id' => $file->id,
+        'title' => 'Test Song',
+        'artist' => 'Test Artist',
+    ]);
+});
+
+test('users cannot fetch tracks for another users playlist', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $playlist = Playlist::factory()->for($otherUser)->create();
+    $this->actingAs($user);
+
+    $response = $this->getJson(route('playlists.tracks', $playlist));
+
+    $response->assertForbidden();
+});
+
 test('users cannot add tracks to another users playlist', function () {
     $user = User::factory()->create();
     $otherUser = User::factory()->create();

@@ -8,6 +8,7 @@ use Domain\Tools\MusicPlayer\Models\Playlist;
 use Domain\Tools\MusicPlayer\Requests\StorePlaylistRequest;
 use Domain\Tools\MusicPlayer\Requests\UpdatePlaylistRequest;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -70,6 +71,20 @@ class PlaylistController extends Controller
             'k' => $value * 1024,
             default => $value,
         };
+    }
+
+    public function tracks(Playlist $playlist): JsonResponse
+    {
+        $this->authorize('view', $playlist);
+
+        return response()->json(
+            $playlist->musicFiles()->orderBy('position')->get()->map(fn (MusicFile $file) => [
+                'id' => $file->id,
+                'title' => $file->title,
+                'artist' => $file->artist,
+                'duration_seconds' => $file->duration_seconds,
+            ]),
+        );
     }
 
     public function store(StorePlaylistRequest $request): RedirectResponse

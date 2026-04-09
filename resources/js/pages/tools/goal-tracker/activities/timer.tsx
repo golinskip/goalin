@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { CheckCircle2, Music, Pause, Play, RotateCcw, SkipBack, SkipForward, Volume2, VolumeX, X } from 'lucide-react';
+import { CheckCircle2, ChevronDown, Loader2, Music, Pause, Play, RotateCcw, SkipBack, SkipForward, Volume2, VolumeX, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
@@ -13,6 +13,13 @@ type TimerMusicFile = {
     duration_seconds: number | null;
 };
 
+type PlaylistInfo = {
+    id: number;
+    name: string;
+    color: string;
+    track_count: number;
+};
+
 type Props = {
     activity: {
         id: number;
@@ -22,7 +29,7 @@ type Props = {
         duration_minutes: number;
         point_cost: number;
     };
-    timerMusic: TimerMusicFile[];
+    playlists: PlaylistInfo[];
 };
 
 type TimerState = 'running' | 'paused' | 'finished';
@@ -69,6 +76,18 @@ function MiniPlayer({ tracks }: { tracks: TimerMusicFile[] }) {
     const [isMuted, setIsMuted] = useState(false);
 
     const currentTrack = tracks[currentIndex];
+
+    // Reset index when tracks change (playlist switch)
+    useEffect(() => {
+        setCurrentIndex(0);
+        setIsPlaying(false);
+        const audio = audioRef.current;
+        if (audio) {
+            audio.pause();
+            audio.removeAttribute('src');
+            audio.load();
+        }
+    }, [tracks]);
 
     const play = useCallback(() => {
         const audio = audioRef.current;
@@ -143,9 +162,23 @@ function MiniPlayer({ tracks }: { tracks: TimerMusicFile[] }) {
         return () => audio.removeEventListener('ended', handleEnded);
     }, [skipNext, tracks.length]);
 
+    // Cleanup audio on unmount
+    useEffect(() => {
+        return () => {
+            const audio = audioRef.current;
+            if (audio) {
+                audio.pause();
+                audio.removeAttribute('src');
+                audio.load();
+            }
+        };
+    }, []);
+
+    if (!currentTrack) return null;
+
     return (
         <div className="flex items-center gap-3 rounded-xl border border-border/30 bg-black/5 px-4 py-2.5 backdrop-blur-sm dark:bg-white/5">
-            <audio ref={audioRef} className="hidden" />
+            <audio ref={audioRef} preload="none" className="hidden" />
 
             <Music className="size-4 shrink-0 text-muted-foreground/50" />
 
@@ -190,7 +223,141 @@ function MiniPlayer({ tracks }: { tracks: TimerMusicFile[] }) {
     );
 }
 
-export default function ActivityTimer({ activity, timerMusic }: Props) {
+function PlaylistMusicPlayer({ playlists }: { playlists: PlaylistInfo[] }) {
+    const [selectedPlaylistId, setSelectedPlaylistId] = useState<number | null>(null);
+    const [tracks, setTracks] = useState<TimerMusicFile[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const abortControllerRef = useRef<AbortController | null>(null);
+
+    const selectedPlaylist = playlists.find((p) => p.id === selectedPlaylistId);
+
+    const loadTracks = useCallback(async (playlistId: number) => {
+        // Abort any in-flight request
+        abortControllerRef.current?.abort();
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
+        setLoading(true);
+        try {
+            const response = await fetch(`/playlists/${playlistId}/tracks`, {
+                signal: controller.signal,
+                headers: { Accept: 'application/json' },
+            });
+            if (!response.ok) throw new Error('Failed to load tracks');
+            const data: TimerMusicFile[] = await response.json();
+            setTracks(data);
+        } catch (e) {
+            if (e instanceof DOMException && e.name === 'AbortError') return;
+            setTracks([]);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const selectPlaylist = useCallback(
+        (playlistId: number | null) => {
+            setSelectedPlaylistId(playlistId);
+            setDropdownOpen(false);
+            if (playlistId) {
+                loadTracks(playlistId);
+            } else {
+                setTracks([]);
+            }
+        },
+        [loadTracks],
+    );
+
+    // Cleanup abort controller on unmount
+    useEffect(() => {
+        return () => {
+            abortControllerRef.current?.abort();
+        };
+    }, []);
+
+    if (playlists.length === 0) {
+        return (
+            <div className="flex items-center gap-2.5 rounded-xl border border-border/30 bg-black/5 px-4 py-2.5 backdrop-blur-sm dark:bg-white/5">
+                <Music className="size-4 shrink-0 text-muted-foreground/40" />
+                <p className="text-xs text-muted-foreground">Create a playlist in the Music Player to play music here.</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col gap-2">
+            {/* Playlist selector */}
+            <div className="relative">
+                <button
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="flex w-full items-center justify-between gap-2 rounded-xl border border-border/30 bg-black/5 px-4 py-2.5 text-left backdrop-blur-sm transition-colors hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10"
+                >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        {selectedPlaylist ? (
+                            <>
+                                <div className="size-3 shrink-0 rounded-full" style={{ backgroundColor: selectedPlaylist.color }} />
+                                <span className="truncate text-xs font-medium">{selectedPlaylist.name}</span>
+                                <span className="shrink-0 text-[10px] text-muted-foreground">
+                                    {selectedPlaylist.track_count} {selectedPlaylist.track_count === 1 ? 'track' : 'tracks'}
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                <Music className="size-4 shrink-0 text-muted-foreground/50" />
+                                <span className="text-xs text-muted-foreground">Select a playlist...</span>
+                            </>
+                        )}
+                    </div>
+                    <ChevronDown className={`size-3.5 shrink-0 text-muted-foreground transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {dropdownOpen && (
+                    <div className="absolute top-full z-20 mt-1 w-full overflow-hidden rounded-xl border border-border/30 bg-background shadow-lg backdrop-blur-sm">
+                        {selectedPlaylist && (
+                            <button
+                                onClick={() => selectPlaylist(null)}
+                                className="flex w-full items-center gap-2.5 px-4 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-accent"
+                            >
+                                <X className="size-3 shrink-0" />
+                                Stop music
+                            </button>
+                        )}
+                        {playlists.map((playlist) => (
+                            <button
+                                key={playlist.id}
+                                onClick={() => selectPlaylist(playlist.id)}
+                                className={`flex w-full items-center gap-2.5 px-4 py-2 text-left transition-colors hover:bg-accent ${playlist.id === selectedPlaylistId ? 'bg-accent/50' : ''}`}
+                            >
+                                <div className="size-3 shrink-0 rounded-full" style={{ backgroundColor: playlist.color }} />
+                                <span className="truncate text-xs font-medium">{playlist.name}</span>
+                                <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">
+                                    {playlist.track_count}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Player */}
+            {loading && (
+                <div className="flex items-center justify-center gap-2 rounded-xl border border-border/30 bg-black/5 px-4 py-2.5 backdrop-blur-sm dark:bg-white/5">
+                    <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Loading tracks...</span>
+                </div>
+            )}
+            {!loading && tracks.length > 0 && <MiniPlayer tracks={tracks} />}
+            {!loading && selectedPlaylistId && tracks.length === 0 && (
+                <div className="flex items-center gap-2.5 rounded-xl border border-border/30 bg-black/5 px-4 py-2.5 backdrop-blur-sm dark:bg-white/5">
+                    <Music className="size-4 shrink-0 text-muted-foreground/40" />
+                    <p className="text-xs text-muted-foreground">This playlist has no tracks.</p>
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default function ActivityTimer({ activity, playlists }: Props) {
     const totalSeconds = activity.duration_minutes * 60;
     const [secondsLeft, setSecondsLeft] = useState(totalSeconds);
     const [timerState, setTimerState] = useState<TimerState>('running');
@@ -489,18 +656,9 @@ export default function ActivityTimer({ activity, timerMusic }: Props) {
                         </div>
                     )}
 
-                    {/* Mini Music Player */}
+                    {/* Playlist Music Player */}
                     <div className="w-full max-w-sm">
-                        {timerMusic.length > 0 ? (
-                            <MiniPlayer tracks={timerMusic} />
-                        ) : (
-                            <div className="flex items-center gap-2.5 rounded-xl border border-border/30 bg-black/5 px-4 py-2.5 backdrop-blur-sm dark:bg-white/5">
-                                <Music className="size-4 shrink-0 text-muted-foreground/40" />
-                                <p className="text-xs text-muted-foreground">
-                                    Tag music files with <span className="font-medium">&ldquo;timer&rdquo;</span> in the Music Player to play them here.
-                                </p>
-                            </div>
-                        )}
+                        <PlaylistMusicPlayer playlists={playlists} />
                     </div>
                 </div>
             </div>
