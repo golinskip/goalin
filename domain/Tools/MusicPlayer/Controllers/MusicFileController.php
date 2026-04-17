@@ -86,12 +86,23 @@ class MusicFileController extends Controller
             $originalName = $file->getClientOriginalName();
             $title = pathinfo($originalName, PATHINFO_FILENAME);
 
+            $durationSeconds = null;
+
+            try {
+                $getID3 = new \getID3;
+                $info = $getID3->analyze(storage_path('app/private/'.$path));
+                $durationSeconds = isset($info['playtime_seconds']) ? (int) round($info['playtime_seconds']) : null;
+            } catch (\Throwable) {
+                // Duration extraction is best-effort
+            }
+
             $musicFile = $user->musicFiles()->create([
                 'title' => $title,
                 'original_filename' => $originalName,
                 'disk_path' => $path,
                 'mime_type' => $file->getMimeType(),
                 'file_size' => $file->getSize(),
+                'duration_seconds' => $durationSeconds,
             ]);
 
             if (count($tagNames) > 0) {
