@@ -139,6 +139,35 @@ class PlaylistController extends Controller
 
         $playlist->musicFiles()->detach($musicFile->id);
 
+        $this->normalizePositions($playlist);
+
         return to_route('playlists.show', $playlist);
+    }
+
+    public function reorderTracks(Request $request, Playlist $playlist): RedirectResponse
+    {
+        $this->authorize('update', $playlist);
+
+        $data = $request->validate([
+            'order' => ['required', 'array'],
+            'order.*' => ['required', 'integer'],
+        ]);
+
+        foreach ($data['order'] as $position => $musicFileId) {
+            $playlist->musicFiles()
+                ->where('music_files.id', $musicFileId)
+                ->updateExistingPivot($musicFileId, ['position' => $position + 1]);
+        }
+
+        return back();
+    }
+
+    private function normalizePositions(Playlist $playlist): void
+    {
+        $tracks = $playlist->musicFiles()->orderByPivot('position')->get();
+
+        foreach ($tracks->values() as $index => $track) {
+            $playlist->musicFiles()->updateExistingPivot($track->id, ['position' => $index + 1]);
+        }
     }
 }

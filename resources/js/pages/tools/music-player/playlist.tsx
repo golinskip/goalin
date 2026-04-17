@@ -1,6 +1,7 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import {
     ChevronLeft,
+    GripVertical,
     ListMusic,
     Music,
     Pause,
@@ -103,10 +104,16 @@ function Player({
     tracks,
     playlistName,
     playlistColor,
+    onDragStart,
+    onDragEnter,
+    onDragEnd,
 }: {
     tracks: Track[];
     playlistName: string;
     playlistColor: string;
+    onDragStart: (index: number) => void;
+    onDragEnter: (index: number) => void;
+    onDragEnd: () => void;
 }) {
     const audioRef = useRef<HTMLAudioElement>(null);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -248,13 +255,21 @@ return null;
             <div className="rounded-xl border bg-white/70 shadow-sm backdrop-blur-sm dark:bg-black/40" style={{ borderColor: playlistColor + '40' }}>
                 <div className="divide-y divide-border/50">
                     {tracks.map((track, index) => (
-                        <button
+                        <div
                             key={track.id}
+                            draggable
+                            onDragStart={() => onDragStart(index)}
+                            onDragEnter={() => onDragEnter(index)}
+                            onDragEnd={onDragEnd}
+                            onDragOver={(e) => e.preventDefault()}
                             onClick={() => playTrack(index)}
-                            className={`flex w-full items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-black/[.02] dark:hover:bg-white/[.02] ${
+                            className={`flex w-full cursor-pointer items-center gap-1 px-2 py-3 text-left transition-colors hover:bg-black/[.02] dark:hover:bg-white/[.02] ${
                                 index === currentIndex ? 'bg-black/[.04] dark:bg-white/[.04]' : ''
                             }`}
                         >
+                            <span className="flex shrink-0 cursor-grab items-center text-muted-foreground/30 hover:text-muted-foreground active:cursor-grabbing">
+                                <GripVertical className="size-4" />
+                            </span>
                             <span className="w-6 shrink-0 text-center text-xs text-muted-foreground">
                                 {index === currentIndex && isPlaying ? (
                                     <span className="inline-block size-2 animate-pulse rounded-full" style={{ backgroundColor: playlistColor }} />
@@ -284,7 +299,7 @@ return null;
                                 </div>
                             </div>
                             <span className="shrink-0 text-xs text-muted-foreground">{formatDuration(track.duration_seconds)}</span>
-                        </button>
+                        </div>
                     ))}
                 </div>
             </div>
@@ -379,11 +394,57 @@ return null;
     );
 }
 
-export default function PlaylistShow({ playlist, tracks, availableFiles, maxFileSize, suggestedTags, availableTags }: Props) {
+export default function PlaylistShow({ playlist, tracks: initialTracks, availableFiles, maxFileSize, suggestedTags, availableTags }: Props) {
+    const [tracks, setTracks] = useState(initialTracks);
     const [showAdd, setShowAdd] = useState(false);
     const [selectedFileId, setSelectedFileId] = useState('');
     const [editingTrack, setEditingTrack] = useState<Track | null>(null);
     const addForm = useForm({ music_file_id: '' });
+
+    // Drag-and-drop reorder state
+    const dragItem = useRef<number | null>(null);
+    const dragOverItem = useRef<number | null>(null);
+
+    useEffect(() => {
+        setTracks(initialTracks);
+    }, [initialTracks]);
+
+    const handleTrackDragStart = useCallback((index: number) => {
+        dragItem.current = index;
+    }, []);
+
+    const handleTrackDragEnter = useCallback((index: number) => {
+        dragOverItem.current = index;
+    }, []);
+
+    const handleTrackDragEnd = useCallback(() => {
+        if (dragItem.current === null || dragOverItem.current === null || dragItem.current === dragOverItem.current) {
+            dragItem.current = null;
+            dragOverItem.current = null;
+
+            return;
+        }
+
+        const items = [...tracks];
+        const draggedItem = items[dragItem.current];
+        items.splice(dragItem.current, 1);
+        items.splice(dragOverItem.current, 0, draggedItem);
+
+        const reordered = items.map((item, index) => ({
+            ...item,
+            position: index + 1,
+        }));
+
+        setTracks(reordered);
+        dragItem.current = null;
+        dragOverItem.current = null;
+
+        router.patch(
+            `/playlists/${playlist.id}/tracks/reorder`,
+            { order: reordered.map((t) => t.id) } as Record<string, unknown>,
+            { preserveScroll: true },
+        );
+    }, [tracks, playlist.id]);
 
     // Upload state
     const [isDragging, setIsDragging] = useState(false);
@@ -1043,7 +1104,14 @@ fileInputRef.current.value = '';
                         </div>
                     ) : tracks.length > 0 ? (
                         <div className="relative">
-                            <Player tracks={tracks} playlistName={playlist.name} playlistColor={playlist.color} />
+                            <Player
+                                tracks={tracks}
+                                playlistName={playlist.name}
+                                playlistColor={playlist.color}
+                                onDragStart={handleTrackDragStart}
+                                onDragEnter={handleTrackDragEnter}
+                                onDragEnd={handleTrackDragEnd}
+                            />
 
                             {/* Edit/Remove track buttons - overlaid */}
                             <div className="absolute top-0 right-0 divide-y divide-transparent">

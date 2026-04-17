@@ -110,6 +110,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('playlists/{playlist}/tracks', [PlaylistController::class, 'tracks'])->name('playlists.tracks');
     Route::post('playlists/{playlist}/tracks', [PlaylistController::class, 'addTrack'])->name('playlists.add-track');
     Route::delete('playlists/{playlist}/tracks/{music_file}', [PlaylistController::class, 'removeTrack'])->name('playlists.remove-track');
+    Route::patch('playlists/{playlist}/tracks/reorder', [PlaylistController::class, 'reorderTracks'])->name('playlists.reorder-tracks');
 });
 
 require __DIR__.'/settings.php';

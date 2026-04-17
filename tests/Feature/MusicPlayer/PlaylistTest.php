@@ -179,3 +179,60 @@ test('users cannot add tracks to another users playlist', function () {
 
     $response->assertForbidden();
 });
+
+test('users can reorder tracks in their playlist', function () {
+    $user = User::factory()->create();
+    $playlist = Playlist::factory()->for($user)->create();
+    $fileA = MusicFile::factory()->for($user)->create();
+    $fileB = MusicFile::factory()->for($user)->create();
+    $fileC = MusicFile::factory()->for($user)->create();
+    $playlist->musicFiles()->attach($fileA->id, ['position' => 1]);
+    $playlist->musicFiles()->attach($fileB->id, ['position' => 2]);
+    $playlist->musicFiles()->attach($fileC->id, ['position' => 3]);
+    $this->actingAs($user);
+
+    $response = $this->patch(route('playlists.reorder-tracks', $playlist), [
+        'order' => [$fileC->id, $fileA->id, $fileB->id],
+    ]);
+
+    $response->assertRedirect();
+
+    $positions = $playlist->musicFiles()->orderByPivot('position')->pluck('music_files.id')->toArray();
+    expect($positions)->toBe([$fileC->id, $fileA->id, $fileB->id]);
+});
+
+test('users cannot reorder tracks in another users playlist', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $playlist = Playlist::factory()->for($otherUser)->create();
+    $this->actingAs($user);
+
+    $response = $this->patch(route('playlists.reorder-tracks', $playlist), [
+        'order' => [],
+    ]);
+
+    $response->assertForbidden();
+});
+
+test('removing a track normalizes positions', function () {
+    $user = User::factory()->create();
+    $playlist = Playlist::factory()->for($user)->create();
+    $fileA = MusicFile::factory()->for($user)->create();
+    $fileB = MusicFile::factory()->for($user)->create();
+    $fileC = MusicFile::factory()->for($user)->create();
+    $playlist->musicFiles()->attach($fileA->id, ['position' => 1]);
+    $playlist->musicFiles()->attach($fileB->id, ['position' => 2]);
+    $playlist->musicFiles()->attach($fileC->id, ['position' => 3]);
+    $this->actingAs($user);
+
+    $this->delete(route('playlists.remove-track', [$playlist, $fileB]));
+
+    $positions = $playlist->musicFiles()->orderByPivot('position')->get()
+        ->map(fn ($f) => ['id' => $f->id, 'position' => $f->pivot->position])
+        ->toArray();
+
+    expect($positions)->toBe([
+        ['id' => $fileA->id, 'position' => 1],
+        ['id' => $fileC->id, 'position' => 2],
+    ]);
+});
