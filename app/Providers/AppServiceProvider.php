@@ -3,18 +3,23 @@
 namespace App\Providers;
 
 use Carbon\CarbonImmutable;
+use Domain\Tools\Alerts\AlertManager;
+use Domain\Tools\Diary\Alerts\EmptyDiaryDaysAlert;
 use Domain\Tools\Diary\Models\DiaryEntry;
 use Domain\Tools\Diary\Policies\DiaryEntryPolicy;
+use Domain\Tools\Flashcards\Alerts\NoReviewTodayAlert;
 use Domain\Tools\Flashcards\Models\MemoSet;
 use Domain\Tools\Flashcards\Policies\MemoSetPolicy;
 use Domain\Tools\Games\Models\GameResult;
 use Domain\Tools\Games\Policies\GameResultPolicy;
+use Domain\Tools\GoalTracker\Alerts\NoTasksTodayAlert;
 use Domain\Tools\GoalTracker\Models\Activity;
 use Domain\Tools\GoalTracker\Models\Goal;
 use Domain\Tools\GoalTracker\Models\Reward;
 use Domain\Tools\GoalTracker\Policies\ActivityPolicy;
 use Domain\Tools\GoalTracker\Policies\GoalPolicy;
 use Domain\Tools\GoalTracker\Policies\RewardPolicy;
+use Domain\Tools\LongTermGoals\Alerts\NoGoalsThisPeriodAlert;
 use Domain\Tools\LongTermGoals\Models\GoalCategory;
 use Domain\Tools\LongTermGoals\Models\GoalPeriod;
 use Domain\Tools\LongTermGoals\Models\LongTermGoal;
@@ -25,6 +30,7 @@ use Domain\Tools\MusicPlayer\Models\MusicFile;
 use Domain\Tools\MusicPlayer\Models\Playlist;
 use Domain\Tools\MusicPlayer\Policies\MusicFilePolicy;
 use Domain\Tools\MusicPlayer\Policies\PlaylistPolicy;
+use Domain\Tools\RssFeeds\Alerts\UncheckedNewsTodayAlert;
 use Domain\Tools\RssFeeds\Models\RssFeed;
 use Domain\Tools\RssFeeds\Policies\RssFeedPolicy;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -41,7 +47,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(AlertManager::class, fn () => new AlertManager(
+            new NoTasksTodayAlert,
+            new EmptyDiaryDaysAlert,
+            new NoReviewTodayAlert,
+            new NoGoalsThisPeriodAlert,
+            new UncheckedNewsTodayAlert,
+        ));
     }
 
     /**
