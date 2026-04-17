@@ -8,6 +8,7 @@ import {
     Pencil,
     Play,
     Plus,
+    Shuffle,
     SkipBack,
     SkipForward,
     Tag,
@@ -102,27 +103,28 @@ return true;
 
 function Player({
     tracks,
-    playlistName,
     playlistColor,
-    onDragStart,
-    onDragEnter,
-    onDragEnd,
+    currentIndex,
+    setCurrentIndex,
+    isPlaying,
+    setIsPlaying,
+    isShuffled,
+    onShuffle,
 }: {
     tracks: Track[];
-    playlistName: string;
     playlistColor: string;
-    onDragStart: (index: number) => void;
-    onDragEnter: (index: number) => void;
-    onDragEnd: () => void;
+    currentIndex: number;
+    setCurrentIndex: (index: number | ((i: number) => number)) => void;
+    isPlaying: boolean;
+    setIsPlaying: (playing: boolean) => void;
+    isShuffled: boolean;
+    onShuffle: () => void;
 }) {
     const audioRef = useRef<HTMLAudioElement>(null);
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
     const [volume, setVolume] = useState(1);
     const [isMuted, setIsMuted] = useState(false);
-    const [minimized, setMinimized] = useState(false);
 
     const currentTrack = tracks[currentIndex] ?? null;
 
@@ -130,8 +132,8 @@ function Player({
         const audio = audioRef.current;
 
         if (!audio || !currentTrack) {
-return;
-}
+            return;
+        }
 
         audio.src = `/music/${currentTrack.id}/stream`;
 
@@ -144,8 +146,8 @@ return;
         const audio = audioRef.current;
 
         if (!audio) {
-return;
-}
+            return;
+        }
 
         const onTimeUpdate = () => setCurrentTime(audio.currentTime);
         const onDurationChange = () => setDuration(audio.duration || 0);
@@ -172,8 +174,8 @@ return;
         const audio = audioRef.current;
 
         if (!audio || !currentTrack) {
-return;
-}
+            return;
+        }
 
         if (isPlaying) {
             audio.pause();
@@ -185,22 +187,22 @@ return;
 
     const skipPrev = useCallback(() => {
         if (currentIndex > 0) {
-setCurrentIndex((i) => i - 1);
-}
+            setCurrentIndex((i) => i - 1);
+        }
     }, [currentIndex]);
 
     const skipNext = useCallback(() => {
         if (currentIndex < tracks.length - 1) {
-setCurrentIndex((i) => i + 1);
-}
+            setCurrentIndex((i) => i + 1);
+        }
     }, [currentIndex, tracks.length]);
 
     const seek = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         const audio = audioRef.current;
 
         if (!audio || !duration) {
-return;
-}
+            return;
+        }
 
         const rect = e.currentTarget.getBoundingClientRect();
         const ratio = (e.clientX - rect.left) / rect.width;
@@ -211,8 +213,8 @@ return;
         const audio = audioRef.current;
 
         if (!audio) {
-return;
-}
+            return;
+        }
 
         if (isMuted) {
             audio.volume = volume;
@@ -227,8 +229,8 @@ return;
         const audio = audioRef.current;
 
         if (!audio) {
-return;
-}
+            return;
+        }
 
         const v = parseFloat(e.target.value);
         setVolume(v);
@@ -236,161 +238,92 @@ return;
         setIsMuted(v === 0);
     }, []);
 
-    const playTrack = useCallback((index: number) => {
-        setCurrentIndex(index);
-        setIsPlaying(true);
-    }, []);
-
     if (tracks.length === 0) {
-return null;
-}
+        return null;
+    }
 
     const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
     return (
-        <>
+        <div className="rounded-xl border bg-white/70 shadow-sm backdrop-blur-sm dark:bg-black/40" style={{ borderColor: playlistColor + '40' }}>
             <audio ref={audioRef} preload="auto" />
 
-            {/* Track list */}
-            <div className="rounded-xl border bg-white/70 shadow-sm backdrop-blur-sm dark:bg-black/40" style={{ borderColor: playlistColor + '40' }}>
-                <div className="divide-y divide-border/50">
-                    {tracks.map((track, index) => (
-                        <div
-                            key={track.id}
-                            draggable
-                            onDragStart={() => onDragStart(index)}
-                            onDragEnter={() => onDragEnter(index)}
-                            onDragEnd={onDragEnd}
-                            onDragOver={(e) => e.preventDefault()}
-                            onClick={() => playTrack(index)}
-                            className={`flex w-full cursor-pointer items-center gap-1 px-2 py-3 text-left transition-colors hover:bg-black/[.02] dark:hover:bg-white/[.02] ${
-                                index === currentIndex ? 'bg-black/[.04] dark:bg-white/[.04]' : ''
-                            }`}
-                        >
-                            <span className="flex shrink-0 cursor-grab items-center text-muted-foreground/30 hover:text-muted-foreground active:cursor-grabbing">
-                                <GripVertical className="size-4" />
-                            </span>
-                            <span className="w-6 shrink-0 text-center text-xs text-muted-foreground">
-                                {index === currentIndex && isPlaying ? (
-                                    <span className="inline-block size-2 animate-pulse rounded-full" style={{ backgroundColor: playlistColor }} />
-                                ) : (
-                                    index + 1
-                                )}
-                            </span>
-                            <div className="min-w-0 flex-1">
-                                <p className={`truncate text-sm font-medium ${index === currentIndex ? 'text-foreground' : ''}`}>
-                                    {track.title}
-                                </p>
-                                <div className="flex items-center gap-1.5">
-                                    <p className="truncate text-xs text-muted-foreground">{track.artist ?? 'Unknown artist'}</p>
-                                    {track.tags.length > 0 && (
-                                        <>
-                                            <span className="text-muted-foreground/30">&middot;</span>
-                                            {track.tags.map((tag) => (
-                                                <span
-                                                    key={tag}
-                                                    className="rounded-full bg-pink-500/10 px-1.5 py-0.5 text-[10px] font-medium text-pink-600 dark:text-pink-400"
-                                                >
-                                                    {tag}
-                                                </span>
-                                            ))}
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                            <span className="shrink-0 text-xs text-muted-foreground">{formatDuration(track.duration_seconds)}</span>
-                        </div>
-                    ))}
+            {/* Track info */}
+            <div className="px-5 pt-4 pb-1">
+                <p className="truncate text-sm font-semibold">
+                    {currentTrack ? currentTrack.title : 'No track selected'}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                    {currentTrack ? (currentTrack.artist ?? 'Unknown artist') : '\u00A0'}
+                </p>
+            </div>
+
+            {/* Progress bar */}
+            <div className="px-5 pt-2">
+                <div className="group cursor-pointer rounded-full bg-black/10 dark:bg-white/10" onClick={seek}>
+                    <div className="h-1.5 rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: playlistColor }} />
+                </div>
+                <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+                    <span>{formatTime(currentTime)}</span>
+                    <span>{formatTime(duration)}</span>
                 </div>
             </div>
 
-            {/* Floating Player */}
-            {currentTrack && (
-                <div
-                    className="fixed right-4 bottom-4 z-50 overflow-hidden rounded-xl border shadow-2xl backdrop-blur-md"
-                    style={{
-                        borderColor: playlistColor + '60',
-                        backgroundColor: 'rgba(255,255,255,0.92)',
-                        width: minimized ? '280px' : '360px',
-                    }}
-                >
-                    <div className="dark:bg-black/70">
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-4 pt-3 pb-1">
-                            <p className="truncate text-xs font-medium text-muted-foreground">{playlistName}</p>
-                            <button
-                                onClick={() => setMinimized(!minimized)}
-                                className="text-muted-foreground/50 hover:text-foreground"
-                            >
-                                {minimized ? <Plus className="size-3.5" /> : <X className="size-3.5" />}
-                            </button>
-                        </div>
-
-                        {/* Track Info */}
-                        <div className="px-4 py-1">
-                            <p className="truncate text-sm font-semibold">{currentTrack.title}</p>
-                            <p className="truncate text-xs text-muted-foreground">{currentTrack.artist ?? 'Unknown artist'}</p>
-                        </div>
-
-                        {!minimized && (
-                            <>
-                                {/* Progress Bar */}
-                                <div className="px-4 pt-2">
-                                    <div className="group cursor-pointer rounded-full bg-black/10 dark:bg-white/10" onClick={seek}>
-                                        <div className="h-1.5 rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: playlistColor }} />
-                                    </div>
-                                    <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
-                                        <span>{formatTime(currentTime)}</span>
-                                        <span>{formatTime(duration)}</span>
-                                    </div>
-                                </div>
-
-                                {/* Volume */}
-                                <div className="flex items-center gap-2 px-4 pb-1">
-                                    <button onClick={toggleMute} className="text-muted-foreground hover:text-foreground">
-                                        {isMuted ? <VolumeX className="size-3.5" /> : <Volume2 className="size-3.5" />}
-                                    </button>
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="1"
-                                        step="0.01"
-                                        value={isMuted ? 0 : volume}
-                                        onChange={changeVolume}
-                                        className="h-1 w-full accent-pink-500"
-                                    />
-                                </div>
-                            </>
-                        )}
-
-                        {/* Controls */}
-                        <div className="flex items-center justify-center gap-4 px-4 pb-3">
-                            <button
-                                onClick={skipPrev}
-                                disabled={currentIndex === 0}
-                                className="text-muted-foreground hover:text-foreground disabled:opacity-30"
-                            >
-                                <SkipBack className="size-4" />
-                            </button>
-                            <button
-                                onClick={togglePlay}
-                                className="flex size-9 items-center justify-center rounded-full text-white transition-transform hover:scale-105"
-                                style={{ backgroundColor: playlistColor }}
-                            >
-                                {isPlaying ? <Pause className="size-4" /> : <Play className="size-4 translate-x-[1px]" />}
-                            </button>
-                            <button
-                                onClick={skipNext}
-                                disabled={currentIndex === tracks.length - 1}
-                                className="text-muted-foreground hover:text-foreground disabled:opacity-30"
-                            >
-                                <SkipForward className="size-4" />
-                            </button>
-                        </div>
-                    </div>
+            {/* Controls row */}
+            <div className="flex items-center justify-between px-5 pb-4 pt-1">
+                {/* Volume */}
+                <div className="flex items-center gap-2">
+                    <button onClick={toggleMute} className="text-muted-foreground hover:text-foreground">
+                        {isMuted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+                    </button>
+                    <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value={isMuted ? 0 : volume}
+                        onChange={changeVolume}
+                        className="h-1 w-20 accent-pink-500"
+                    />
                 </div>
-            )}
-        </>
+
+                {/* Playback controls */}
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={onShuffle}
+                        className={`transition-colors ${isShuffled ? '' : 'text-muted-foreground/40 hover:text-muted-foreground'}`}
+                        style={isShuffled ? { color: playlistColor } : undefined}
+                        title="Shuffle"
+                    >
+                        <Shuffle className="size-4" />
+                    </button>
+                    <button
+                        onClick={skipPrev}
+                        disabled={currentIndex === 0}
+                        className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                    >
+                        <SkipBack className="size-4" />
+                    </button>
+                    <button
+                        onClick={togglePlay}
+                        className="flex size-10 items-center justify-center rounded-full text-white transition-transform hover:scale-105"
+                        style={{ backgroundColor: playlistColor }}
+                    >
+                        {isPlaying ? <Pause className="size-5" /> : <Play className="size-5 translate-x-[1px]" />}
+                    </button>
+                    <button
+                        onClick={skipNext}
+                        disabled={currentIndex === tracks.length - 1}
+                        className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                    >
+                        <SkipForward className="size-4" />
+                    </button>
+                </div>
+
+                {/* Spacer to balance layout */}
+                <div className="w-[104px]" />
+            </div>
+        </div>
     );
 }
 
@@ -401,13 +334,56 @@ export default function PlaylistShow({ playlist, tracks: initialTracks, availabl
     const [editingTrack, setEditingTrack] = useState<Track | null>(null);
     const addForm = useForm({ music_file_id: '' });
 
+    // Player state (lifted so track list and player share it)
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [isShuffled, setIsShuffled] = useState(false);
+    const originalOrderRef = useRef<Track[] | null>(null);
+
     // Drag-and-drop reorder state
     const dragItem = useRef<number | null>(null);
     const dragOverItem = useRef<number | null>(null);
 
     useEffect(() => {
         setTracks(initialTracks);
+        originalOrderRef.current = null;
+        setIsShuffled(false);
     }, [initialTracks]);
+
+    const handleShuffle = useCallback(() => {
+        if (isShuffled) {
+            // Restore original order
+            if (originalOrderRef.current) {
+                const currentTrack = tracks[currentIndex];
+                const restored = originalOrderRef.current;
+                const newIndex = restored.findIndex((t) => t.id === currentTrack?.id);
+                setTracks(restored);
+                setCurrentIndex(newIndex >= 0 ? newIndex : 0);
+            }
+
+            originalOrderRef.current = null;
+            setIsShuffled(false);
+        } else {
+            // Shuffle: keep current track at index 0, shuffle the rest
+            originalOrderRef.current = tracks;
+            const currentTrack = tracks[currentIndex];
+            const rest = tracks.filter((_, i) => i !== currentIndex);
+
+            for (let i = rest.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [rest[i], rest[j]] = [rest[j], rest[i]];
+            }
+
+            setTracks([currentTrack, ...rest]);
+            setCurrentIndex(0);
+            setIsShuffled(true);
+        }
+    }, [isShuffled, tracks, currentIndex]);
+
+    const playTrack = useCallback((index: number) => {
+        setCurrentIndex(index);
+        setIsPlaying(true);
+    }, []);
 
     const handleTrackDragStart = useCallback((index: number) => {
         dragItem.current = index;
@@ -1095,7 +1071,21 @@ fileInputRef.current.value = '';
                         </div>
                     )}
 
-                    {/* Tracks / Player */}
+                    {/* Player */}
+                    {tracks.length > 0 && (
+                        <Player
+                            tracks={tracks}
+                            playlistColor={playlist.color}
+                            currentIndex={currentIndex}
+                            setCurrentIndex={setCurrentIndex}
+                            isPlaying={isPlaying}
+                            setIsPlaying={setIsPlaying}
+                            isShuffled={isShuffled}
+                            onShuffle={handleShuffle}
+                        />
+                    )}
+
+                    {/* Track list */}
                     {tracks.length === 0 && pendingFiles.length === 0 ? (
                         <div className="rounded-xl border bg-white/70 p-8 text-center shadow-sm backdrop-blur-sm dark:bg-black/40" style={{ borderColor: playlist.color + '40' }}>
                             <Music className="mx-auto mb-2 size-8 text-pink-400/50" />
@@ -1104,39 +1094,76 @@ fileInputRef.current.value = '';
                         </div>
                     ) : tracks.length > 0 ? (
                         <div className="relative">
-                            <Player
-                                tracks={tracks}
-                                playlistName={playlist.name}
-                                playlistColor={playlist.color}
-                                onDragStart={handleTrackDragStart}
-                                onDragEnter={handleTrackDragEnter}
-                                onDragEnd={handleTrackDragEnd}
-                            />
-
-                            {/* Edit/Remove track buttons - overlaid */}
-                            <div className="absolute top-0 right-0 divide-y divide-transparent">
-                                {tracks.map((track) => (
-                                    <div key={track.id} className="flex h-[52px] items-center gap-1 pr-3">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleEditTrack(track);
-                                            }}
-                                            className="rounded-md p-1 text-muted-foreground/30 hover:text-foreground"
+                            <div className="rounded-xl border bg-white/70 shadow-sm backdrop-blur-sm dark:bg-black/40" style={{ borderColor: playlist.color + '40' }}>
+                                <div className="divide-y divide-border/50">
+                                    {tracks.map((track, index) => (
+                                        <div
+                                            key={track.id}
+                                            draggable={!isShuffled}
+                                            onDragStart={() => handleTrackDragStart(index)}
+                                            onDragEnter={() => handleTrackDragEnter(index)}
+                                            onDragEnd={handleTrackDragEnd}
+                                            onDragOver={(e) => e.preventDefault()}
+                                            onClick={() => playTrack(index)}
+                                            className={`flex w-full cursor-pointer items-center gap-1 px-2 py-3 text-left transition-colors hover:bg-black/[.02] dark:hover:bg-white/[.02] ${
+                                                index === currentIndex ? 'bg-black/[.04] dark:bg-white/[.04]' : ''
+                                            }`}
                                         >
-                                            <Pencil className="size-3.5" />
-                                        </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleRemoveTrack(track.id);
-                                            }}
-                                            className="rounded-md p-1 text-muted-foreground/30 hover:text-red-500"
-                                        >
-                                            <Trash2 className="size-3.5" />
-                                        </button>
-                                    </div>
-                                ))}
+                                            {!isShuffled && (
+                                                <span className="flex shrink-0 cursor-grab items-center text-muted-foreground/30 hover:text-muted-foreground active:cursor-grabbing">
+                                                    <GripVertical className="size-4" />
+                                                </span>
+                                            )}
+                                            <span className="w-6 shrink-0 text-center text-xs text-muted-foreground">
+                                                {index === currentIndex && isPlaying ? (
+                                                    <span className="inline-block size-2 animate-pulse rounded-full" style={{ backgroundColor: playlist.color }} />
+                                                ) : (
+                                                    index + 1
+                                                )}
+                                            </span>
+                                            <div className="min-w-0 flex-1">
+                                                <p className={`truncate text-sm font-medium ${index === currentIndex ? 'text-foreground' : ''}`}>
+                                                    {track.title}
+                                                </p>
+                                                <div className="flex items-center gap-1.5">
+                                                    <p className="truncate text-xs text-muted-foreground">{track.artist ?? 'Unknown artist'}</p>
+                                                    {track.tags.length > 0 && (
+                                                        <>
+                                                            <span className="text-muted-foreground/30">&middot;</span>
+                                                            {track.tags.map((tag) => (
+                                                                <span
+                                                                    key={tag}
+                                                                    className="rounded-full bg-pink-500/10 px-1.5 py-0.5 text-[10px] font-medium text-pink-600 dark:text-pink-400"
+                                                                >
+                                                                    {tag}
+                                                                </span>
+                                                            ))}
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <span className="shrink-0 text-xs text-muted-foreground">{formatDuration(track.duration_seconds)}</span>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleEditTrack(track);
+                                                }}
+                                                className="rounded-md p-1 text-muted-foreground/30 hover:text-foreground"
+                                            >
+                                                <Pencil className="size-3.5" />
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleRemoveTrack(track.id);
+                                                }}
+                                                className="rounded-md p-1 text-muted-foreground/30 hover:text-red-500"
+                                            >
+                                                <Trash2 className="size-3.5" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     ) : null}
