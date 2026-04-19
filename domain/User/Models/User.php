@@ -45,7 +45,19 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'is_super_admin' => 'boolean',
+            'locked_at' => 'datetime',
         ];
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return (bool) $this->is_super_admin;
+    }
+
+    public function isLocked(): bool
+    {
+        return $this->locked_at !== null;
     }
 
     public function setting(): HasOne

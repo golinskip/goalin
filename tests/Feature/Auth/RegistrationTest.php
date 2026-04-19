@@ -1,9 +1,11 @@
 <?php
 
+use Domain\Admin\Support\RegistrationSetting;
 use Laravel\Fortify\Features;
 
 beforeEach(function () {
     $this->skipUnlessFortifyFeature(Features::registration());
+    RegistrationSetting::setEnabled(true);
 });
 
 test('registration screen can be rendered', function () {

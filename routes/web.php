@@ -1,5 +1,9 @@
 <?php
 
+use Domain\Admin\Controllers\AdminController;
+use Domain\Admin\Controllers\RegistrationSettingController;
+use Domain\Admin\Controllers\UserLockController;
+use Domain\Admin\Support\RegistrationSetting;
 use Domain\Tools\Diary\Controllers\DiaryController;
 use Domain\Tools\Flashcards\Controllers\MemoCardController;
 use Domain\Tools\Flashcards\Controllers\MemoSetController;
@@ -26,11 +30,12 @@ use Domain\Tools\MusicPlayer\Controllers\MusicFileController;
 use Domain\Tools\MusicPlayer\Controllers\PlaylistController;
 use Domain\Tools\RssFeeds\Controllers\RssFeedController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 use Laravel\Fortify\Features;
 
-Route::inertia('/', 'welcome', [
-    'canRegister' => Features::enabled(Features::registration()),
-])->name('home');
+Route::get('/', fn () => Inertia::render('welcome', [
+    'canRegister' => Features::enabled(Features::registration()) && RegistrationSetting::isEnabled(),
+]))->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
@@ -102,6 +107,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('rss-feeds/{rss_feed}/refresh', [RssFeedController::class, 'refresh'])->name('rss-feeds.refresh');
     Route::post('rss-feeds/refresh-all', [RssFeedController::class, 'refreshAll'])->name('rss-feeds.refresh-all');
     Route::post('rss-articles/{rss_article}/toggle-read', [RssFeedController::class, 'toggleRead'])->name('rss-articles.toggle-read');
+
+    // Super Admin
+    Route::middleware('super-admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/', AdminController::class)->name('index');
+        Route::patch('registration', [RegistrationSettingController::class, 'update'])->name('registration.update');
+        Route::post('users/{user}/lock', [UserLockController::class, 'store'])->name('users.lock');
+        Route::delete('users/{user}/lock', [UserLockController::class, 'destroy'])->name('users.unlock');
+    });
 
     Route::post('playlists', [PlaylistController::class, 'store'])->name('playlists.store');
     Route::get('playlists/{playlist}', [PlaylistController::class, 'show'])->name('playlists.show');

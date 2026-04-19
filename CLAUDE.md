@@ -16,6 +16,13 @@ domain/
 ├── Alerts/                       # Cross-tool alert system (shared globally via Inertia, shown in top-bar dropdown)
 │   ├── Alert.php                 # Abstract base class — each tool extends it in its own Alerts/ subdirectory
 │   └── AlertManager.php          # Aggregates registered alerts; registered in AppServiceProvider
+├── Admin/                        # Super-admin panel (user list, lock accounts, toggle new registration)
+│   ├── Models/                   # AppSetting (generic key/value store used for registration_enabled)
+│   ├── Controllers/              # AdminController, UserLockController, RegistrationSettingController
+│   ├── Middleware/               # EnsureSuperAdmin, BlockLockedUsers
+│   └── Support/                  # RegistrationSetting helper
+│                                 # Super admin is assigned/revoked via `super-admin:assign|revoke {email}` CLI.
+│                                 # First run of the migration promotes the first existing user automatically.
 └── Tools/                        # Productivity tools
     ├── GoalTracker/              # Subdomain: goal tracking, activities, rewards & statistics
     │   ├── Models/               # Activity, ActivityLog, Tag, Goal, Reward

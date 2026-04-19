@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, ChevronDown, Compass, Gamepad2, Layers, LayoutGrid, Menu, Music, NotebookPen, Rss, Target } from 'lucide-react';
+import { BookOpen, ChevronDown, Compass, Gamepad2, Layers, LayoutGrid, Menu, Music, NotebookPen, Rss, Shield, Target } from 'lucide-react';
 import { AlertsMenu } from '@/components/alerts-menu';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -254,6 +254,18 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </div>
 
                     <div className="ml-auto flex items-center space-x-2">
+                        {auth.user.is_super_admin && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-10 rounded-full"
+                                asChild
+                            >
+                                <Link href="/admin" aria-label="Super admin panel">
+                                    <Shield className="size-5" />
+                                </Link>
+                            </Button>
+                        )}
                         <AlertsMenu />
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>

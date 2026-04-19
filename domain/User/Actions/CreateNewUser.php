@@ -2,10 +2,12 @@
 
 namespace Domain\User\Actions;
 
+use Domain\Admin\Support\RegistrationSetting;
 use Domain\User\Concerns\PasswordValidationRules;
 use Domain\User\Concerns\ProfileValidationRules;
 use Domain\User\Models\User;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
@@ -19,6 +21,12 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
+        if (! RegistrationSetting::isEnabled()) {
+            throw ValidationException::withMessages([
+                'email' => __('Registration is currently disabled.'),
+            ]);
+        }
+
         Validator::make($input, [
             ...$this->profileRules(),
             'password' => $this->passwordRules(),
