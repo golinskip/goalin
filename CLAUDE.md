@@ -13,6 +13,9 @@ domain/
 │   ├── Actions/                  # CreateNewUser, ResetUserPassword (Fortify)
 │   ├── Controllers/              # Profile, Security, General (settings)
 │   └── Requests/                 # Profile, Password, General form requests
+├── Alerts/                       # Cross-tool alert system (shared globally via Inertia, shown in top-bar dropdown)
+│   ├── Alert.php                 # Abstract base class — each tool extends it in its own Alerts/ subdirectory
+│   └── AlertManager.php          # Aggregates registered alerts; registered in AppServiceProvider
 └── Tools/                        # Productivity tools
     ├── GoalTracker/              # Subdomain: goal tracking, activities, rewards & statistics
     │   ├── Models/               # Activity, ActivityLog, Tag, Goal, Reward
@@ -144,8 +147,7 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 ## Application Structure & Architecture
 
-- This project uses DDD with domain logic in `domain/` — see the top of this file for the full structure.
-- New domains/subdomains go under `domain/`. New tools go under `domain/Tools/`.
+- Stick to existing directory structure; don't create new base folders without approval.
 - Do not change the application's dependencies without approval.
 
 ## Frontend Bundling

@@ -2,7 +2,7 @@
 
 namespace Domain\Tools\LongTermGoals\Alerts;
 
-use Domain\Tools\Alerts\Alert;
+use Domain\Alerts\Alert;
 use Domain\Tools\LongTermGoals\Enums\GoalPeriodType;
 use Domain\User\Models\User;
 use Illuminate\Support\Carbon;

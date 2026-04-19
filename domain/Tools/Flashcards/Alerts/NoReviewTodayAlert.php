@@ -2,7 +2,7 @@
 
 namespace Domain\Tools\Flashcards\Alerts;
 
-use Domain\Tools\Alerts\Alert;
+use Domain\Alerts\Alert;
 use Domain\Tools\Flashcards\Models\MemoCard;
 use Domain\User\Models\User;
 

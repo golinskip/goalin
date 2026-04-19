@@ -1,20 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
-import { AlertTriangle, BookOpen, Compass, Gamepad2, Layers, Music, NotebookPen, Rss, Target } from 'lucide-react';
+import { BookOpen, Compass, Gamepad2, Layers, Music, NotebookPen, Rss, Target } from 'lucide-react';
 import PageBackground from '@/components/page-background';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
-
-type AlertItem = {
-    key: string;
-    tool: string;
-    message: string;
-    href: string;
-};
-
-type Props = {
-    alerts: AlertItem[];
-};
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -23,7 +12,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Dashboard({ alerts }: Props) {
+export default function Dashboard() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
@@ -142,37 +131,6 @@ export default function Dashboard({ alerts }: Props) {
                         </div>
                     </div>
 
-                    {/* Alerts */}
-                    {alerts.length > 0 && (
-                        <div>
-                            <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
-                                <AlertTriangle className="size-5 text-amber-500" />
-                                Alerts
-                                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
-                                    {alerts.length}
-                                </span>
-                            </h2>
-                            <div className="rounded-xl border border-amber-200/80 bg-white/70 shadow-sm backdrop-blur-sm dark:border-amber-800/50 dark:bg-black/40">
-                                <div className="divide-y divide-border/50">
-                                    {alerts.map((alert) => (
-                                        <Link
-                                            key={alert.key}
-                                            href={alert.href}
-                                            className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-amber-50/50 dark:hover:bg-amber-950/20"
-                                        >
-                                            <span className="inline-block size-2 shrink-0 rounded-full bg-amber-500" />
-                                            <div className="min-w-0 flex-1">
-                                                <p className="text-sm">{alert.message}</p>
-                                            </div>
-                                            <span className="shrink-0 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
-                                                {alert.tool}
-                                            </span>
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
         </AppLayout>

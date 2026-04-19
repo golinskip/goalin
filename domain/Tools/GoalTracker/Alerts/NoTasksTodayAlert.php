@@ -2,7 +2,7 @@
 
 namespace Domain\Tools\GoalTracker\Alerts;
 
-use Domain\Tools\Alerts\Alert;
+use Domain\Alerts\Alert;
 use Domain\User\Models\User;
 
 class NoTasksTodayAlert extends Alert

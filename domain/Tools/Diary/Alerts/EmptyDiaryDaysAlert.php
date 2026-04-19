@@ -2,7 +2,7 @@
 
 namespace Domain\Tools\Diary\Alerts;
 
-use Domain\Tools\Alerts\Alert;
+use Domain\Alerts\Alert;
 use Domain\User\Models\User;
 use Illuminate\Support\Carbon;
 

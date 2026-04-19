@@ -1,6 +1,6 @@
 <?php
 
-use Domain\Tools\Alerts\AlertManager;
+use Domain\Alerts\AlertManager;
 use Domain\Tools\Diary\Alerts\EmptyDiaryDaysAlert;
 use Domain\Tools\Flashcards\Alerts\NoReviewTodayAlert;
 use Domain\Tools\GoalTracker\Alerts\NoTasksTodayAlert;
@@ -132,7 +132,7 @@ test('alert manager returns only active alerts', function () {
     expect($alerts[0]['key'])->toBe('goal-tracker.no-tasks-today');
 });
 
-test('dashboard passes alerts to frontend', function () {
+test('alerts are shared globally with inertia responses', function () {
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)->get(route('dashboard'));

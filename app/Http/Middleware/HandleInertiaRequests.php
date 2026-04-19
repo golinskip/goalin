@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use Domain\Alerts\AlertManager;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -35,17 +36,21 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        $background = $request->user()?->setting?->background;
+        $user = $request->user();
+        $background = $user?->setting?->background;
 
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'env' => app()->environment(),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'background' => $background ? "/img/backgrounds/{$background}.png" : '/img/backgrounds/spring.png',
+            'alerts' => fn () => $user
+                ? app(AlertManager::class)->getActiveAlerts($user)
+                : [],
         ];
     }
 }

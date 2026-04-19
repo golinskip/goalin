@@ -2,7 +2,7 @@
 
 namespace Domain\Tools\RssFeeds\Alerts;
 
-use Domain\Tools\Alerts\Alert;
+use Domain\Alerts\Alert;
 use Domain\Tools\RssFeeds\Models\RssArticle;
 use Domain\User\Models\User;
 

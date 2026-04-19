@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use Carbon\CarbonImmutable;
-use Domain\Tools\Alerts\AlertManager;
+use Domain\Alerts\AlertManager;
 use Domain\Tools\Diary\Alerts\EmptyDiaryDaysAlert;
 use Domain\Tools\Diary\Models\DiaryEntry;
 use Domain\Tools\Diary\Policies\DiaryEntryPolicy;

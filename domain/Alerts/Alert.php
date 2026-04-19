@@ -1,6 +1,6 @@
 <?php
 
-namespace Domain\Tools\Alerts;
+namespace Domain\Alerts;
 
 use Domain\User\Models\User;
 
