@@ -14,9 +14,9 @@ return new class extends Migration
             $table->string('session_id')->index();
             $table->string('ip_address', 45)->nullable();
             $table->string('user_agent')->nullable();
-            $table->timestamp('login_at');
+            $table->timestamp('login_at')->nullable();
             $table->unsignedInteger('request_count')->default(0);
-            $table->timestamp('last_request_at');
+            $table->timestamp('last_request_at')->nullable();
             $table->timestamps();
 
             $table->unique(['user_id', 'session_id']);
