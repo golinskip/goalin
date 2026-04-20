@@ -151,6 +151,16 @@ export default function RssFeeds({ feeds, articles, currentFeedId, filters }: Pr
         });
     };
 
+    const handleArticleOpen = (article: Article) => {
+        if (article.read_at) {
+            return;
+        }
+        router.post(`/rss-articles/${article.id}/mark-read`, {}, {
+            preserveScroll: true,
+            preserveState: true,
+        });
+    };
+
     const formatDate = (dateStr: string | null) => {
         if (!dateStr) return '';
         const date = new Date(dateStr);
@@ -381,6 +391,12 @@ export default function RssFeeds({ feeds, articles, currentFeedId, filters }: Pr
                                     href={article.link}
                                     target="_blank"
                                     rel="noopener noreferrer"
+                                    onClick={() => handleArticleOpen(article)}
+                                    onAuxClick={(e) => {
+                                        if (e.button === 1) {
+                                            handleArticleOpen(article);
+                                        }
+                                    }}
                                     className={`block flex-1 rounded-lg border p-4 transition-colors hover:bg-accent/50 ${
                                         article.read_at ? 'bg-muted/30 opacity-60' : 'bg-card'
                                     }`}

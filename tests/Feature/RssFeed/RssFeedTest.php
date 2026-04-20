@@ -273,3 +273,40 @@ test('users cannot toggle read on another users article', function () {
 
     $response->assertForbidden();
 });
+
+test('opening an unread article marks it as read', function () {
+    $user = User::factory()->create();
+    $feed = RssFeed::factory()->for($user)->create();
+    $article = RssArticle::factory()->for($feed, 'feed')->create(['read_at' => null]);
+    $this->actingAs($user);
+
+    $response = $this->post(route('rss-articles.mark-read', $article));
+
+    $response->assertRedirect();
+    expect($article->fresh()->read_at)->not->toBeNull();
+});
+
+test('mark-read does not change an already-read article timestamp', function () {
+    $user = User::factory()->create();
+    $feed = RssFeed::factory()->for($user)->create();
+    $readAt = now()->subHour();
+    $article = RssArticle::factory()->for($feed, 'feed')->create(['read_at' => $readAt]);
+    $this->actingAs($user);
+
+    $this->post(route('rss-articles.mark-read', $article));
+
+    expect($article->fresh()->read_at->timestamp)->toBe($readAt->timestamp);
+});
+
+test('users cannot mark-read another users article', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $feed = RssFeed::factory()->for($otherUser)->create();
+    $article = RssArticle::factory()->for($feed, 'feed')->create(['read_at' => null]);
+    $this->actingAs($user);
+
+    $response = $this->post(route('rss-articles.mark-read', $article));
+
+    $response->assertForbidden();
+    expect($article->fresh()->read_at)->toBeNull();
+});

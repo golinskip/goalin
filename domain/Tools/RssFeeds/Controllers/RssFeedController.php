@@ -163,4 +163,17 @@ class RssFeedController extends Controller
 
         return back();
     }
+
+    public function markRead(Request $request, RssArticle $rssArticle): RedirectResponse
+    {
+        $feed = $rssArticle->feed;
+
+        abort_unless($feed->user_id === $request->user()->id, 403);
+
+        if ($rssArticle->read_at === null) {
+            $rssArticle->update(['read_at' => now()]);
+        }
+
+        return back();
+    }
 }

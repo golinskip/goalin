@@ -107,6 +107,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('rss-feeds/{rss_feed}/refresh', [RssFeedController::class, 'refresh'])->name('rss-feeds.refresh');
     Route::post('rss-feeds/refresh-all', [RssFeedController::class, 'refreshAll'])->name('rss-feeds.refresh-all');
     Route::post('rss-articles/{rss_article}/toggle-read', [RssFeedController::class, 'toggleRead'])->name('rss-articles.toggle-read');
+    Route::post('rss-articles/{rss_article}/mark-read', [RssFeedController::class, 'markRead'])->name('rss-articles.mark-read');
 
     // Super Admin
     Route::middleware('super-admin')->prefix('admin')->name('admin.')->group(function () {
