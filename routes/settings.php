@@ -1,5 +1,8 @@
 <?php
 
+use Domain\ExternalServices\Controllers\ExternalServicesController;
+use Domain\ExternalServices\Controllers\GoogleCalendarConnectionController;
+use Domain\ExternalServices\Controllers\TodoistConnectionController;
 use Domain\User\Controllers\GeneralController;
 use Domain\User\Controllers\ProfileController;
 use Domain\User\Controllers\SecurityController;
@@ -25,4 +28,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('settings/general', [GeneralController::class, 'edit'])->name('general.edit');
     Route::patch('settings/general', [GeneralController::class, 'update'])->name('general.update');
+
+    Route::get('settings/external-services', [ExternalServicesController::class, 'edit'])->name('external-services.edit');
+    Route::post('settings/external-services/todoist', [TodoistConnectionController::class, 'store'])->name('external-services.todoist.store');
+    Route::delete('settings/external-services/todoist', [TodoistConnectionController::class, 'destroy'])->name('external-services.todoist.destroy');
+    Route::get('settings/external-services/google-calendar/redirect', [GoogleCalendarConnectionController::class, 'redirect'])->name('external-services.google-calendar.redirect');
+    Route::get('settings/external-services/google-calendar/callback', [GoogleCalendarConnectionController::class, 'callback'])->name('external-services.google-calendar.callback');
+    Route::delete('settings/external-services/google-calendar', [GoogleCalendarConnectionController::class, 'destroy'])->name('external-services.google-calendar.destroy');
 });
