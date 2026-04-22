@@ -127,3 +127,35 @@ test('invalid background is rejected', function () {
         ])
         ->assertSessionHasErrors('background');
 });
+
+test('user can update ringtones', function () {
+    $user = User::factory()->create();
+    UserSetting::factory()->create(['user_id' => $user->id]);
+
+    $this->actingAs($user)
+        ->patch(route('general.update'), [
+            'currency' => 'EUR',
+            'multiplier' => 1.00,
+            'task_ringtone' => 'chime',
+            'break_ringtone' => 'bell',
+        ])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('general.edit'));
+
+    $user->refresh();
+    expect($user->setting->task_ringtone->value)->toBe('chime');
+    expect($user->setting->break_ringtone->value)->toBe('bell');
+});
+
+test('invalid ringtone is rejected', function () {
+    $user = User::factory()->create();
+    UserSetting::factory()->create(['user_id' => $user->id]);
+
+    $this->actingAs($user)
+        ->patch(route('general.update'), [
+            'currency' => 'EUR',
+            'multiplier' => 1.00,
+            'task_ringtone' => 'not_a_real_ringtone',
+        ])
+        ->assertSessionHasErrors('task_ringtone');
+});

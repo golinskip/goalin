@@ -4,6 +4,7 @@ namespace Domain\User\Controllers;
 
 use App\Http\Controllers\Controller;
 use Domain\User\Enums\Currency;
+use Domain\User\Enums\Ringtone;
 use Domain\User\Requests\GeneralUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,6 +29,8 @@ class GeneralController extends Controller
                 'currency' => $setting->currency->value,
                 'multiplier' => $setting->multiplier,
                 'background' => $setting->background,
+                'task_ringtone' => $setting->task_ringtone->value,
+                'break_ringtone' => $setting->break_ringtone->value,
             ],
             'currencies' => collect(Currency::cases())->map(fn (Currency $currency) => [
                 'value' => $currency->value,
@@ -35,6 +38,11 @@ class GeneralController extends Controller
                 'symbol' => $currency->symbol(),
             ]),
             'backgrounds' => $backgrounds,
+            'ringtones' => collect(Ringtone::cases())->map(fn (Ringtone $ringtone) => [
+                'value' => $ringtone->value,
+                'label' => $ringtone->label(),
+                'description' => $ringtone->description(),
+            ]),
         ]);
     }
 

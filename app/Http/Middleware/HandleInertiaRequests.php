@@ -37,7 +37,8 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
-        $background = $user?->setting?->background;
+        $setting = $user?->setting;
+        $background = $setting?->background;
 
         return [
             ...parent::share($request),
@@ -48,6 +49,10 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'background' => $background ? "/img/backgrounds/{$background}.png" : '/img/backgrounds/spring.png',
+            'ringtones' => [
+                'task' => $setting?->task_ringtone?->value ?? 'classic',
+                'break' => $setting?->break_ringtone?->value ?? 'classic',
+            ],
             'alerts' => fn () => $user
                 ? app(AlertManager::class)->getActiveAlerts($user)
                 : [],

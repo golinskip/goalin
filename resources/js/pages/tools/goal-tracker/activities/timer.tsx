@@ -1,9 +1,10 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { CheckCircle2, ChevronDown, Loader2, Music, Pause, Play, RotateCcw, SkipBack, SkipForward, Volume2, VolumeX, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
+import { playRingtone } from '@/lib/ringtones';
 import { index as goalTrackerIndex } from '@/routes/goal-tracker';
 import type { BreadcrumbItem } from '@/types';
 
@@ -40,35 +41,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Goal Tracker', href: goalTrackerIndex() },
     { title: 'Timer', href: '#' },
 ];
-
-function createRingSound(): () => void {
-    const ctx = new AudioContext();
-    const now = ctx.currentTime;
-
-    const frequencies = [880, 1108.73, 880, 1108.73, 880];
-    const noteDuration = 0.15;
-    const gap = 0.08;
-
-    frequencies.forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.type = 'sine';
-        osc.frequency.value = freq;
-
-        const start = now + i * (noteDuration + gap);
-        gain.gain.setValueAtTime(0, start);
-        gain.gain.linearRampToValueAtTime(0.3, start + 0.02);
-        gain.gain.linearRampToValueAtTime(0, start + noteDuration);
-
-        osc.start(start);
-        osc.stop(start + noteDuration);
-    });
-
-    return () => ctx.close();
-}
 
 function MiniPlayer({ tracks }: { tracks: TimerMusicFile[] }) {
     const audioRef = useRef<HTMLAudioElement>(null);
@@ -392,6 +364,7 @@ return;
 }
 
 export default function ActivityTimer({ activity, playlists }: Props) {
+    const { ringtones } = usePage().props;
     const totalSeconds = activity.duration_minutes * 60;
     const [secondsLeft, setSecondsLeft] = useState(totalSeconds);
     const [timerState, setTimerState] = useState<TimerState>('running');
@@ -451,9 +424,9 @@ export default function ActivityTimer({ activity, playlists }: Props) {
             clearTimer();
             setTimerState('finished');
             setShowConfirm(true);
-            createRingSound();
+            playRingtone(ringtones.task);
         }
-    }, [secondsLeft, timerState, clearTimer]);
+    }, [secondsLeft, timerState, clearTimer, ringtones.task]);
 
     const timerPause = useCallback(() => {
         // Capture elapsed time so far

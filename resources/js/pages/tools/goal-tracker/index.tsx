@@ -1,5 +1,5 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { BarChart3, Calendar, CheckCircle, Clock, Coffee, Flame, Gift, History, MoreHorizontal, Pause, Play, Target, TrendingUp, Zap } from 'lucide-react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { BarChart3, Calendar, CheckCircle, Clock, Coffee, Flame, Gift, History, MoreHorizontal, Target, TrendingUp, Zap } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import { playRingtone  } from '@/lib/ringtones';
+import type {RingtoneId} from '@/lib/ringtones';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -76,36 +78,7 @@ type LogMode = 'today' | 'postponed' | null;
 
 const BREAK_OPTIONS = [5, 10, 15, 20] as const;
 
-function playAlarmSound(): () => void {
-    const ctx = new AudioContext();
-    const now = ctx.currentTime;
-
-    const frequencies = [880, 1108.73, 880, 1108.73, 880];
-    const noteDuration = 0.15;
-    const gap = 0.08;
-
-    frequencies.forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.type = 'sine';
-        osc.frequency.value = freq;
-
-        const start = now + i * (noteDuration + gap);
-        gain.gain.setValueAtTime(0, start);
-        gain.gain.linearRampToValueAtTime(0.3, start + 0.02);
-        gain.gain.linearRampToValueAtTime(0, start + noteDuration);
-
-        osc.start(start);
-        osc.stop(start + noteDuration);
-    });
-
-    return () => ctx.close();
-}
-
-function BreakTimer() {
+function BreakTimer({ ringtone }: { ringtone: RingtoneId }) {
     const [breakMinutes, setBreakMinutes] = useState<number | null>(null);
     const [running, setRunning] = useState(false);
     const [remainingSeconds, setRemainingSeconds] = useState(0);
@@ -153,7 +126,7 @@ function BreakTimer() {
             if (diff <= 0) {
                 clearTimer();
                 setRunning(false);
-                alarmCleanupRef.current = playAlarmSound();
+                alarmCleanupRef.current = playRingtone(ringtone);
             }
         };
 
@@ -161,7 +134,7 @@ function BreakTimer() {
         intervalRef.current = setInterval(tick, 500);
 
         return clearTimer;
-    }, [running, clearTimer]);
+    }, [running, clearTimer, ringtone]);
 
     useEffect(() => {
         if (!running) {
@@ -176,7 +149,7 @@ return;
                 if (diff <= 0) {
                     clearTimer();
                     setRunning(false);
-                    alarmCleanupRef.current = playAlarmSound();
+                    alarmCleanupRef.current = playRingtone(ringtone);
                 }
             }
         };
@@ -184,7 +157,7 @@ return;
         document.addEventListener('visibilitychange', handleVisibility);
 
         return () => document.removeEventListener('visibilitychange', handleVisibility);
-    }, [running, clearTimer]);
+    }, [running, clearTimer, ringtone]);
 
     const minutes = Math.floor(remainingSeconds / 60);
     const seconds = remainingSeconds % 60;
@@ -229,6 +202,7 @@ return;
 }
 
 export default function GoalTracker({ activities, rewardProgression, summary }: Props) {
+    const { ringtones } = usePage().props;
     const [logMode, setLogMode] = useState<LogMode>(null);
     const [selectedActivity, setSelectedActivity] = useState<number | null>(null);
     const [quantity, setQuantity] = useState('1');
@@ -510,7 +484,7 @@ return;
                     </div>
 
                     {/* Break Timer */}
-                    <BreakTimer />
+                    <BreakTimer ringtone={ringtones.break} />
 
                     {/* Two-Week Summary */}
                     <div className="rounded-xl border border-border/20 bg-white/40 px-4 py-3 backdrop-blur-sm dark:border-border/10 dark:bg-black/20">

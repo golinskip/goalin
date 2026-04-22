@@ -3,6 +3,7 @@
 namespace Domain\User\Requests;
 
 use Domain\User\Enums\Currency;
+use Domain\User\Enums\Ringtone;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -24,6 +25,8 @@ class GeneralUpdateRequest extends FormRequest
             'currency' => ['required', 'string', Rule::enum(Currency::class)],
             'multiplier' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
             'background' => ['nullable', 'string', Rule::in($backgrounds)],
+            'task_ringtone' => ['nullable', 'string', Rule::enum(Ringtone::class)],
+            'break_ringtone' => ['nullable', 'string', Rule::enum(Ringtone::class)],
         ];
     }
 }
