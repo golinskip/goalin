@@ -1,6 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Check, Eye, RotateCcw, X } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { ArrowLeft, Check, Eye, Pencil, Plus, RotateCcw, X } from 'lucide-react';
+import { useCallback, useState } from 'react';
 import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
@@ -11,6 +11,7 @@ type Card = {
     id: number;
     front: string;
     back: string;
+    note: string | null;
     correct_count: number;
     incorrect_count: number;
     weight: number;
@@ -61,12 +62,55 @@ export default function MemoSetLearn({ memoSet, cards: initialCards }: Props) {
     const [sessionCorrect, setSessionCorrect] = useState(0);
     const [sessionIncorrect, setSessionIncorrect] = useState(0);
     const [isFinished, setIsFinished] = useState(false);
+    const [isEditingNote, setIsEditingNote] = useState(false);
+    const [noteDraft, setNoteDraft] = useState('');
+    const [isSavingNote, setIsSavingNote] = useState(false);
 
     const totalReviewed = sessionCorrect + sessionIncorrect;
 
     const handleReveal = useCallback(() => {
         setRevealed(true);
     }, []);
+
+    const startEditNote = useCallback(() => {
+        if (!currentCard) {
+            return;
+        }
+
+        setNoteDraft(currentCard.note ?? '');
+        setIsEditingNote(true);
+    }, [currentCard]);
+
+    const cancelEditNote = useCallback(() => {
+        setIsEditingNote(false);
+        setNoteDraft('');
+    }, []);
+
+    const saveNote = useCallback(() => {
+        if (!currentCard) {
+            return;
+        }
+
+        const trimmed = noteDraft.trim();
+        const newNote = trimmed === '' ? null : trimmed;
+
+        setIsSavingNote(true);
+        router.patch(
+            `/memo-cards/${currentCard.id}/note`,
+            { note: newNote },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    setCards((prev) => prev.map((c) => (c.id === currentCard.id ? { ...c, note: newNote } : c)));
+                    setCurrentCard((prev) => (prev ? { ...prev, note: newNote } : prev));
+                    setIsEditingNote(false);
+                    setNoteDraft('');
+                },
+                onFinish: () => setIsSavingNote(false),
+            },
+        );
+    }, [currentCard, noteDraft]);
 
     const handleAnswer = useCallback(
         (correct: boolean) => {
@@ -105,6 +149,8 @@ return c;
             }
 
             setRevealed(false);
+            setIsEditingNote(false);
+            setNoteDraft('');
             const nextCard = weightedRandomPick(updatedCards, currentCard.id);
             setCurrentCard(nextCard);
         },
@@ -210,6 +256,68 @@ return c;
                                             <p className="text-2xl font-medium" style={{ color: memoSet.color }}>
                                                 {currentCard.back}
                                             </p>
+                                        </div>
+
+                                        <div className="mb-6 rounded-lg border border-border/40 bg-muted/40 p-4">
+                                            <div className="mb-1 flex items-center justify-between">
+                                                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Note</p>
+                                                {!isEditingNote && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-6 gap-1 px-2 text-xs"
+                                                        onClick={startEditNote}
+                                                    >
+                                                        {currentCard.note ? (
+                                                            <>
+                                                                <Pencil className="size-3" />
+                                                                Edit
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Plus className="size-3" />
+                                                                Add note
+                                                            </>
+                                                        )}
+                                                    </Button>
+                                                )}
+                                            </div>
+
+                                            {isEditingNote ? (
+                                                <div className="flex flex-col gap-2">
+                                                    <textarea
+                                                        value={noteDraft}
+                                                        onChange={(e) => setNoteDraft(e.target.value)}
+                                                        placeholder="Example sentence, mnemonic, or extra context..."
+                                                        rows={3}
+                                                        autoFocus
+                                                        className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                                                    />
+                                                    <div className="flex justify-end gap-2">
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={cancelEditNote}
+                                                            disabled={isSavingNote}
+                                                        >
+                                                            Cancel
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            onClick={saveNote}
+                                                            disabled={isSavingNote}
+                                                        >
+                                                            {isSavingNote ? 'Saving...' : 'Save'}
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ) : currentCard.note ? (
+                                                <p className="text-sm whitespace-pre-wrap">{currentCard.note}</p>
+                                            ) : (
+                                                <p className="text-xs italic text-muted-foreground/70">No note yet.</p>
+                                            )}
                                         </div>
 
                                         <div className="flex justify-center gap-4">

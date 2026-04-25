@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['front', 'back', 'correct_count', 'incorrect_count', 'last_reviewed_at'])]
+#[Fillable(['front', 'back', 'note', 'correct_count', 'incorrect_count', 'last_reviewed_at'])]
 class MemoCard extends Model
 {
     /** @use HasFactory<MemoCardFactory> */

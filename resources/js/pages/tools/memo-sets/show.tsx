@@ -15,6 +15,7 @@ type Card = {
     id: number;
     front: string;
     back: string;
+    note: string | null;
     correct_count: number;
     incorrect_count: number;
 };
@@ -42,8 +43,8 @@ export default function MemoSetShow({ memoSet, cards }: Props) {
     const [importText, setImportText] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const addForm = useForm({ front: '', back: '' });
-    const editForm = useForm({ front: '', back: '' });
+    const addForm = useForm({ front: '', back: '', note: '' });
+    const editForm = useForm({ front: '', back: '', note: '' });
     const importForm = useForm<{ csv_file: File | null; csv_text: string }>({ csv_file: null, csv_text: '' });
 
     function submitAdd(e: React.FormEvent) {
@@ -56,7 +57,7 @@ export default function MemoSetShow({ memoSet, cards }: Props) {
 
     function startEdit(card: Card) {
         setEditingCard(card.id);
-        editForm.setData({ front: card.front, back: card.back });
+        editForm.setData({ front: card.front, back: card.back, note: card.note ?? '' });
     }
 
     function submitEdit(e: React.FormEvent, cardId: number) {
@@ -235,33 +236,47 @@ fileInputRef.current.value = '';
                             <Plus className="size-4" />
                             Add Card
                         </h2>
-                        <form onSubmit={submitAdd} className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                            <div className="flex-1">
-                                <Label htmlFor="front" className="text-xs">Front</Label>
-                                <Input
-                                    id="front"
-                                    value={addForm.data.front}
-                                    onChange={(e) => addForm.setData('front', e.target.value)}
-                                    placeholder="Question or term..."
-                                    required
-                                />
-                                <InputError message={addForm.errors.front} />
+                        <form onSubmit={submitAdd} className="flex flex-col gap-3">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                                <div className="flex-1">
+                                    <Label htmlFor="front" className="text-xs">Front</Label>
+                                    <Input
+                                        id="front"
+                                        value={addForm.data.front}
+                                        onChange={(e) => addForm.setData('front', e.target.value)}
+                                        placeholder="Question or term..."
+                                        required
+                                    />
+                                    <InputError message={addForm.errors.front} />
+                                </div>
+                                <div className="flex-1">
+                                    <Label htmlFor="back" className="text-xs">Back</Label>
+                                    <Input
+                                        id="back"
+                                        value={addForm.data.back}
+                                        onChange={(e) => addForm.setData('back', e.target.value)}
+                                        placeholder="Answer or definition..."
+                                        required
+                                    />
+                                    <InputError message={addForm.errors.back} />
+                                </div>
+                                <Button type="submit" disabled={addForm.processing} className="shrink-0">
+                                    {addForm.processing ? <Spinner /> : <Plus className="mr-1 size-4" />}
+                                    Add
+                                </Button>
                             </div>
-                            <div className="flex-1">
-                                <Label htmlFor="back" className="text-xs">Back</Label>
-                                <Input
-                                    id="back"
-                                    value={addForm.data.back}
-                                    onChange={(e) => addForm.setData('back', e.target.value)}
-                                    placeholder="Answer or definition..."
-                                    required
+                            <div>
+                                <Label htmlFor="note" className="text-xs">Note <span className="text-muted-foreground">(optional)</span></Label>
+                                <textarea
+                                    id="note"
+                                    value={addForm.data.note}
+                                    onChange={(e) => addForm.setData('note', e.target.value)}
+                                    placeholder="Example sentence, mnemonic, or extra context..."
+                                    rows={2}
+                                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                                 />
-                                <InputError message={addForm.errors.back} />
+                                <InputError message={addForm.errors.note} />
                             </div>
-                            <Button type="submit" disabled={addForm.processing} className="shrink-0">
-                                {addForm.processing ? <Spinner /> : <Plus className="mr-1 size-4" />}
-                                Add
-                            </Button>
                         </form>
                     </div>
 
@@ -280,62 +295,83 @@ fileInputRef.current.value = '';
                                     className="rounded-xl border border-border/50 bg-white/70 p-4 shadow-sm backdrop-blur-sm dark:bg-black/40"
                                 >
                                     {editingCard === card.id ? (
-                                        <form onSubmit={(e) => submitEdit(e, card.id)} className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                                            <div className="flex-1">
-                                                <Label className="text-xs">Front</Label>
-                                                <Input
-                                                    value={editForm.data.front}
-                                                    onChange={(e) => editForm.setData('front', e.target.value)}
-                                                    required
-                                                />
+                                        <form onSubmit={(e) => submitEdit(e, card.id)} className="flex flex-col gap-3">
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                                                <div className="flex-1">
+                                                    <Label className="text-xs">Front</Label>
+                                                    <Input
+                                                        value={editForm.data.front}
+                                                        onChange={(e) => editForm.setData('front', e.target.value)}
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <Label className="text-xs">Back</Label>
+                                                    <Input
+                                                        value={editForm.data.back}
+                                                        onChange={(e) => editForm.setData('back', e.target.value)}
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="flex gap-1">
+                                                    <Button type="submit" size="icon" className="size-8" disabled={editForm.processing}>
+                                                        <Check className="size-3.5" />
+                                                    </Button>
+                                                    <Button type="button" variant="ghost" size="icon" className="size-8" onClick={() => setEditingCard(null)}>
+                                                        <X className="size-3.5" />
+                                                    </Button>
+                                                </div>
                                             </div>
-                                            <div className="flex-1">
-                                                <Label className="text-xs">Back</Label>
-                                                <Input
-                                                    value={editForm.data.back}
-                                                    onChange={(e) => editForm.setData('back', e.target.value)}
-                                                    required
+                                            <div>
+                                                <Label className="text-xs">Note <span className="text-muted-foreground">(optional)</span></Label>
+                                                <textarea
+                                                    value={editForm.data.note}
+                                                    onChange={(e) => editForm.setData('note', e.target.value)}
+                                                    placeholder="Example sentence, mnemonic, or extra context..."
+                                                    rows={2}
+                                                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                                                 />
-                                            </div>
-                                            <div className="flex gap-1">
-                                                <Button type="submit" size="icon" className="size-8" disabled={editForm.processing}>
-                                                    <Check className="size-3.5" />
-                                                </Button>
-                                                <Button type="button" variant="ghost" size="icon" className="size-8" onClick={() => setEditingCard(null)}>
-                                                    <X className="size-3.5" />
-                                                </Button>
+                                                <InputError message={editForm.errors.note} />
                                             </div>
                                         </form>
                                     ) : (
-                                        <div className="flex items-center gap-4">
-                                            <div className="grid min-w-0 flex-1 gap-1 sm:grid-cols-2 sm:gap-4">
-                                                <div>
-                                                    <p className="text-xs font-medium text-muted-foreground">Front</p>
-                                                    <p className="text-sm">{card.front}</p>
+                                        <div className="flex flex-col gap-3">
+                                            <div className="flex items-center gap-4">
+                                                <div className="grid min-w-0 flex-1 gap-1 sm:grid-cols-2 sm:gap-4">
+                                                    <div>
+                                                        <p className="text-xs font-medium text-muted-foreground">Front</p>
+                                                        <p className="text-sm">{card.front}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-medium text-muted-foreground">Back</p>
+                                                        <p className="text-sm">{card.back}</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="text-xs font-medium text-muted-foreground">Back</p>
-                                                    <p className="text-sm">{card.back}</p>
+                                                <div className="flex shrink-0 items-center gap-2">
+                                                    <span className="text-xs text-muted-foreground">
+                                                        <span className="text-green-600">{card.correct_count}</span>
+                                                        {' / '}
+                                                        <span className="text-red-500">{card.incorrect_count}</span>
+                                                    </span>
+                                                    <Button variant="ghost" size="icon" className="size-8" onClick={() => startEdit(card)}>
+                                                        <Pencil className="size-3.5" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="size-8 text-destructive hover:text-destructive"
+                                                        onClick={() => handleDelete(card.id)}
+                                                    >
+                                                        <Trash2 className="size-3.5" />
+                                                    </Button>
                                                 </div>
                                             </div>
-                                            <div className="flex shrink-0 items-center gap-2">
-                                                <span className="text-xs text-muted-foreground">
-                                                    <span className="text-green-600">{card.correct_count}</span>
-                                                    {' / '}
-                                                    <span className="text-red-500">{card.incorrect_count}</span>
-                                                </span>
-                                                <Button variant="ghost" size="icon" className="size-8" onClick={() => startEdit(card)}>
-                                                    <Pencil className="size-3.5" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="size-8 text-destructive hover:text-destructive"
-                                                    onClick={() => handleDelete(card.id)}
-                                                >
-                                                    <Trash2 className="size-3.5" />
-                                                </Button>
-                                            </div>
+                                            {card.note && (
+                                                <div className="rounded-md border border-border/40 bg-muted/30 px-3 py-2">
+                                                    <p className="text-xs font-medium text-muted-foreground">Note</p>
+                                                    <p className="text-sm whitespace-pre-wrap">{card.note}</p>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>

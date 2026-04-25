@@ -20,6 +20,7 @@ class MemoCardController extends Controller
         $data = $request->validate([
             'front' => ['required', 'string', 'max:2000'],
             'back' => ['required', 'string', 'max:2000'],
+            'note' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $memoSet->cards()->create($data);
@@ -34,6 +35,7 @@ class MemoCardController extends Controller
         $data = $request->validate([
             'front' => ['required', 'string', 'max:2000'],
             'back' => ['required', 'string', 'max:2000'],
+            'note' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $memoCard->update($data);
@@ -49,6 +51,19 @@ class MemoCardController extends Controller
         $memoCard->delete();
 
         return to_route('memo-sets.show', $memoSetId);
+    }
+
+    public function updateNote(Request $request, MemoCard $memoCard): RedirectResponse
+    {
+        $this->authorize('update', $memoCard->memoSet);
+
+        $data = $request->validate([
+            'note' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $memoCard->update(['note' => $data['note'] ?? null]);
+
+        return back();
     }
 
     public function review(Request $request, MemoCard $memoCard): RedirectResponse

@@ -61,6 +61,7 @@ class MemoSetController extends Controller
                 'id' => $card->id,
                 'front' => $card->front,
                 'back' => $card->back,
+                'note' => $card->note,
                 'correct_count' => $card->correct_count,
                 'incorrect_count' => $card->incorrect_count,
             ]),
@@ -107,10 +108,10 @@ class MemoSetController extends Controller
 
         return response()->streamDownload(function () use ($memoSet) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['front', 'back'], ';');
+            fputcsv($handle, ['front', 'back', 'note'], ';');
 
             $memoSet->cards()->orderBy('id')->each(function (MemoCard $card) use ($handle) {
-                fputcsv($handle, [$card->front, $card->back], ';');
+                fputcsv($handle, [$card->front, $card->back, $card->note ?? ''], ';');
             });
 
             fclose($handle);
@@ -142,9 +143,10 @@ class MemoSetController extends Controller
             if (count($line) >= 2 && trim($line[0]) !== '' && trim($line[1]) !== '') {
                 $front = trim($line[0]);
                 $back = trim($line[1]);
+                $note = isset($line[2]) && trim($line[2]) !== '' ? trim($line[2]) : null;
 
-                if (mb_strlen($front) <= 2000 && mb_strlen($back) <= 2000) {
-                    $memoSet->cards()->create(['front' => $front, 'back' => $back]);
+                if (mb_strlen($front) <= 2000 && mb_strlen($back) <= 2000 && ($note === null || mb_strlen($note) <= 2000)) {
+                    $memoSet->cards()->create(['front' => $front, 'back' => $back, 'note' => $note]);
                     $imported++;
                 }
             }
@@ -186,6 +188,7 @@ class MemoSetController extends Controller
             'id' => $card->id,
             'front' => $card->front,
             'back' => $card->back,
+            'note' => $card->note,
             'correct_count' => $card->correct_count,
             'incorrect_count' => $card->incorrect_count,
             'weight' => max(1, ($card->incorrect_count + 1) - ($card->correct_count * 0.5)),

@@ -64,6 +64,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('memo-cards/{memo_card}', [MemoCardController::class, 'update'])->name('memo-cards.update');
     Route::delete('memo-cards/{memo_card}', [MemoCardController::class, 'destroy'])->name('memo-cards.destroy');
     Route::post('memo-cards/{memo_card}/review', [MemoCardController::class, 'review'])->name('memo-cards.review');
+    Route::patch('memo-cards/{memo_card}/note', [MemoCardController::class, 'updateNote'])->name('memo-cards.update-note');
 
     Route::get('diary', [DiaryController::class, 'index'])->name('diary.index');
     Route::get('diary/table', [DiaryController::class, 'table'])->name('diary.table');

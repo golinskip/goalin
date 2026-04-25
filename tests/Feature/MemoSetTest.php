@@ -101,6 +101,99 @@ test('users can add a card to their memo set', function () {
         'memo_set_id' => $memoSet->id,
         'front' => 'Hola',
         'back' => 'Hello',
+        'note' => null,
+    ]);
+});
+
+test('users can add a card with an optional note', function () {
+    $user = User::factory()->create();
+    $memoSet = MemoSet::factory()->for($user)->create();
+    $this->actingAs($user);
+
+    $response = $this->post(route('memo-cards.store', $memoSet), [
+        'front' => 'ephemeral',
+        'back' => 'lasting for a very short time',
+        'note' => 'The ephemeral beauty of cherry blossoms.',
+    ]);
+
+    $response->assertRedirect(route('memo-sets.show', $memoSet));
+    $this->assertDatabaseHas('memo_cards', [
+        'memo_set_id' => $memoSet->id,
+        'front' => 'ephemeral',
+        'note' => 'The ephemeral beauty of cherry blossoms.',
+    ]);
+});
+
+test('users can update a cards note', function () {
+    $user = User::factory()->create();
+    $memoSet = MemoSet::factory()->for($user)->create();
+    $card = MemoCard::factory()->for($memoSet, 'memoSet')->create(['note' => null]);
+    $this->actingAs($user);
+
+    $response = $this->put(route('memo-cards.update', $card), [
+        'front' => $card->front,
+        'back' => $card->back,
+        'note' => 'Added use case later.',
+    ]);
+
+    $response->assertRedirect(route('memo-sets.show', $memoSet));
+    $this->assertDatabaseHas('memo_cards', [
+        'id' => $card->id,
+        'note' => 'Added use case later.',
+    ]);
+});
+
+test('users can update only a cards note via the dedicated endpoint', function () {
+    $user = User::factory()->create();
+    $memoSet = MemoSet::factory()->for($user)->create();
+    $card = MemoCard::factory()->for($memoSet, 'memoSet')->create([
+        'front' => 'Hola',
+        'back' => 'Hello',
+        'note' => null,
+    ]);
+    $this->actingAs($user);
+
+    $response = $this->from(route('memo-sets.learn', $memoSet))
+        ->patch(route('memo-cards.update-note', $card), [
+            'note' => 'Common Spanish greeting.',
+        ]);
+
+    $response->assertRedirect(route('memo-sets.learn', $memoSet));
+    $this->assertDatabaseHas('memo_cards', [
+        'id' => $card->id,
+        'front' => 'Hola',
+        'back' => 'Hello',
+        'note' => 'Common Spanish greeting.',
+    ]);
+});
+
+test('users can clear a cards note via the dedicated endpoint', function () {
+    $user = User::factory()->create();
+    $memoSet = MemoSet::factory()->for($user)->create();
+    $card = MemoCard::factory()->for($memoSet, 'memoSet')->create(['note' => 'old note']);
+    $this->actingAs($user);
+
+    $this->patch(route('memo-cards.update-note', $card), ['note' => null]);
+
+    $this->assertDatabaseHas('memo_cards', [
+        'id' => $card->id,
+        'note' => null,
+    ]);
+});
+
+test('users cannot update note on another users card', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $memoSet = MemoSet::factory()->for($otherUser)->create();
+    $card = MemoCard::factory()->for($memoSet, 'memoSet')->create(['note' => null]);
+    $this->actingAs($user);
+
+    $response = $this->patch(route('memo-cards.update-note', $card), ['note' => 'sneaky']);
+
+    $response->assertForbidden();
+    $this->assertDatabaseHas('memo_cards', [
+        'id' => $card->id,
+        'note' => null,
     ]);
 });
 
@@ -172,16 +265,17 @@ test('users can review a card as incorrect', function () {
 test('users can export cards as csv', function () {
     $user = User::factory()->create();
     $memoSet = MemoSet::factory()->for($user)->create(['name' => 'Spanish']);
-    MemoCard::factory()->for($memoSet, 'memoSet')->create(['front' => 'Hola', 'back' => 'Hello']);
-    MemoCard::factory()->for($memoSet, 'memoSet')->create(['front' => 'Gracias', 'back' => 'Thank you']);
+    MemoCard::factory()->for($memoSet, 'memoSet')->create(['front' => 'Hola', 'back' => 'Hello', 'note' => null]);
+    MemoCard::factory()->for($memoSet, 'memoSet')->create(['front' => 'Gracias', 'back' => 'Thank you', 'note' => 'Muchas gracias!']);
     $this->actingAs($user);
 
     $response = $this->get(route('memo-sets.export', $memoSet));
     $response->assertOk();
     $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
     $content = $response->streamedContent();
-    expect($content)->toContain('Hola;Hello');
-    expect($content)->toContain('Gracias;"Thank you"');
+    expect($content)->toContain('front;back;note');
+    expect($content)->toContain('Hola;Hello;');
+    expect($content)->toContain('Muchas gracias!');
 });
 
 test('users can import cards from csv text', function () {
@@ -196,6 +290,27 @@ test('users can import cards from csv text', function () {
     $response->assertRedirect(route('memo-sets.show', $memoSet));
     $this->assertDatabaseHas('memo_cards', ['memo_set_id' => $memoSet->id, 'front' => 'Hola', 'back' => 'Hello']);
     $this->assertDatabaseHas('memo_cards', ['memo_set_id' => $memoSet->id, 'front' => 'Gracias', 'back' => 'Thank you']);
+});
+
+test('users can import cards with an optional note column', function () {
+    $user = User::factory()->create();
+    $memoSet = MemoSet::factory()->for($user)->create();
+    $this->actingAs($user);
+
+    $this->post(route('memo-sets.import', $memoSet), [
+        'csv_text' => "front;back;note\nephemeral;short-lived;Cherry blossoms are ephemeral.\nHola;Hello;",
+    ]);
+
+    $this->assertDatabaseHas('memo_cards', [
+        'memo_set_id' => $memoSet->id,
+        'front' => 'ephemeral',
+        'note' => 'Cherry blossoms are ephemeral.',
+    ]);
+    $this->assertDatabaseHas('memo_cards', [
+        'memo_set_id' => $memoSet->id,
+        'front' => 'Hola',
+        'note' => null,
+    ]);
 });
 
 test('users can import cards from csv file', function () {
