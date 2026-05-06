@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Carbon\CarbonImmutable;
 use Domain\Alerts\AlertManager;
+use Domain\Tools\DailyRoutine\Alerts\UnmarkedRoutineTasksAlert;
 use Domain\Tools\DailyRoutine\Models\RoutineTask;
 use Domain\Tools\DailyRoutine\Policies\RoutineTaskPolicy;
 use Domain\Tools\Diary\Alerts\EmptyDiaryDaysAlert;
@@ -55,6 +56,7 @@ class AppServiceProvider extends ServiceProvider
             new NoReviewTodayAlert,
             new NoGoalsThisPeriodAlert,
             new UncheckedNewsTodayAlert,
+            new UnmarkedRoutineTasksAlert,
         ));
     }
 
