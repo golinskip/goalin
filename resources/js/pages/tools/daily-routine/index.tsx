@@ -599,7 +599,12 @@ export default function DailyRoutineIndex({ selectedDate, today, tasks, tasksFor
                 </div>
             </div>
 
-            <TaskFormDialog open={dialogOpen} onOpenChange={setDialogOpen} editing={editingTask} />
+            <TaskFormDialog
+                key={editingTask?.id ?? 'new'}
+                open={dialogOpen}
+                onOpenChange={setDialogOpen}
+                editing={editingTask}
+            />
         </AppLayout>
     );
 }
