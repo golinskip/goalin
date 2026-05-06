@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use Carbon\CarbonImmutable;
 use Domain\Alerts\AlertManager;
+use Domain\Tools\DailyRoutine\Models\RoutineTask;
+use Domain\Tools\DailyRoutine\Policies\RoutineTaskPolicy;
 use Domain\Tools\Diary\Alerts\EmptyDiaryDaysAlert;
 use Domain\Tools\Diary\Models\DiaryEntry;
 use Domain\Tools\Diary\Policies\DiaryEntryPolicy;
@@ -95,6 +97,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(LongTermGoal::class, LongTermGoalPolicy::class);
         Gate::policy(GameResult::class, GameResultPolicy::class);
         Gate::policy(RssFeed::class, RssFeedPolicy::class);
+        Gate::policy(RoutineTask::class, RoutineTaskPolicy::class);
     }
 
     /**

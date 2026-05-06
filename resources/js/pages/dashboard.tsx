@@ -9,6 +9,7 @@ import {
     ListTodo,
     Music,
     NotebookPen,
+    Repeat2,
     Rss,
     Target,
 } from 'lucide-react';
@@ -167,6 +168,20 @@ export default function Dashboard({ integrations }: Props) {
                                     <div>
                                         <p className="font-semibold">Diary</p>
                                         <p className="text-sm text-muted-foreground">Write and reflect on your days</p>
+                                    </div>
+                                </div>
+                            </Link>
+                            <Link
+                                href="/daily-routine"
+                                className="group rounded-xl border border-emerald-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm transition-all hover:shadow-md dark:border-emerald-800/50 dark:bg-black/40"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="flex size-10 items-center justify-center rounded-lg bg-emerald-500/15 transition-colors group-hover:bg-emerald-500/25">
+                                        <Repeat2 className="size-5 text-emerald-600 dark:text-emerald-400" />
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold">Daily Routine</p>
+                                        <p className="text-sm text-muted-foreground">Track recurring tasks day-by-day</p>
                                     </div>
                                 </div>
                             </Link>

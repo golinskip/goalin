@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, ChevronDown, Compass, Gamepad2, Layers, LayoutGrid, Menu, Music, NotebookPen, Rss, Shield, Target } from 'lucide-react';
+import { BookOpen, ChevronDown, Compass, Gamepad2, Layers, LayoutGrid, Menu, Music, NotebookPen, Repeat2, Rss, Shield, Target } from 'lucide-react';
 import { AlertsMenu } from '@/components/alerts-menu';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -29,6 +29,7 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import { index as dailyRoutineIndex } from '@/routes/daily-routine';
 import { index as diaryIndex } from '@/routes/diary';
 import { index as memoSetsIndex } from '@/routes/memo-sets';
 import { index as musicIndex } from '@/routes/music';
@@ -53,6 +54,11 @@ const toolsNavItems: NavItem[] = [
         title: 'Diary',
         href: diaryIndex(),
         icon: NotebookPen,
+    },
+    {
+        title: 'Daily Routine',
+        href: dailyRoutineIndex(),
+        icon: Repeat2,
     },
     {
         title: 'Long Term Goals',

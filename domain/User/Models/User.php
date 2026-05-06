@@ -6,6 +6,7 @@ namespace Domain\User\Models;
 use Database\Factories\UserFactory;
 use Domain\ExternalServices\Enums\ServiceType;
 use Domain\ExternalServices\Models\ServiceConnection;
+use Domain\Tools\DailyRoutine\Models\RoutineTask;
 use Domain\Tools\Diary\Models\DiaryEntry;
 use Domain\Tools\Flashcards\Models\MemoSet;
 use Domain\Tools\Games\Models\GameResult;
@@ -135,6 +136,11 @@ class User extends Authenticatable
     public function rssFeeds(): HasMany
     {
         return $this->hasMany(RssFeed::class);
+    }
+
+    public function routineTasks(): HasMany
+    {
+        return $this->hasMany(RoutineTask::class);
     }
 
     public function serviceConnections(): HasMany

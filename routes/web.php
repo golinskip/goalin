@@ -4,6 +4,9 @@ use Domain\Admin\Controllers\AdminController;
 use Domain\Admin\Controllers\RegistrationSettingController;
 use Domain\Admin\Controllers\UserLockController;
 use Domain\Admin\Support\RegistrationSetting;
+use Domain\Tools\DailyRoutine\Controllers\DailyRoutineController;
+use Domain\Tools\DailyRoutine\Controllers\RoutineTaskController;
+use Domain\Tools\DailyRoutine\Controllers\RoutineTaskLogController;
 use Domain\Tools\Diary\Controllers\DiaryController;
 use Domain\Tools\Flashcards\Controllers\MemoCardController;
 use Domain\Tools\Flashcards\Controllers\MemoSetController;
@@ -99,6 +102,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('games/aim-trainer', AimTrainerController::class)->name('games.aim-trainer');
     Route::get('games/memory', MemoryController::class)->name('games.memory');
     Route::post('games/results', [GameResultController::class, 'store'])->name('games.results.store');
+
+    // Daily Routine
+    Route::get('daily-routine', [DailyRoutineController::class, 'index'])->name('daily-routine.index');
+    Route::post('routine-tasks', [RoutineTaskController::class, 'store'])->name('routine-tasks.store');
+    Route::put('routine-tasks/{routine_task}', [RoutineTaskController::class, 'update'])->name('routine-tasks.update');
+    Route::delete('routine-tasks/{routine_task}', [RoutineTaskController::class, 'destroy'])->name('routine-tasks.destroy');
+    Route::post('routine-tasks/{routine_task}/log', [RoutineTaskLogController::class, 'store'])->name('routine-tasks.log');
 
     // RSS Feeds
     Route::get('rss-feeds', [RssFeedController::class, 'index'])->name('rss-feeds.index');
