@@ -122,17 +122,18 @@ test('unchecked news alert does not trigger when article was read today', functi
     expect($alert->check($user))->toBeFalse();
 });
 
-test('unmarked routine tasks alert does not trigger when no tasks scheduled today', function () {
+test('unmarked routine tasks alert does not trigger when no tasks scheduled in the past week', function () {
     $user = User::factory()->create();
     $alert = new UnmarkedRoutineTasksAlert;
 
     expect($alert->check($user))->toBeFalse();
 });
 
-test('unmarked routine tasks alert triggers when scheduled tasks have no log today', function () {
+test('unmarked routine tasks alert triggers when previous day has no log', function () {
     $user = User::factory()->create();
+    $yesterday = Carbon::today()->subDay();
     RoutineTask::factory()->for($user)->create([
-        'weekdays' => [(int) Carbon::today()->dayOfWeekIso],
+        'weekdays' => [(int) $yesterday->dayOfWeekIso],
         'starts_on' => Carbon::today()->subWeek(),
         'ends_on' => Carbon::today()->addWeek(),
     ]);
@@ -140,16 +141,20 @@ test('unmarked routine tasks alert triggers when scheduled tasks have no log tod
     $alert = new UnmarkedRoutineTasksAlert;
 
     expect($alert->check($user))->toBeTrue();
-    expect($alert->message())->toContain('1 unmarked routine task today');
+    expect($alert->message())->toContain('1 unmarked routine task from the past week');
 });
 
-test('unmarked routine tasks alert ignores tasks scheduled on other weekdays', function () {
+test('unmarked routine tasks alert does not trigger when all past scheduled tasks are logged', function () {
     $user = User::factory()->create();
-    $otherDay = ((int) Carbon::today()->dayOfWeekIso % 7) + 1;
-    RoutineTask::factory()->for($user)->create([
-        'weekdays' => [$otherDay],
+    $yesterday = Carbon::today()->subDay();
+    $task = RoutineTask::factory()->for($user)->create([
+        'weekdays' => [(int) $yesterday->dayOfWeekIso],
         'starts_on' => Carbon::today()->subWeek(),
         'ends_on' => Carbon::today()->addWeek(),
+    ]);
+    $task->logs()->create([
+        'log_date' => $yesterday,
+        'status' => RoutineTaskStatus::Done,
     ]);
 
     $alert = new UnmarkedRoutineTasksAlert;
@@ -157,16 +162,12 @@ test('unmarked routine tasks alert ignores tasks scheduled on other weekdays', f
     expect($alert->check($user))->toBeFalse();
 });
 
-test('unmarked routine tasks alert does not trigger when all scheduled tasks are logged today', function () {
+test('unmarked routine tasks alert ignores unmarked tasks scheduled today', function () {
     $user = User::factory()->create();
-    $task = RoutineTask::factory()->for($user)->create([
+    RoutineTask::factory()->for($user)->create([
         'weekdays' => [(int) Carbon::today()->dayOfWeekIso],
-        'starts_on' => Carbon::today()->subWeek(),
+        'starts_on' => Carbon::today(),
         'ends_on' => Carbon::today()->addWeek(),
-    ]);
-    $task->logs()->create([
-        'log_date' => Carbon::today(),
-        'status' => RoutineTaskStatus::Done,
     ]);
 
     $alert = new UnmarkedRoutineTasksAlert;
