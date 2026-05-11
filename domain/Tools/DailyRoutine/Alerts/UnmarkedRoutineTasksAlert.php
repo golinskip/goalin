@@ -56,6 +56,7 @@ class UnmarkedRoutineTasksAlert extends Alert
         $loggedDatesByTask = RoutineTaskLog::query()
             ->whereIn('routine_task_id', $tasks->pluck('id'))
             ->whereBetween('log_date', [$start, $end])
+            ->whereNotNull('status')
             ->get(['routine_task_id', 'log_date'])
             ->groupBy('routine_task_id')
             ->map(fn (Collection $logs) => $logs->pluck('log_date')->map(fn ($d) => $d->toDateString())->all());

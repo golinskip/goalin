@@ -193,6 +193,89 @@ test('cannot log a future date', function () {
         ->assertSessionHasErrors('log_date');
 });
 
+test('users can add a comment to a routine log', function () {
+    $user = User::factory()->create();
+    $task = RoutineTask::factory()->for($user)->create();
+    $this->actingAs($user);
+
+    $date = now()->toDateString();
+
+    $this->post(route('routine-tasks.log', $task), ['log_date' => $date, 'status' => 'done']);
+    $this->post(route('routine-tasks.comment', $task), [
+        'log_date' => $date,
+        'comment' => 'Felt great today',
+    ])->assertRedirect();
+
+    $log = $task->logs()->first();
+    expect($log->status)->toBe(RoutineTaskStatus::Done);
+    expect($log->comment)->toBe('Felt great today');
+});
+
+test('comments persist when status is cleared', function () {
+    $user = User::factory()->create();
+    $task = RoutineTask::factory()->for($user)->create();
+    $this->actingAs($user);
+
+    $date = now()->toDateString();
+
+    $this->post(route('routine-tasks.log', $task), ['log_date' => $date, 'status' => 'done']);
+    $this->post(route('routine-tasks.comment', $task), ['log_date' => $date, 'comment' => 'note']);
+
+    $this->post(route('routine-tasks.log', $task), ['log_date' => $date]);
+
+    $log = $task->logs()->first();
+    expect($log)->not->toBeNull();
+    expect($log->status)->toBeNull();
+    expect($log->comment)->toBe('note');
+});
+
+test('adding a comment without a status creates a log entry', function () {
+    $user = User::factory()->create();
+    $task = RoutineTask::factory()->for($user)->create();
+    $this->actingAs($user);
+
+    $date = now()->toDateString();
+
+    $this->post(route('routine-tasks.comment', $task), [
+        'log_date' => $date,
+        'comment' => 'reflection',
+    ])->assertRedirect();
+
+    $log = $task->logs()->first();
+    expect($log)->not->toBeNull();
+    expect($log->status)->toBeNull();
+    expect($log->comment)->toBe('reflection');
+});
+
+test('clearing the comment of a status-less log deletes the row', function () {
+    $user = User::factory()->create();
+    $task = RoutineTask::factory()->for($user)->create();
+    $this->actingAs($user);
+
+    $date = now()->toDateString();
+
+    $this->post(route('routine-tasks.comment', $task), ['log_date' => $date, 'comment' => 'hi']);
+    $this->post(route('routine-tasks.comment', $task), ['log_date' => $date, 'comment' => null]);
+
+    $this->assertDatabaseMissing('routine_task_logs', [
+        'routine_task_id' => $task->id,
+        'log_date' => $date,
+    ]);
+});
+
+test('users cannot comment on another user routine task', function () {
+    $owner = User::factory()->create();
+    $other = User::factory()->create();
+    $task = RoutineTask::factory()->for($owner)->create();
+
+    $this->actingAs($other);
+
+    $this->post(route('routine-tasks.comment', $task), [
+        'log_date' => now()->toDateString(),
+        'comment' => 'evil',
+    ])->assertForbidden();
+});
+
 test('calendar reports completion percentage per day', function () {
     $user = User::factory()->create();
 

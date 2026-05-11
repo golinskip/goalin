@@ -1,6 +1,6 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { Check, ChevronLeft, ChevronRight, ListChecks, Pencil, Plus, SkipForward, Trash2, X } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { Check, ChevronLeft, ChevronRight, ListChecks, MessageSquare, MessageSquarePlus, Pencil, Plus, SkipForward, Trash2, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     destroy as destroyTask,
     store as storeTask,
@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
 import { index as dailyRoutineIndex } from '@/routes/daily-routine';
-import { log as logRoute } from '@/routes/routine-tasks';
+import { comment as commentRoute, log as logRoute } from '@/routes/routine-tasks';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 
@@ -57,6 +57,7 @@ type TaskForDay = {
     name: string;
     color: string | null;
     status: RoutineTaskStatus | null;
+    comment: string | null;
 };
 
 type CalendarDay = {
@@ -290,9 +291,111 @@ function TaskFormDialog({
     );
 }
 
+function CommentDialog({
+    open,
+    onOpenChange,
+    task,
+    logDate,
+}: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    task: TaskForDay | null;
+    logDate: string;
+}) {
+    const [value, setValue] = useState('');
+    const [processing, setProcessing] = useState(false);
+
+    useEffect(() => {
+        if (open) {
+            setValue(task?.comment ?? '');
+        }
+    }, [open, task]);
+
+    if (!task) {
+        return null;
+    }
+
+    const submit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setProcessing(true);
+
+        router.post(
+            commentRoute.url(task.id),
+            { log_date: logDate, comment: value.trim() === '' ? null : value },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onFinish: () => setProcessing(false),
+                onSuccess: () => onOpenChange(false),
+            },
+        );
+    };
+
+    const handleClear = () => {
+        setProcessing(true);
+
+        router.post(
+            commentRoute.url(task.id),
+            { log_date: logDate, comment: null },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onFinish: () => setProcessing(false),
+                onSuccess: () => onOpenChange(false),
+            },
+        );
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{task.comment ? 'Edit comment' : 'Add comment'}</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={submit} className="space-y-3">
+                    <div className="text-xs text-muted-foreground">
+                        <span className="font-medium text-foreground">{task.name}</span> · {formatDateLabel(logDate)}
+                    </div>
+                    <textarea
+                        className="min-h-[140px] w-full rounded-lg border border-border bg-white/50 p-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-black/20"
+                        placeholder="How did it go?"
+                        value={value}
+                        onChange={(e) => setValue(e.target.value)}
+                        maxLength={2000}
+                        autoFocus
+                    />
+                    <DialogFooter className="sm:justify-between">
+                        <div>
+                            {task.comment && (
+                                <Button type="button" variant="ghost" onClick={handleClear} disabled={processing}>
+                                    Remove
+                                </Button>
+                            )}
+                        </div>
+                        <div className="flex gap-2">
+                            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={processing}>
+                                Save
+                            </Button>
+                        </div>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 export default function DailyRoutineIndex({ selectedDate, today, tasks, tasksForSelectedDay, calendar }: Props) {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<RoutineTask | null>(null);
+    const [commentTaskId, setCommentTaskId] = useState<number | null>(null);
+
+    const commentTask = useMemo(
+        () => (commentTaskId === null ? null : tasksForSelectedDay.find((t) => t.id === commentTaskId) ?? null),
+        [commentTaskId, tasksForSelectedDay],
+    );
 
     const navigateDate = useCallback((date: string) => {
         router.get(
@@ -425,70 +528,102 @@ export default function DailyRoutineIndex({ selectedDate, today, tasks, tasksFor
                                 ) : (
                                     tasksForSelectedDay.map((task) => {
                                         const colorClass = COLOR_DOT[task.color ?? 'emerald'] ?? COLOR_DOT.emerald;
+                                        const hasComment = task.comment !== null && task.comment.trim() !== '';
 
                                         return (
                                             <div
                                                 key={task.id}
                                                 className={cn(
-                                                    'flex items-center justify-between gap-3 rounded-lg border bg-white/60 px-3 py-2.5 dark:bg-black/30',
+                                                    'rounded-lg border bg-white/60 dark:bg-black/30',
                                                     task.status === 'done' && 'border-emerald-300/70 bg-emerald-50/60 dark:border-emerald-700/60 dark:bg-emerald-950/30',
                                                     task.status === 'skipped' && 'border-amber-300/70 bg-amber-50/60 dark:border-amber-700/60 dark:bg-amber-950/30',
                                                     task.status === 'missed' && 'border-rose-300/70 bg-rose-50/60 dark:border-rose-700/60 dark:bg-rose-950/30',
                                                 )}
                                             >
-                                                <div className="flex min-w-0 items-center gap-3">
-                                                    <span className={cn('size-2.5 shrink-0 rounded-full', colorClass)} />
-                                                    <span
+                                                <div className="flex items-center justify-between gap-3 px-3 py-2.5">
+                                                    <div className="flex min-w-0 items-center gap-3">
+                                                        <span className={cn('size-2.5 shrink-0 rounded-full', colorClass)} />
+                                                        <span
+                                                            className={cn(
+                                                                'truncate text-sm font-medium',
+                                                                task.status === 'done' && 'line-through text-muted-foreground',
+                                                            )}
+                                                        >
+                                                            {task.name}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex shrink-0 items-center gap-1">
+                                                        {!isPastOrToday ? null : (
+                                                            <>
+                                                                <Button
+                                                                    variant={task.status === 'done' ? 'default' : 'outline'}
+                                                                    size="sm"
+                                                                    className={cn(
+                                                                        'h-7 px-2 text-xs',
+                                                                        task.status === 'done' && 'bg-emerald-600 hover:bg-emerald-700',
+                                                                    )}
+                                                                    onClick={() => setStatus(task.id, task.status === 'done' ? null : 'done')}
+                                                                >
+                                                                    <Check className="mr-1 size-3" />
+                                                                    Done
+                                                                </Button>
+                                                                <Button
+                                                                    variant={task.status === 'skipped' ? 'default' : 'outline'}
+                                                                    size="sm"
+                                                                    className={cn(
+                                                                        'h-7 px-2 text-xs',
+                                                                        task.status === 'skipped' && 'bg-amber-500 hover:bg-amber-600',
+                                                                    )}
+                                                                    onClick={() => setStatus(task.id, task.status === 'skipped' ? null : 'skipped')}
+                                                                >
+                                                                    <SkipForward className="mr-1 size-3" />
+                                                                    Skip
+                                                                </Button>
+                                                                <Button
+                                                                    variant={task.status === 'missed' ? 'default' : 'outline'}
+                                                                    size="sm"
+                                                                    className={cn(
+                                                                        'h-7 px-2 text-xs',
+                                                                        task.status === 'missed' && 'bg-rose-500 hover:bg-rose-600',
+                                                                    )}
+                                                                    onClick={() => setStatus(task.id, task.status === 'missed' ? null : 'missed')}
+                                                                >
+                                                                    <X className="mr-1 size-3" />
+                                                                    Miss
+                                                                </Button>
+                                                                <Button
+                                                                    variant={hasComment ? 'default' : 'outline'}
+                                                                    size="sm"
+                                                                    className={cn(
+                                                                        'h-7 px-2 text-xs',
+                                                                        hasComment && 'bg-sky-600 hover:bg-sky-700',
+                                                                    )}
+                                                                    onClick={() => setCommentTaskId(task.id)}
+                                                                    title={hasComment ? 'Edit comment' : 'Add comment'}
+                                                                >
+                                                                    {hasComment ? (
+                                                                        <MessageSquare className="mr-1 size-3" />
+                                                                    ) : (
+                                                                        <MessageSquarePlus className="mr-1 size-3" />
+                                                                    )}
+                                                                    {hasComment ? 'Comment' : 'Add comment'}
+                                                                </Button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                {hasComment && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => isPastOrToday && setCommentTaskId(task.id)}
                                                         className={cn(
-                                                            'truncate text-sm font-medium',
-                                                            task.status === 'done' && 'line-through text-muted-foreground',
+                                                            'block w-full border-t border-border/60 px-3 py-2 text-left text-xs italic text-muted-foreground',
+                                                            isPastOrToday && 'hover:bg-black/[0.02] dark:hover:bg-white/[0.02]',
                                                         )}
                                                     >
-                                                        {task.name}
-                                                    </span>
-                                                </div>
-                                                <div className="flex shrink-0 items-center gap-1">
-                                                    {!isPastOrToday ? null : (
-                                                        <>
-                                                            <Button
-                                                                variant={task.status === 'done' ? 'default' : 'outline'}
-                                                                size="sm"
-                                                                className={cn(
-                                                                    'h-7 px-2 text-xs',
-                                                                    task.status === 'done' && 'bg-emerald-600 hover:bg-emerald-700',
-                                                                )}
-                                                                onClick={() => setStatus(task.id, task.status === 'done' ? null : 'done')}
-                                                            >
-                                                                <Check className="mr-1 size-3" />
-                                                                Done
-                                                            </Button>
-                                                            <Button
-                                                                variant={task.status === 'skipped' ? 'default' : 'outline'}
-                                                                size="sm"
-                                                                className={cn(
-                                                                    'h-7 px-2 text-xs',
-                                                                    task.status === 'skipped' && 'bg-amber-500 hover:bg-amber-600',
-                                                                )}
-                                                                onClick={() => setStatus(task.id, task.status === 'skipped' ? null : 'skipped')}
-                                                            >
-                                                                <SkipForward className="mr-1 size-3" />
-                                                                Skip
-                                                            </Button>
-                                                            <Button
-                                                                variant={task.status === 'missed' ? 'default' : 'outline'}
-                                                                size="sm"
-                                                                className={cn(
-                                                                    'h-7 px-2 text-xs',
-                                                                    task.status === 'missed' && 'bg-rose-500 hover:bg-rose-600',
-                                                                )}
-                                                                onClick={() => setStatus(task.id, task.status === 'missed' ? null : 'missed')}
-                                                            >
-                                                                <X className="mr-1 size-3" />
-                                                                Miss
-                                                            </Button>
-                                                        </>
-                                                    )}
-                                                </div>
+                                                        <span className="whitespace-pre-wrap">{task.comment}</span>
+                                                    </button>
+                                                )}
                                             </div>
                                         );
                                     })
@@ -604,6 +739,18 @@ export default function DailyRoutineIndex({ selectedDate, today, tasks, tasksFor
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
                 editing={editingTask}
+            />
+
+            <CommentDialog
+                key={commentTaskId ?? 'comment-none'}
+                open={commentTaskId !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setCommentTaskId(null);
+                    }
+                }}
+                task={commentTask}
+                logDate={selectedDate}
             />
         </AppLayout>
     );

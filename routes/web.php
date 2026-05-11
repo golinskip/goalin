@@ -109,6 +109,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('routine-tasks/{routine_task}', [RoutineTaskController::class, 'update'])->name('routine-tasks.update');
     Route::delete('routine-tasks/{routine_task}', [RoutineTaskController::class, 'destroy'])->name('routine-tasks.destroy');
     Route::post('routine-tasks/{routine_task}/log', [RoutineTaskLogController::class, 'store'])->name('routine-tasks.log');
+    Route::post('routine-tasks/{routine_task}/comment', [RoutineTaskLogController::class, 'comment'])->name('routine-tasks.comment');
 
     // RSS Feeds
     Route::get('rss-feeds', [RssFeedController::class, 'index'])->name('rss-feeds.index');

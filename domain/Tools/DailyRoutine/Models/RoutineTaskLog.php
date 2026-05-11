@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['log_date', 'status'])]
+#[Fillable(['log_date', 'status', 'comment'])]
 class RoutineTaskLog extends Model
 {
     /** @use HasFactory<RoutineTaskLogFactory> */

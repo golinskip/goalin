@@ -49,7 +49,8 @@ class DailyRoutineController extends Controller
                     'id' => $task->id,
                     'name' => $task->name,
                     'color' => $task->color,
-                    'status' => $log?->status->value,
+                    'status' => $log?->status?->value,
+                    'comment' => $log?->comment,
                 ];
             });
 
@@ -68,7 +69,7 @@ class DailyRoutineController extends Controller
                 }
 
                 $scheduledCount++;
-                $status = ($logsByTask[$task->id][$dateKey] ?? null)?->status->value;
+                $status = ($logsByTask[$task->id][$dateKey] ?? null)?->status?->value;
 
                 if ($status === 'done') {
                     $doneCount++;
