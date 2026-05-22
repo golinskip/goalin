@@ -1,9 +1,19 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { CalendarDays, ChevronLeft, ChevronRight, NotebookPen, Pencil, Plus, Table, Trash2, X } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Download, NotebookPen, Pencil, Plus, Table, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { store, update, destroy } from '@/actions/Domain/Tools/Diary/Controllers/DiaryController';
+import { store, update, destroy, exportMethod } from '@/actions/Domain/Tools/Diary/Controllers/DiaryController';
 import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { index as diaryIndex } from '@/routes/diary';
@@ -228,6 +238,136 @@ function shiftMonth(month: string, delta: number): string {
     const date = new Date(parseInt(year), parseInt(m) - 1 + delta, 1);
 
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function ExportDialog() {
+    const today = new Date().toISOString().split('T')[0];
+    const [open, setOpen] = useState(false);
+    const [mode, setMode] = useState<'all' | 'range'>('all');
+    const [from, setFrom] = useState('');
+    const [to, setTo] = useState('');
+    const [error, setError] = useState<string | null>(null);
+
+    const reset = () => {
+        setMode('all');
+        setFrom('');
+        setTo('');
+        setError(null);
+    };
+
+    const handleDownload = () => {
+        if (mode === 'range' && from && to && from > to) {
+            setError('The end date must be on or after the start date.');
+
+            return;
+        }
+
+        const query = mode === 'range' ? { from: from || undefined, to: to || undefined } : {};
+        window.location.href = exportMethod.url({ query });
+        setOpen(false);
+    };
+
+    return (
+        <Dialog
+            open={open}
+            onOpenChange={(next) => {
+                setOpen(next);
+                if (!next) {
+                    reset();
+                }
+            }}
+        >
+            <DialogTrigger asChild>
+                <button
+                    className="rounded p-0.5 text-muted-foreground/40 transition-colors hover:text-amber-600 dark:hover:text-amber-400"
+                    title="Export to text file"
+                >
+                    <Download className="size-3.5" />
+                </button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Export diary</DialogTitle>
+                    <DialogDescription>Download your diary entries as a plain text file.</DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-2">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setMode('all');
+                                setError(null);
+                            }}
+                            className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
+                                mode === 'all' ? 'border-primary bg-primary/10 font-medium text-primary' : 'border-border hover:bg-accent'
+                            }`}
+                        >
+                            All entries
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setMode('range');
+                                setError(null);
+                            }}
+                            className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
+                                mode === 'range' ? 'border-primary bg-primary/10 font-medium text-primary' : 'border-border hover:bg-accent'
+                            }`}
+                        >
+                            Date range
+                        </button>
+                    </div>
+
+                    {mode === 'range' && (
+                        <>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-muted-foreground">From</label>
+                                    <Input
+                                        type="date"
+                                        value={from}
+                                        max={today}
+                                        onChange={(e) => {
+                                            setFrom(e.target.value);
+                                            setError(null);
+                                        }}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-muted-foreground">To</label>
+                                    <Input
+                                        type="date"
+                                        value={to}
+                                        max={today}
+                                        onChange={(e) => {
+                                            setTo(e.target.value);
+                                            setError(null);
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Leave a field empty to export from the very first entry or up to the latest one.
+                            </p>
+                        </>
+                    )}
+
+                    {error && <p className="text-sm text-destructive">{error}</p>}
+                </div>
+
+                <DialogFooter>
+                    <Button variant="ghost" onClick={() => setOpen(false)}>
+                        Cancel
+                    </Button>
+                    <Button onClick={handleDownload}>
+                        <Download className="mr-1.5 size-4" />
+                        Download .txt
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
 }
 
 export default function Diary({ month, selectedDate, entryDates, selectedEntry, totalEntries, fieldSuggestions }: Props) {
@@ -465,6 +605,7 @@ return;
                                     >
                                         <Table className="size-3.5" />
                                     </Link>
+                                    <ExportDialog />
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <div className="flex items-center gap-1">

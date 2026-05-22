@@ -250,3 +250,87 @@ test('diary entry fields validation rejects empty labels', function () {
 
     $response->assertSessionHasErrors('fields.0.label');
 });
+
+test('guests cannot export the diary', function () {
+    $response = $this->get(route('diary.export'));
+
+    $response->assertRedirect(route('login'));
+});
+
+test('users can export all diary entries to a text file', function () {
+    $user = User::factory()->create();
+    DiaryEntry::factory()->for($user)->create([
+        'entry_date' => '2026-01-10',
+        'content' => 'January entry',
+    ]);
+    DiaryEntry::factory()->for($user)->create([
+        'entry_date' => '2026-02-15',
+        'content' => 'February entry',
+    ]);
+    $this->actingAs($user);
+
+    $response = $this->get(route('diary.export'));
+
+    $response->assertOk();
+    $response->assertDownload('diary-export-'.now()->format('Y-m-d').'.txt');
+    expect($response->streamedContent())
+        ->toContain('January entry')
+        ->toContain('February entry');
+});
+
+test('users can export diary entries within a date range', function () {
+    $user = User::factory()->create();
+    DiaryEntry::factory()->for($user)->create([
+        'entry_date' => '2026-01-10',
+        'content' => 'Inside range',
+    ]);
+    DiaryEntry::factory()->for($user)->create([
+        'entry_date' => '2026-03-10',
+        'content' => 'Outside range',
+    ]);
+    $this->actingAs($user);
+
+    $response = $this->get(route('diary.export', ['from' => '2026-01-01', 'to' => '2026-02-01']));
+
+    $response->assertOk();
+    expect($response->streamedContent())
+        ->toContain('Inside range')
+        ->not->toContain('Outside range');
+});
+
+test('diary export includes additional fields', function () {
+    $user = User::factory()->create();
+    DiaryEntry::factory()->for($user)->create([
+        'content' => 'A day with fields',
+        'fields' => [['label' => 'Mood', 'value' => 'Happy']],
+    ]);
+    $this->actingAs($user);
+
+    $response = $this->get(route('diary.export'));
+
+    expect($response->streamedContent())->toContain('Mood: Happy');
+});
+
+test('diary export only includes the authenticated users entries', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    DiaryEntry::factory()->for($user)->create(['content' => 'My private entry']);
+    DiaryEntry::factory()->for($otherUser)->create(['content' => 'Someone elses entry']);
+    $this->actingAs($user);
+
+    $response = $this->get(route('diary.export'));
+
+    $response->assertOk();
+    expect($response->streamedContent())
+        ->toContain('My private entry')
+        ->not->toContain('Someone elses entry');
+});
+
+test('diary export rejects an end date before the start date', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->get(route('diary.export', ['from' => '2026-02-01', 'to' => '2026-01-01']));
+
+    $response->assertSessionHasErrors('to');
+});

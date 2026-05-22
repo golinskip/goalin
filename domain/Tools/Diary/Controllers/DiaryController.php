@@ -5,6 +5,7 @@ namespace Domain\Tools\Diary\Controllers;
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Domain\Tools\Diary\Models\DiaryEntry;
+use Domain\Tools\Diary\Requests\ExportDiaryRequest;
 use Domain\Tools\Diary\Requests\StoreDiaryEntryRequest;
 use Domain\Tools\Diary\Requests\UpdateDiaryEntryRequest;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -12,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DiaryController extends Controller
 {
@@ -103,6 +105,47 @@ class DiaryController extends Controller
         return Inertia::render('tools/diary/table', [
             'year' => $year,
             'entries' => $entries,
+        ]);
+    }
+
+    public function export(ExportDiaryRequest $request): StreamedResponse
+    {
+        $from = $request->validated('from');
+        $to = $request->validated('to');
+
+        $entries = $request->user()->diaryEntries()
+            ->when($from, fn ($query) => $query->whereDate('entry_date', '>=', $from))
+            ->when($to, fn ($query) => $query->whereDate('entry_date', '<=', $to))
+            ->orderBy('entry_date')
+            ->get();
+
+        $filename = 'diary-export-'.now()->format('Y-m-d').'.txt';
+
+        return response()->streamDownload(function () use ($entries): void {
+            $handle = fopen('php://output', 'w');
+
+            $entries->each(function (DiaryEntry $entry, int $index) use ($handle): void {
+                if ($index > 0) {
+                    fwrite($handle, "\n\n");
+                }
+
+                $heading = $entry->entry_date->format('l, F j, Y');
+                fwrite($handle, $heading."\n");
+                fwrite($handle, str_repeat('=', strlen($heading))."\n\n");
+                fwrite($handle, trim((string) $entry->content)."\n");
+
+                if (! empty($entry->fields)) {
+                    fwrite($handle, "\n");
+
+                    foreach ($entry->fields as $field) {
+                        fwrite($handle, ($field['label'] ?? '').': '.($field['value'] ?? '')."\n");
+                    }
+                }
+            });
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/plain',
         ]);
     }
 
