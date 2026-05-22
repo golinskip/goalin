@@ -58,6 +58,8 @@ class DiaryController extends Controller
         $fieldSuggestions = [];
         $user->diaryEntries()
             ->whereNotNull('fields')
+            ->orderByDesc('entry_date')
+            ->orderByDesc('id')
             ->pluck('fields')
             ->each(function (array $fields) use (&$fieldSuggestions): void {
                 foreach ($fields as $field) {
