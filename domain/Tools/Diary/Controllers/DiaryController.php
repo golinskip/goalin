@@ -110,6 +110,55 @@ class DiaryController extends Controller
         ]);
     }
 
+    public function statistics(Request $request): Response
+    {
+        $user = $request->user();
+        $year = (int) $request->input('year', now()->year);
+
+        $startOfYear = Carbon::createFromDate($year, 1, 1)->startOfYear();
+        $endOfYear = $startOfYear->copy()->endOfYear();
+
+        /** @var array<string, array{total: float, entries: int}> $totals */
+        $totals = [];
+
+        $user->diaryEntries()
+            ->whereBetween('entry_date', [$startOfYear, $endOfYear])
+            ->whereNotNull('fields')
+            ->pluck('fields')
+            ->each(function (array $fields) use (&$totals): void {
+                foreach ($fields as $field) {
+                    $label = trim((string) ($field['label'] ?? ''));
+                    $value = trim((string) ($field['value'] ?? ''));
+
+                    if ($label === '' || ! is_numeric($value)) {
+                        continue;
+                    }
+
+                    if (! isset($totals[$label])) {
+                        $totals[$label] = ['total' => 0.0, 'entries' => 0];
+                    }
+
+                    $totals[$label]['total'] += (float) $value;
+                    $totals[$label]['entries']++;
+                }
+            });
+
+        $fieldTotals = collect($totals)
+            ->map(fn (array $data, string $label): array => [
+                'label' => $label,
+                'total' => round($data['total'], 2),
+                'entries' => $data['entries'],
+            ])
+            ->sortByDesc('total')
+            ->values()
+            ->all();
+
+        return Inertia::render('tools/diary/statistics', [
+            'year' => $year,
+            'fieldTotals' => $fieldTotals,
+        ]);
+    }
+
     public function export(ExportDiaryRequest $request): StreamedResponse
     {
         $from = $request->validated('from');

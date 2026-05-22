@@ -71,6 +71,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('diary', [DiaryController::class, 'index'])->name('diary.index');
     Route::get('diary/table', [DiaryController::class, 'table'])->name('diary.table');
+    Route::get('diary/statistics', [DiaryController::class, 'statistics'])->name('diary.statistics');
     Route::get('diary/export', [DiaryController::class, 'export'])->name('diary.export');
     Route::post('diary', [DiaryController::class, 'store'])->name('diary.store');
     Route::put('diary/{diary_entry}', [DiaryController::class, 'update'])->name('diary.update');

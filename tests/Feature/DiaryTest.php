@@ -334,3 +334,103 @@ test('diary export rejects an end date before the start date', function () {
 
     $response->assertSessionHasErrors('to');
 });
+
+test('guests cannot view diary statistics', function () {
+    $response = $this->get(route('diary.statistics'));
+
+    $response->assertRedirect(route('login'));
+});
+
+test('diary statistics sums numeric field values for the year', function () {
+    $user = User::factory()->create();
+    DiaryEntry::factory()->for($user)->create([
+        'entry_date' => '2026-03-01',
+        'fields' => [
+            ['label' => 'Steps', 'value' => '8000'],
+            ['label' => 'Coffee', 'value' => '2'],
+        ],
+    ]);
+    DiaryEntry::factory()->for($user)->create([
+        'entry_date' => '2026-06-15',
+        'fields' => [
+            ['label' => 'Steps', 'value' => '10000'],
+            ['label' => 'Coffee', 'value' => '3'],
+        ],
+    ]);
+    $this->actingAs($user);
+
+    $response = $this->get(route('diary.statistics', ['year' => 2026]));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('tools/diary/statistics')
+        ->where('year', 2026)
+        ->where('fieldTotals', [
+            ['label' => 'Steps', 'total' => 18000, 'entries' => 2],
+            ['label' => 'Coffee', 'total' => 5, 'entries' => 2],
+        ])
+    );
+});
+
+test('diary statistics ignores non-numeric field values', function () {
+    $user = User::factory()->create();
+    DiaryEntry::factory()->for($user)->create([
+        'entry_date' => '2026-04-10',
+        'fields' => [
+            ['label' => 'Mood', 'value' => 'Happy'],
+            ['label' => 'Pushups', 'value' => '20'],
+        ],
+    ]);
+    $this->actingAs($user);
+
+    $response = $this->get(route('diary.statistics', ['year' => 2026]));
+
+    $response->assertInertia(fn ($page) => $page
+        ->where('fieldTotals', [
+            ['label' => 'Pushups', 'total' => 20, 'entries' => 1],
+        ])
+    );
+});
+
+test('diary statistics only counts entries within the selected year', function () {
+    $user = User::factory()->create();
+    DiaryEntry::factory()->for($user)->create([
+        'entry_date' => '2026-05-01',
+        'fields' => [['label' => 'Steps', 'value' => '5000']],
+    ]);
+    DiaryEntry::factory()->for($user)->create([
+        'entry_date' => '2025-05-01',
+        'fields' => [['label' => 'Steps', 'value' => '9999']],
+    ]);
+    $this->actingAs($user);
+
+    $response = $this->get(route('diary.statistics', ['year' => 2026]));
+
+    $response->assertInertia(fn ($page) => $page
+        ->where('fieldTotals', [
+            ['label' => 'Steps', 'total' => 5000, 'entries' => 1],
+        ])
+    );
+});
+
+test('diary statistics only includes the authenticated users entries', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    DiaryEntry::factory()->for($user)->create([
+        'entry_date' => '2026-07-01',
+        'fields' => [['label' => 'Steps', 'value' => '3000']],
+    ]);
+    DiaryEntry::factory()->for($otherUser)->create([
+        'entry_date' => '2026-07-01',
+        'fields' => [['label' => 'Steps', 'value' => '100000']],
+    ]);
+    $this->actingAs($user);
+
+    $response = $this->get(route('diary.statistics', ['year' => 2026]));
+
+    $response->assertInertia(fn ($page) => $page
+        ->where('fieldTotals', [
+            ['label' => 'Steps', 'total' => 3000, 'entries' => 1],
+        ])
+    );
+});

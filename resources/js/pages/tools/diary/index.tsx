@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { CalendarDays, ChevronLeft, ChevronRight, Download, NotebookPen, Pencil, Plus, Table, Trash2, X } from 'lucide-react';
+import { BarChart3, CalendarDays, ChevronLeft, ChevronRight, Download, NotebookPen, Pencil, Plus, Table, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { store, update, destroy, exportMethod } from '@/actions/Domain/Tools/Diary/Controllers/DiaryController';
 import PageBackground from '@/components/page-background';
@@ -604,6 +604,13 @@ return;
                                         title="Table view"
                                     >
                                         <Table className="size-3.5" />
+                                    </Link>
+                                    <Link
+                                        href={`/diary/statistics?year=${currentYear}`}
+                                        className="rounded p-0.5 text-muted-foreground/40 transition-colors hover:text-amber-600 dark:hover:text-amber-400"
+                                        title="Statistics"
+                                    >
+                                        <BarChart3 className="size-3.5" />
                                     </Link>
                                     <ExportDialog />
                                 </div>
