@@ -8,6 +8,7 @@ use Domain\ExternalServices\Enums\ServiceType;
 use Domain\ExternalServices\Models\ServiceConnection;
 use Domain\Tools\DailyRoutine\Models\RoutineTask;
 use Domain\Tools\Diary\Models\DiaryEntry;
+use Domain\Tools\Flashcards\Models\MemoFolder;
 use Domain\Tools\Flashcards\Models\MemoSet;
 use Domain\Tools\Games\Models\GameResult;
 use Domain\Tools\GoalTracker\Models\Activity;
@@ -96,6 +97,11 @@ class User extends Authenticatable
     public function memoSets(): HasMany
     {
         return $this->hasMany(MemoSet::class);
+    }
+
+    public function memoFolders(): HasMany
+    {
+        return $this->hasMany(MemoFolder::class);
     }
 
     public function diaryEntries(): HasMany

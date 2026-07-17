@@ -30,11 +30,12 @@ domain/
     │   ├── Requests/             # Activity, ActivityLog, Goal, Reward form requests
     │   ├── Services/             # PointService
     │   └── Policies/             # Activity, Goal, Reward policies
-    ├── Flashcards/               # Subdomain: spaced-repetition flashcards
-    │   ├── Models/               # MemoSet, MemoCard
-    │   ├── Controllers/          # MemoSet, MemoCard
-    │   ├── Requests/             # MemoSet form requests
-    │   └── Policies/             # MemoSet policy
+    ├── Flashcards/               # Subdomain: spaced-repetition flashcards in nested folders
+    │   ├── Models/               # MemoSet, MemoCard, MemoFolder (self-nesting tree)
+    │   ├── Controllers/          # MemoSet, MemoCard, MemoFolder
+    │   ├── Requests/             # MemoSet, MemoFolder, Move form requests
+    │   ├── Support/              # FolderTree (listing payload, breadcrumb, move options)
+    │   └── Policies/             # MemoSet, MemoFolder policies
     ├── Diary/                    # Subdomain: personal diary entries
     │   ├── Models/               # DiaryEntry
     │   ├── Controllers/          # Diary

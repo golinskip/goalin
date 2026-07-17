@@ -6,7 +6,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreMemoSetRequest extends FormRequest
+class StoreMemoFolderRequest extends FormRequest
 {
     /**
      * Get the validation rules that apply to the request.
@@ -17,9 +17,8 @@ class StoreMemoSetRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:1000'],
             'color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'memo_folder_id' => [
+            'parent_id' => [
                 'nullable',
                 'integer',
                 Rule::exists('memo_folders', 'id')->where('user_id', $this->user()->id),

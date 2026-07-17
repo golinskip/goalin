@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'description', 'color'])]
+#[Fillable(['name', 'description', 'color', 'memo_folder_id'])]
 class MemoSet extends Model
 {
     /** @use HasFactory<MemoSetFactory> */
@@ -19,6 +19,11 @@ class MemoSet extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function folder(): BelongsTo
+    {
+        return $this->belongsTo(MemoFolder::class, 'memo_folder_id');
     }
 
     public function cards(): HasMany

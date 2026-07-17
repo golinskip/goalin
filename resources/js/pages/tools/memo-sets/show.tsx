@@ -29,12 +29,14 @@ type MemoSetData = {
 
 type Props = {
     memoSet: MemoSetData;
+    breadcrumb: { id: number; name: string }[];
     cards: Card[];
 };
 
-export default function MemoSetShow({ memoSet, cards }: Props) {
+export default function MemoSetShow({ memoSet, breadcrumb, cards }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Memo Cards', href: memoSetsIndex() },
+        ...breadcrumb.map((crumb) => ({ title: crumb.name, href: `/memo-folders/${crumb.id}` })),
         { title: memoSet.name, href: `/memo-sets/${memoSet.id}` },
     ];
 

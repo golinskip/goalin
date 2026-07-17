@@ -10,16 +10,25 @@ import { randomColor } from '@/lib/utils';
 import { index as memoSetsIndex } from '@/routes/memo-sets';
 import type { BreadcrumbItem } from '@/types';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Memo Cards', href: memoSetsIndex() },
-    { title: 'Create', href: '/memo-sets/create' },
-];
+type Props = {
+    folder: { id: number; name: string } | null;
+    breadcrumb: { id: number; name: string }[];
+};
 
-export default function MemoSetCreate() {
+export default function MemoSetCreate({ folder, breadcrumb }: Props) {
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Memo Cards', href: memoSetsIndex() },
+        ...breadcrumb.map((crumb) => ({ title: crumb.name, href: `/memo-folders/${crumb.id}` })),
+        { title: 'Create', href: folder ? `/memo-sets/create?folder=${folder.id}` : '/memo-sets/create' },
+    ];
+
+    const parentHref = folder ? `/memo-folders/${folder.id}` : memoSetsIndex().url;
+
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         description: '',
         color: randomColor(),
+        memo_folder_id: folder?.id ?? null,
     });
 
     function submit(e: React.FormEvent) {
@@ -35,7 +44,14 @@ export default function MemoSetCreate() {
                 <PageBackground />
 
                 <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 p-4 lg:p-6">
-                    <h1 className="text-2xl font-semibold">Create Memo Set</h1>
+                    <div>
+                        <h1 className="text-2xl font-semibold">Create Memo Set</h1>
+                        {folder && (
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                in <span className="font-medium text-foreground">{folder.name}</span>
+                            </p>
+                        )}
+                    </div>
 
                     <div className="rounded-xl border border-blue-200/80 bg-white/70 p-6 shadow-sm backdrop-blur-sm dark:border-blue-800/50 dark:bg-black/40">
                         <form onSubmit={submit} className="space-y-6">
@@ -90,7 +106,7 @@ export default function MemoSetCreate() {
                                     Create Set
                                 </Button>
                                 <Button variant="ghost" asChild>
-                                    <Link href={memoSetsIndex()}>Cancel</Link>
+                                    <Link href={parentHref}>Cancel</Link>
                                 </Button>
                             </div>
                         </form>

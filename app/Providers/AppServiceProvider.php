@@ -11,7 +11,9 @@ use Domain\Tools\Diary\Alerts\EmptyDiaryDaysAlert;
 use Domain\Tools\Diary\Models\DiaryEntry;
 use Domain\Tools\Diary\Policies\DiaryEntryPolicy;
 use Domain\Tools\Flashcards\Alerts\NoReviewTodayAlert;
+use Domain\Tools\Flashcards\Models\MemoFolder;
 use Domain\Tools\Flashcards\Models\MemoSet;
+use Domain\Tools\Flashcards\Policies\MemoFolderPolicy;
 use Domain\Tools\Flashcards\Policies\MemoSetPolicy;
 use Domain\Tools\Games\Models\GameResult;
 use Domain\Tools\Games\Policies\GameResultPolicy;
@@ -91,6 +93,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Goal::class, GoalPolicy::class);
         Gate::policy(Reward::class, RewardPolicy::class);
         Gate::policy(MemoSet::class, MemoSetPolicy::class);
+        Gate::policy(MemoFolder::class, MemoFolderPolicy::class);
         Gate::policy(DiaryEntry::class, DiaryEntryPolicy::class);
         Gate::policy(MusicFile::class, MusicFilePolicy::class);
         Gate::policy(Playlist::class, PlaylistPolicy::class);

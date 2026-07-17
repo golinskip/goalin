@@ -4,9 +4,12 @@ namespace Domain\Tools\Flashcards\Controllers;
 
 use App\Http\Controllers\Controller;
 use Domain\Tools\Flashcards\Models\MemoCard;
+use Domain\Tools\Flashcards\Models\MemoFolder;
 use Domain\Tools\Flashcards\Models\MemoSet;
+use Domain\Tools\Flashcards\Requests\MoveMemoSetRequest;
 use Domain\Tools\Flashcards\Requests\StoreMemoSetRequest;
 use Domain\Tools\Flashcards\Requests\UpdateMemoSetRequest;
+use Domain\Tools\Flashcards\Support\FolderTree;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,30 +23,24 @@ class MemoSetController extends Controller
 
     public function index(Request $request): Response
     {
-        $user = $request->user();
-
-        return Inertia::render('tools/memo-sets/index', [
-            'memoSets' => $user->memoSets()->withCount('cards')->latest()->get()->map(fn (MemoSet $set) => [
-                'id' => $set->id,
-                'name' => $set->name,
-                'description' => $set->description,
-                'color' => $set->color,
-                'cards_count' => $set->cards_count,
-                'updated_at' => $set->updated_at->toISOString(),
-            ]),
-        ]);
+        return Inertia::render('tools/memo-sets/index', FolderTree::listing($request->user(), null));
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        return Inertia::render('tools/memo-sets/create');
+        $folder = $this->resolveFolder($request);
+
+        return Inertia::render('tools/memo-sets/create', [
+            'folder' => $folder === null ? null : ['id' => $folder->id, 'name' => $folder->name],
+            'breadcrumb' => FolderTree::breadcrumb($folder),
+        ]);
     }
 
     public function store(StoreMemoSetRequest $request): RedirectResponse
     {
-        $request->user()->memoSets()->create($request->validated());
+        $set = $request->user()->memoSets()->create($request->validated());
 
-        return to_route('memo-sets.index');
+        return FolderTree::redirectTo($set->folder);
     }
 
     public function show(Request $request, MemoSet $memoSet): Response
@@ -57,6 +54,7 @@ class MemoSetController extends Controller
                 'description' => $memoSet->description,
                 'color' => $memoSet->color,
             ],
+            'breadcrumb' => FolderTree::breadcrumb($memoSet->folder),
             'cards' => $memoSet->cards()->orderByDesc('updated_at')->get()->map(fn (MemoCard $card) => [
                 'id' => $card->id,
                 'front' => $card->front,
@@ -91,13 +89,44 @@ class MemoSetController extends Controller
         return to_route('memo-sets.show', $memoSet);
     }
 
+    public function move(MoveMemoSetRequest $request, MemoSet $memoSet): RedirectResponse
+    {
+        $this->authorize('update', $memoSet);
+
+        $memoSet->update(['memo_folder_id' => $request->validated('memo_folder_id')]);
+
+        return back();
+    }
+
     public function destroy(MemoSet $memoSet): RedirectResponse
     {
         $this->authorize('delete', $memoSet);
 
+        $folder = $memoSet->folder;
+
         $memoSet->delete();
 
-        return to_route('memo-sets.index');
+        return FolderTree::redirectTo($folder);
+    }
+
+    /**
+     * The folder a new set is being created in, taken from the browsing context.
+     */
+    private function resolveFolder(Request $request): ?MemoFolder
+    {
+        $folderId = $request->integer('folder');
+
+        if ($folderId === 0) {
+            return null;
+        }
+
+        $folder = MemoFolder::find($folderId);
+
+        if ($folder === null || $folder->user_id !== $request->user()->id) {
+            return null;
+        }
+
+        return $folder;
     }
 
     public function export(MemoSet $memoSet): StreamedResponse
