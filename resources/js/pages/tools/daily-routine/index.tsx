@@ -1,5 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { Archive, ArchiveRestore, Check, ChevronDown, ChevronLeft, ChevronRight, ListChecks, MessageSquare, MessageSquarePlus, Pencil, Plus, SkipForward, Trash2, X } from 'lucide-react';
+import { Archive, Check, ChevronDown, ChevronLeft, ChevronRight, CopyPlus, ListChecks, MessageSquare, MessageSquarePlus, Pencil, Plus, SkipForward, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     archive as archiveTask,
@@ -134,30 +134,46 @@ function TaskFormDialog({
     open,
     onOpenChange,
     editing,
+    template,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     editing: RoutineTask | null;
+    template: RoutineTask | null;
 }) {
-    const initialData: TaskFormData = useMemo(
-        () =>
-            editing
-                ? {
-                      name: editing.name,
-                      color: editing.color ?? 'emerald',
-                      weekdays: editing.weekdays,
-                      starts_on: editing.starts_on,
-                      ends_on: editing.ends_on,
-                  }
-                : {
-                      name: '',
-                      color: 'emerald',
-                      weekdays: [1, 2, 3, 4, 5, 6, 7],
-                      starts_on: todayString(),
-                      ends_on: endOfYearString(),
-                  },
-        [editing],
-    );
+    const initialData: TaskFormData = useMemo(() => {
+        if (editing) {
+            return {
+                name: editing.name,
+                color: editing.color ?? 'emerald',
+                weekdays: editing.weekdays,
+                starts_on: editing.starts_on,
+                ends_on: editing.ends_on,
+            };
+        }
+
+        /**
+         * Starting again from an old task keeps what it was, but never when it
+         * ran — that is the reason it was archived.
+         */
+        if (template) {
+            return {
+                name: template.name,
+                color: template.color ?? 'emerald',
+                weekdays: template.weekdays,
+                starts_on: todayString(),
+                ends_on: endOfYearString(),
+            };
+        }
+
+        return {
+            name: '',
+            color: 'emerald',
+            weekdays: [1, 2, 3, 4, 5, 6, 7],
+            starts_on: todayString(),
+            ends_on: endOfYearString(),
+        };
+    }, [editing, template]);
 
     const form = useForm<TaskFormData>(initialData);
 
@@ -198,7 +214,7 @@ function TaskFormDialog({
         >
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>{editing ? 'Edit task' : 'New routine task'}</DialogTitle>
+                    <DialogTitle>{editing ? 'Edit task' : template ? 'Start again from archive' : 'New routine task'}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={submit} className="space-y-4">
                     <div className="space-y-1.5">
@@ -396,12 +412,14 @@ function TaskRow({
     onEdit,
     onArchive,
     onDelete,
+    onReuse,
 }: {
     task: RoutineTask;
     archived: boolean;
     onEdit: (task: RoutineTask) => void;
     onArchive: (task: RoutineTask) => void;
     onDelete: (task: RoutineTask) => void;
+    onReuse: (task: RoutineTask) => void;
 }) {
     const colorClass = COLOR_DOT[task.color ?? 'emerald'] ?? COLOR_DOT.emerald;
     const days = WEEKDAYS.filter((d) => task.weekdays.includes(d.value))
@@ -421,8 +439,19 @@ function TaskRow({
                 </div>
             </div>
             <div className="flex shrink-0 gap-1">
+                {archived && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8"
+                        onClick={() => onReuse(task)}
+                        title="Start again — new task with these settings"
+                    >
+                        <CopyPlus className="size-3.5" />
+                    </Button>
+                )}
                 <Button variant="ghost" size="icon" className="size-8" onClick={() => onEdit(task)} title="Edit">
-                    {archived ? <ArchiveRestore className="size-3.5" /> : <Pencil className="size-3.5" />}
+                    <Pencil className="size-3.5" />
                 </Button>
                 {task.is_used ? (
                     !archived && (
@@ -455,6 +484,7 @@ function TaskRow({
 export default function DailyRoutineIndex({ selectedDate, today, tasks, archivedTasks, tasksForSelectedDay, calendar }: Props) {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<RoutineTask | null>(null);
+    const [templateTask, setTemplateTask] = useState<RoutineTask | null>(null);
     const [commentTaskId, setCommentTaskId] = useState<number | null>(null);
     const [archiveOpen, setArchiveOpen] = useState(false);
 
@@ -496,11 +526,19 @@ export default function DailyRoutineIndex({ selectedDate, today, tasks, archived
 
     const handleEdit = (task: RoutineTask) => {
         setEditingTask(task);
+        setTemplateTask(null);
         setDialogOpen(true);
     };
 
     const handleNew = () => {
         setEditingTask(null);
+        setTemplateTask(null);
+        setDialogOpen(true);
+    };
+
+    const handleReuse = (task: RoutineTask) => {
+        setEditingTask(null);
+        setTemplateTask(task);
         setDialogOpen(true);
     };
 
@@ -777,6 +815,7 @@ export default function DailyRoutineIndex({ selectedDate, today, tasks, archived
                                         onEdit={handleEdit}
                                         onArchive={handleArchive}
                                         onDelete={handleDelete}
+                                        onReuse={handleReuse}
                                     />
                                 ))}
                             </ul>
@@ -808,6 +847,7 @@ export default function DailyRoutineIndex({ selectedDate, today, tasks, archived
                                             onEdit={handleEdit}
                                             onArchive={handleArchive}
                                             onDelete={handleDelete}
+                                            onReuse={handleReuse}
                                         />
                                     ))}
                                 </ul>
@@ -818,10 +858,11 @@ export default function DailyRoutineIndex({ selectedDate, today, tasks, archived
             </div>
 
             <TaskFormDialog
-                key={editingTask?.id ?? 'new'}
+                key={editingTask ? `edit-${editingTask.id}` : templateTask ? `copy-${templateTask.id}` : 'new'}
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
                 editing={editingTask}
+                template={templateTask}
             />
 
             <CommentDialog
