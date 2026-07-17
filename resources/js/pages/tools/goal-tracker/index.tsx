@@ -486,60 +486,6 @@ return;
                     {/* Break Timer */}
                     <BreakTimer ringtone={ringtones.break} />
 
-                    {/* Two-Week Summary */}
-                    <div className="rounded-xl border border-border/20 bg-white/40 px-4 py-3 backdrop-blur-sm dark:border-border/10 dark:bg-black/20">
-                        <div className="mb-2 flex items-center justify-between">
-                            <h3 className="text-xs font-medium text-muted-foreground">Last 2 Weeks</h3>
-                            <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                    <Zap className="size-3" />
-                                    {summary.totalActivities}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                    <TrendingUp className="size-3" />
-                                    {summary.totalPoints} pts
-                                </span>
-                                <span className="flex items-center gap-1">
-                                    <Flame className="size-3" />
-                                    {summary.activeDays}/14 days
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className="flex items-end gap-0.5">
-                            {summary.dailyBreakdown.map((day) => {
-                                const height = day.points > 0 ? Math.max(10, (day.points / maxDailyPoints) * 100) : 0;
-                                const dateObj = new Date(day.date + 'T12:00:00');
-                                const dayLabel = dateObj.toLocaleDateString('en-US', { weekday: 'narrow' });
-                                const isToday = day.date === today;
-
-                                return (
-                                    <div key={day.date} className="flex flex-1 flex-col items-center gap-0.5">
-                                        <div className="relative flex h-[48px] w-full items-end justify-center">
-                                            {day.points > 0 ? (
-                                                <div
-                                                    className={`w-full max-w-[20px] rounded-sm transition-all ${isToday ? 'bg-primary' : 'bg-primary/30'}`}
-                                                    style={{ height: `${height}%` }}
-                                                    title={`${day.date}: ${day.count} activities, ${day.points} pts`}
-                                                />
-                                            ) : (
-                                                <div
-                                                    className="w-full max-w-[20px] rounded-sm bg-muted/30"
-                                                    style={{ height: '3px' }}
-                                                />
-                                            )}
-                                        </div>
-                                        <span
-                                            className={`text-[9px] ${isToday ? 'font-bold text-primary' : 'text-muted-foreground/50'}`}
-                                        >
-                                            {dayLabel}
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
                     {/* Reward Progression */}
                     {hasAnyRewards && (
                         <div className="rounded-xl border border-purple-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm dark:border-purple-800/50 dark:bg-black/40">
@@ -684,6 +630,60 @@ return;
                             )}
                         </div>
                     )}
+
+                    {/* Two-Week Summary */}
+                    <div className="rounded-xl border border-border/20 bg-white/40 px-4 py-3 backdrop-blur-sm dark:border-border/10 dark:bg-black/20">
+                        <div className="mb-2 flex items-center justify-between">
+                            <h3 className="text-xs font-medium text-muted-foreground">Last 2 Weeks</h3>
+                            <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                    <Zap className="size-3" />
+                                    {summary.totalActivities}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <TrendingUp className="size-3" />
+                                    {summary.totalPoints} pts
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <Flame className="size-3" />
+                                    {summary.activeDays}/14 days
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-end gap-0.5">
+                            {summary.dailyBreakdown.map((day) => {
+                                const height = day.points > 0 ? Math.max(10, (day.points / maxDailyPoints) * 100) : 0;
+                                const dateObj = new Date(day.date + 'T12:00:00');
+                                const dayLabel = dateObj.toLocaleDateString('en-US', { weekday: 'narrow' });
+                                const isToday = day.date === today;
+
+                                return (
+                                    <div key={day.date} className="flex flex-1 flex-col items-center gap-0.5">
+                                        <div className="relative flex h-[48px] w-full items-end justify-center">
+                                            {day.points > 0 ? (
+                                                <div
+                                                    className={`w-full max-w-[20px] rounded-sm transition-all ${isToday ? 'bg-primary' : 'bg-primary/30'}`}
+                                                    style={{ height: `${height}%` }}
+                                                    title={`${day.date}: ${day.count} activities, ${day.points} pts`}
+                                                />
+                                            ) : (
+                                                <div
+                                                    className="w-full max-w-[20px] rounded-sm bg-muted/30"
+                                                    style={{ height: '3px' }}
+                                                />
+                                            )}
+                                        </div>
+                                        <span
+                                            className={`text-[9px] ${isToday ? 'font-bold text-primary' : 'text-muted-foreground/50'}`}
+                                        >
+                                            {dayLabel}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
                 </div>
             </div>
         </AppLayout>
