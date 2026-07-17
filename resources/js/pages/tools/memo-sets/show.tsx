@@ -1,5 +1,15 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { BookOpen, Check, Download, Pencil, Play, Plus, Trash2, Upload, X } from 'lucide-react';
+import {
+    BookOpen,
+    Check,
+    Download,
+    Pencil,
+    Play,
+    Plus,
+    Trash2,
+    Upload,
+    X,
+} from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
 import InputError from '@/components/input-error';
 import PageBackground from '@/components/page-background';
@@ -36,7 +46,10 @@ type Props = {
 export default function MemoSetShow({ memoSet, breadcrumb, cards }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Memo Cards', href: memoSetsIndex() },
-        ...breadcrumb.map((crumb) => ({ title: crumb.name, href: `/memo-folders/${crumb.id}` })),
+        ...breadcrumb.map((crumb) => ({
+            title: crumb.name,
+            href: `/memo-folders/${crumb.id}`,
+        })),
         { title: memoSet.name, href: `/memo-sets/${memoSet.id}` },
     ];
 
@@ -47,7 +60,10 @@ export default function MemoSetShow({ memoSet, breadcrumb, cards }: Props) {
 
     const addForm = useForm({ front: '', back: '', note: '' });
     const editForm = useForm({ front: '', back: '', note: '' });
-    const importForm = useForm<{ csv_file: File | null; csv_text: string }>({ csv_file: null, csv_text: '' });
+    const importForm = useForm<{ csv_file: File | null; csv_text: string }>({
+        csv_file: null,
+        csv_text: '',
+    });
 
     function submitAdd(e: React.FormEvent) {
         e.preventDefault();
@@ -59,7 +75,11 @@ export default function MemoSetShow({ memoSet, breadcrumb, cards }: Props) {
 
     function startEdit(card: Card) {
         setEditingCard(card.id);
-        editForm.setData({ front: card.front, back: card.back, note: card.note ?? '' });
+        editForm.setData({
+            front: card.front,
+            back: card.back,
+            note: card.note ?? '',
+        });
     }
 
     function submitEdit(e: React.FormEvent, cardId: number) {
@@ -72,48 +92,46 @@ export default function MemoSetShow({ memoSet, breadcrumb, cards }: Props) {
 
     const handleDelete = useCallback((id: number) => {
         if (!confirm('Delete this card?')) {
-return;
-}
+            return;
+        }
 
         router.delete(`/memo-cards/${id}`, { preserveScroll: true });
     }, []);
+
+    function submitImport(
+        payload: { csv_file: File | null; csv_text: string },
+        onDone: () => void,
+    ) {
+        importForm.transform(() => payload);
+        importForm.post(`/memo-sets/${memoSet.id}/import`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setShowImport(false);
+                importForm.reset();
+                onDone();
+            },
+            onFinish: () => importForm.transform((data) => data),
+        });
+    }
 
     function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
 
         if (!file) {
-return;
-}
+            return;
+        }
 
-        importForm.setData('csv_file', file);
-        importForm.post(`/memo-sets/${memoSet.id}/import`, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setShowImport(false);
-                importForm.reset();
-
-                if (fileInputRef.current) {
-fileInputRef.current.value = '';
-}
-            },
+        submitImport({ csv_file: file, csv_text: '' }, () => {
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         });
-    }
-
-    function handleImportText(e: React.FormEvent) {
-        e.preventDefault();
-        importForm.setData('csv_text', importText);
     }
 
     function submitImportText() {
-        importForm.transform(() => ({ csv_file: null, csv_text: importText }));
-        importForm.post(`/memo-sets/${memoSet.id}/import`, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setShowImport(false);
-                setImportText('');
-                importForm.reset();
-            },
-        });
+        submitImport({ csv_file: null, csv_text: importText }, () =>
+            setImportText(''),
+        );
     }
 
     return (
@@ -128,14 +146,23 @@ fileInputRef.current.value = '';
                         <div className="flex items-center gap-3">
                             <div
                                 className="flex size-10 items-center justify-center rounded-lg"
-                                style={{ backgroundColor: memoSet.color + '20' }}
+                                style={{
+                                    backgroundColor: memoSet.color + '20',
+                                }}
                             >
-                                <BookOpen className="size-5" style={{ color: memoSet.color }} />
+                                <BookOpen
+                                    className="size-5"
+                                    style={{ color: memoSet.color }}
+                                />
                             </div>
                             <div>
-                                <h1 className="text-2xl font-semibold">{memoSet.name}</h1>
+                                <h1 className="text-2xl font-semibold">
+                                    {memoSet.name}
+                                </h1>
                                 {memoSet.description && (
-                                    <p className="text-sm text-muted-foreground">{memoSet.description}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {memoSet.description}
+                                    </p>
                                 )}
                             </div>
                         </div>
@@ -151,13 +178,17 @@ fileInputRef.current.value = '';
                             {cards.length > 0 && (
                                 <>
                                     <Button variant="outline" size="sm" asChild>
-                                        <a href={`/memo-sets/${memoSet.id}/export`}>
+                                        <a
+                                            href={`/memo-sets/${memoSet.id}/export`}
+                                        >
                                             <Download className="mr-1.5 size-3.5" />
                                             Export
                                         </a>
                                     </Button>
                                     <Button asChild>
-                                        <Link href={`/memo-sets/${memoSet.id}/learn`}>
+                                        <Link
+                                            href={`/memo-sets/${memoSet.id}/learn`}
+                                        >
                                             <Play className="mr-2 size-4" />
                                             Learn
                                         </Link>
@@ -175,12 +206,18 @@ fileInputRef.current.value = '';
                                 Import Cards
                             </h2>
                             <p className="mb-3 text-xs text-muted-foreground">
-                                CSV format: <code className="rounded bg-black/5 px-1 py-0.5 dark:bg-white/10">front;back</code> per line. Header row is optional.
+                                CSV format:{' '}
+                                <code className="rounded bg-black/5 px-1 py-0.5 dark:bg-white/10">
+                                    front;back
+                                </code>{' '}
+                                per line. Header row is optional.
                             </p>
 
                             <div className="space-y-4">
                                 <div>
-                                    <Label className="text-xs">Upload CSV file</Label>
+                                    <Label className="text-xs">
+                                        Upload CSV file
+                                    </Label>
                                     <Input
                                         ref={fileInputRef}
                                         type="file"
@@ -188,33 +225,50 @@ fileInputRef.current.value = '';
                                         onChange={handleImportFile}
                                         className="mt-1"
                                     />
-                                    <InputError message={importForm.errors.csv_file} />
+                                    <InputError
+                                        message={importForm.errors.csv_file}
+                                    />
                                 </div>
 
                                 <div className="flex items-center gap-3">
                                     <div className="h-px flex-1 bg-border" />
-                                    <span className="text-xs text-muted-foreground">or paste text</span>
+                                    <span className="text-xs text-muted-foreground">
+                                        or paste text
+                                    </span>
                                     <div className="h-px flex-1 bg-border" />
                                 </div>
 
                                 <div>
                                     <textarea
                                         value={importText}
-                                        onChange={(e) => setImportText(e.target.value)}
-                                        placeholder={'front;back\nHola;Hello\nGracias;Thank you'}
+                                        onChange={(e) =>
+                                            setImportText(e.target.value)
+                                        }
+                                        placeholder={
+                                            'front;back\nHola;Hello\nGracias;Thank you'
+                                        }
                                         rows={5}
                                         className="flex w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                                     />
-                                    <InputError message={importForm.errors.csv_text} />
+                                    <InputError
+                                        message={importForm.errors.csv_text}
+                                    />
                                 </div>
 
                                 <div className="flex items-center gap-2">
                                     <Button
                                         onClick={submitImportText}
-                                        disabled={importForm.processing || !importText.trim()}
+                                        disabled={
+                                            importForm.processing ||
+                                            !importText.trim()
+                                        }
                                         size="sm"
                                     >
-                                        {importForm.processing ? <Spinner /> : <Upload className="mr-1.5 size-3.5" />}
+                                        {importForm.processing ? (
+                                            <Spinner />
+                                        ) : (
+                                            <Upload className="mr-1.5 size-3.5" />
+                                        )}
                                         Import Text
                                     </Button>
                                     <Button
@@ -238,41 +292,75 @@ fileInputRef.current.value = '';
                             <Plus className="size-4" />
                             Add Card
                         </h2>
-                        <form onSubmit={submitAdd} className="flex flex-col gap-3">
+                        <form
+                            onSubmit={submitAdd}
+                            className="flex flex-col gap-3"
+                        >
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                                 <div className="flex-1">
-                                    <Label htmlFor="front" className="text-xs">Front</Label>
+                                    <Label htmlFor="front" className="text-xs">
+                                        Front
+                                    </Label>
                                     <Input
                                         id="front"
                                         value={addForm.data.front}
-                                        onChange={(e) => addForm.setData('front', e.target.value)}
+                                        onChange={(e) =>
+                                            addForm.setData(
+                                                'front',
+                                                e.target.value,
+                                            )
+                                        }
                                         placeholder="Question or term..."
                                         required
                                     />
-                                    <InputError message={addForm.errors.front} />
+                                    <InputError
+                                        message={addForm.errors.front}
+                                    />
                                 </div>
                                 <div className="flex-1">
-                                    <Label htmlFor="back" className="text-xs">Back</Label>
+                                    <Label htmlFor="back" className="text-xs">
+                                        Back
+                                    </Label>
                                     <Input
                                         id="back"
                                         value={addForm.data.back}
-                                        onChange={(e) => addForm.setData('back', e.target.value)}
+                                        onChange={(e) =>
+                                            addForm.setData(
+                                                'back',
+                                                e.target.value,
+                                            )
+                                        }
                                         placeholder="Answer or definition..."
                                         required
                                     />
                                     <InputError message={addForm.errors.back} />
                                 </div>
-                                <Button type="submit" disabled={addForm.processing} className="shrink-0">
-                                    {addForm.processing ? <Spinner /> : <Plus className="mr-1 size-4" />}
+                                <Button
+                                    type="submit"
+                                    disabled={addForm.processing}
+                                    className="shrink-0"
+                                >
+                                    {addForm.processing ? (
+                                        <Spinner />
+                                    ) : (
+                                        <Plus className="mr-1 size-4" />
+                                    )}
                                     Add
                                 </Button>
                             </div>
                             <div>
-                                <Label htmlFor="note" className="text-xs">Note <span className="text-muted-foreground">(optional)</span></Label>
+                                <Label htmlFor="note" className="text-xs">
+                                    Note{' '}
+                                    <span className="text-muted-foreground">
+                                        (optional)
+                                    </span>
+                                </Label>
                                 <textarea
                                     id="note"
                                     value={addForm.data.note}
-                                    onChange={(e) => addForm.setData('note', e.target.value)}
+                                    onChange={(e) =>
+                                        addForm.setData('note', e.target.value)
+                                    }
                                     placeholder="Example sentence, mnemonic, or extra context..."
                                     rows={2}
                                     className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
@@ -286,8 +374,13 @@ fileInputRef.current.value = '';
                     {cards.length === 0 ? (
                         <div className="flex flex-col items-center justify-center rounded-xl border border-border/50 bg-white/70 py-16 text-center shadow-sm backdrop-blur-sm dark:bg-black/40">
                             <BookOpen className="mb-3 size-10 text-muted-foreground/30" />
-                            <p className="text-muted-foreground">No cards yet</p>
-                            <p className="mt-1 text-sm text-muted-foreground/75">Add your first card above to start building this set.</p>
+                            <p className="text-muted-foreground">
+                                No cards yet
+                            </p>
+                            <p className="mt-1 text-sm text-muted-foreground/75">
+                                Add your first card above to start building this
+                                set.
+                            </p>
                         </div>
                     ) : (
                         <div className="space-y-2">
@@ -297,43 +390,95 @@ fileInputRef.current.value = '';
                                     className="rounded-xl border border-border/50 bg-white/70 p-4 shadow-sm backdrop-blur-sm dark:bg-black/40"
                                 >
                                     {editingCard === card.id ? (
-                                        <form onSubmit={(e) => submitEdit(e, card.id)} className="flex flex-col gap-3">
+                                        <form
+                                            onSubmit={(e) =>
+                                                submitEdit(e, card.id)
+                                            }
+                                            className="flex flex-col gap-3"
+                                        >
                                             <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                                                 <div className="flex-1">
-                                                    <Label className="text-xs">Front</Label>
+                                                    <Label className="text-xs">
+                                                        Front
+                                                    </Label>
                                                     <Input
-                                                        value={editForm.data.front}
-                                                        onChange={(e) => editForm.setData('front', e.target.value)}
+                                                        value={
+                                                            editForm.data.front
+                                                        }
+                                                        onChange={(e) =>
+                                                            editForm.setData(
+                                                                'front',
+                                                                e.target.value,
+                                                            )
+                                                        }
                                                         required
                                                     />
                                                 </div>
                                                 <div className="flex-1">
-                                                    <Label className="text-xs">Back</Label>
+                                                    <Label className="text-xs">
+                                                        Back
+                                                    </Label>
                                                     <Input
-                                                        value={editForm.data.back}
-                                                        onChange={(e) => editForm.setData('back', e.target.value)}
+                                                        value={
+                                                            editForm.data.back
+                                                        }
+                                                        onChange={(e) =>
+                                                            editForm.setData(
+                                                                'back',
+                                                                e.target.value,
+                                                            )
+                                                        }
                                                         required
                                                     />
                                                 </div>
                                                 <div className="flex gap-1">
-                                                    <Button type="submit" size="icon" className="size-8" disabled={editForm.processing}>
+                                                    <Button
+                                                        type="submit"
+                                                        size="icon"
+                                                        className="size-8"
+                                                        disabled={
+                                                            editForm.processing
+                                                        }
+                                                    >
                                                         <Check className="size-3.5" />
                                                     </Button>
-                                                    <Button type="button" variant="ghost" size="icon" className="size-8" onClick={() => setEditingCard(null)}>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="size-8"
+                                                        onClick={() =>
+                                                            setEditingCard(null)
+                                                        }
+                                                    >
                                                         <X className="size-3.5" />
                                                     </Button>
                                                 </div>
                                             </div>
                                             <div>
-                                                <Label className="text-xs">Note <span className="text-muted-foreground">(optional)</span></Label>
+                                                <Label className="text-xs">
+                                                    Note{' '}
+                                                    <span className="text-muted-foreground">
+                                                        (optional)
+                                                    </span>
+                                                </Label>
                                                 <textarea
                                                     value={editForm.data.note}
-                                                    onChange={(e) => editForm.setData('note', e.target.value)}
+                                                    onChange={(e) =>
+                                                        editForm.setData(
+                                                            'note',
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                     placeholder="Example sentence, mnemonic, or extra context..."
                                                     rows={2}
                                                     className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                                                 />
-                                                <InputError message={editForm.errors.note} />
+                                                <InputError
+                                                    message={
+                                                        editForm.errors.note
+                                                    }
+                                                />
                                             </div>
                                         </form>
                                     ) : (
@@ -341,28 +486,53 @@ fileInputRef.current.value = '';
                                             <div className="flex items-center gap-4">
                                                 <div className="grid min-w-0 flex-1 gap-1 sm:grid-cols-2 sm:gap-4">
                                                     <div>
-                                                        <p className="text-xs font-medium text-muted-foreground">Front</p>
-                                                        <p className="text-sm">{card.front}</p>
+                                                        <p className="text-xs font-medium text-muted-foreground">
+                                                            Front
+                                                        </p>
+                                                        <p className="text-sm">
+                                                            {card.front}
+                                                        </p>
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs font-medium text-muted-foreground">Back</p>
-                                                        <p className="text-sm">{card.back}</p>
+                                                        <p className="text-xs font-medium text-muted-foreground">
+                                                            Back
+                                                        </p>
+                                                        <p className="text-sm">
+                                                            {card.back}
+                                                        </p>
                                                     </div>
                                                 </div>
                                                 <div className="flex shrink-0 items-center gap-2">
                                                     <span className="text-xs text-muted-foreground">
-                                                        <span className="text-green-600">{card.correct_count}</span>
+                                                        <span className="text-green-600">
+                                                            {card.correct_count}
+                                                        </span>
                                                         {' / '}
-                                                        <span className="text-red-500">{card.incorrect_count}</span>
+                                                        <span className="text-red-500">
+                                                            {
+                                                                card.incorrect_count
+                                                            }
+                                                        </span>
                                                     </span>
-                                                    <Button variant="ghost" size="icon" className="size-8" onClick={() => startEdit(card)}>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="size-8"
+                                                        onClick={() =>
+                                                            startEdit(card)
+                                                        }
+                                                    >
                                                         <Pencil className="size-3.5" />
                                                     </Button>
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
                                                         className="size-8 text-destructive hover:text-destructive"
-                                                        onClick={() => handleDelete(card.id)}
+                                                        onClick={() =>
+                                                            handleDelete(
+                                                                card.id,
+                                                            )
+                                                        }
                                                     >
                                                         <Trash2 className="size-3.5" />
                                                     </Button>
@@ -370,8 +540,12 @@ fileInputRef.current.value = '';
                                             </div>
                                             {card.note && (
                                                 <div className="rounded-md border border-border/40 bg-muted/30 px-3 py-2">
-                                                    <p className="text-xs font-medium text-muted-foreground">Note</p>
-                                                    <p className="text-sm whitespace-pre-wrap">{card.note}</p>
+                                                    <p className="text-xs font-medium text-muted-foreground">
+                                                        Note
+                                                    </p>
+                                                    <p className="text-sm whitespace-pre-wrap">
+                                                        {card.note}
+                                                    </p>
                                                 </div>
                                             )}
                                         </div>
