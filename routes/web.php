@@ -110,6 +110,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('routine-tasks', [RoutineTaskController::class, 'store'])->name('routine-tasks.store');
     Route::put('routine-tasks/{routine_task}', [RoutineTaskController::class, 'update'])->name('routine-tasks.update');
     Route::delete('routine-tasks/{routine_task}', [RoutineTaskController::class, 'destroy'])->name('routine-tasks.destroy');
+    Route::post('routine-tasks/{routine_task}/archive', [RoutineTaskController::class, 'archive'])->name('routine-tasks.archive');
     Route::post('routine-tasks/{routine_task}/log', [RoutineTaskLogController::class, 'store'])->name('routine-tasks.log');
     Route::post('routine-tasks/{routine_task}/comment', [RoutineTaskLogController::class, 'comment'])->name('routine-tasks.comment');
 

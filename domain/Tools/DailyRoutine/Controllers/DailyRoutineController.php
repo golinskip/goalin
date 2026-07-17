@@ -25,7 +25,7 @@ class DailyRoutineController extends Controller
         }
 
         /** @var Collection<int, RoutineTask> $tasks */
-        $tasks = $user->routineTasks()->orderBy('created_at')->get();
+        $tasks = $user->routineTasks()->withCount('logs')->orderBy('created_at')->get();
 
         $calendarDays = 60;
         $calendarStart = $today->subDays($calendarDays - 1);
@@ -90,20 +90,32 @@ class DailyRoutineController extends Controller
             ];
         }
 
+        [$archivedTasks, $activeTasks] = $tasks->partition(fn (RoutineTask $task) => $task->isArchived());
+
         return Inertia::render('tools/daily-routine/index', [
             'selectedDate' => $selectedDate->format('Y-m-d'),
             'today' => $today->format('Y-m-d'),
-            'tasks' => $tasks->map(fn (RoutineTask $task) => [
-                'id' => $task->id,
-                'name' => $task->name,
-                'color' => $task->color,
-                'weekdays' => $task->weekdays,
-                'starts_on' => $task->starts_on->format('Y-m-d'),
-                'ends_on' => $task->ends_on->format('Y-m-d'),
-            ]),
+            'tasks' => $activeTasks->values()->map($this->presentTask(...)),
+            'archivedTasks' => $archivedTasks->values()->map($this->presentTask(...)),
             'tasksForSelectedDay' => $tasksForSelectedDay,
             'calendar' => $calendar,
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function presentTask(RoutineTask $task): array
+    {
+        return [
+            'id' => $task->id,
+            'name' => $task->name,
+            'color' => $task->color,
+            'weekdays' => $task->weekdays,
+            'starts_on' => $task->starts_on->format('Y-m-d'),
+            'ends_on' => $task->ends_on->format('Y-m-d'),
+            'is_used' => $task->logs_count > 0,
+        ];
     }
 
     private function parseDate(mixed $value, CarbonImmutable $fallback): CarbonImmutable

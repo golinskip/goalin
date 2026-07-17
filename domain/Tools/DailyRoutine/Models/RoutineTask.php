@@ -40,6 +40,24 @@ class RoutineTask extends Model
     }
 
     /**
+     * Whether the task has fallen out of use, i.e. its usage period has ended.
+     */
+    public function isArchived(): bool
+    {
+        return $this->ends_on->lt(CarbonImmutable::today());
+    }
+
+    /**
+     * The last date the task was marked or commented on, if ever.
+     */
+    public function lastLogDate(): ?CarbonImmutable
+    {
+        $lastLogDate = $this->logs()->max('log_date');
+
+        return $lastLogDate === null ? null : CarbonImmutable::parse($lastLogDate)->startOfDay();
+    }
+
+    /**
      * Whether the task is scheduled for the given date (within range and matching weekday).
      */
     public function isScheduledOn(CarbonImmutable $date): bool

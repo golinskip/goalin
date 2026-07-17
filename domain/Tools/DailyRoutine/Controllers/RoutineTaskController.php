@@ -29,6 +29,22 @@ class RoutineTaskController extends Controller
         return back();
     }
 
+    /**
+     * Flag a used task as archived by ending its usage period on the date it was last marked.
+     */
+    public function archive(RoutineTask $routineTask): RedirectResponse
+    {
+        $this->authorize('archive', $routineTask);
+
+        $lastLogDate = $routineTask->lastLogDate();
+
+        $routineTask->update([
+            'ends_on' => $lastLogDate->lt($routineTask->starts_on) ? $routineTask->starts_on : $lastLogDate,
+        ]);
+
+        return back();
+    }
+
     public function destroy(RoutineTask $routineTask): RedirectResponse
     {
         $this->authorize('delete', $routineTask);

@@ -27,8 +27,16 @@ class RoutineTaskPolicy
         return $user->id === $routineTask->user_id;
     }
 
+    /**
+     * Tasks that have been used keep their history and must be archived instead.
+     */
     public function delete(User $user, RoutineTask $routineTask): bool
     {
-        return $user->id === $routineTask->user_id;
+        return $user->id === $routineTask->user_id && ! $routineTask->logs()->exists();
+    }
+
+    public function archive(User $user, RoutineTask $routineTask): bool
+    {
+        return $user->id === $routineTask->user_id && $routineTask->logs()->exists();
     }
 }

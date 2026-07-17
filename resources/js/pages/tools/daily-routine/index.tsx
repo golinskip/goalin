@@ -1,7 +1,8 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { Check, ChevronLeft, ChevronRight, ListChecks, MessageSquare, MessageSquarePlus, Pencil, Plus, SkipForward, Trash2, X } from 'lucide-react';
+import { Archive, ArchiveRestore, Check, ChevronDown, ChevronLeft, ChevronRight, ListChecks, MessageSquare, MessageSquarePlus, Pencil, Plus, SkipForward, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+    archive as archiveTask,
     destroy as destroyTask,
     store as storeTask,
     update as updateTask,
@@ -50,6 +51,7 @@ type RoutineTask = {
     weekdays: number[];
     starts_on: string;
     ends_on: string;
+    is_used: boolean;
 };
 
 type TaskForDay = {
@@ -72,6 +74,7 @@ type Props = {
     selectedDate: string;
     today: string;
     tasks: RoutineTask[];
+    archivedTasks: RoutineTask[];
     tasksForSelectedDay: TaskForDay[];
     calendar: CalendarDay[];
 };
@@ -387,10 +390,73 @@ function CommentDialog({
     );
 }
 
-export default function DailyRoutineIndex({ selectedDate, today, tasks, tasksForSelectedDay, calendar }: Props) {
+function TaskRow({
+    task,
+    archived,
+    onEdit,
+    onArchive,
+    onDelete,
+}: {
+    task: RoutineTask;
+    archived: boolean;
+    onEdit: (task: RoutineTask) => void;
+    onArchive: (task: RoutineTask) => void;
+    onDelete: (task: RoutineTask) => void;
+}) {
+    const colorClass = COLOR_DOT[task.color ?? 'emerald'] ?? COLOR_DOT.emerald;
+    const days = WEEKDAYS.filter((d) => task.weekdays.includes(d.value))
+        .map((d) => d.short)
+        .join(', ');
+
+    return (
+        <li className="flex items-center justify-between gap-3 py-2.5">
+            <div className="flex min-w-0 items-center gap-3">
+                <span className={cn('size-2.5 shrink-0 rounded-full', colorClass, archived && 'opacity-50')} />
+                <div className="min-w-0">
+                    <p className={cn('truncate text-sm font-medium', archived && 'text-muted-foreground')}>{task.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                        {days} · {task.starts_on} → {task.ends_on}
+                        {archived && ' · ended'}
+                    </p>
+                </div>
+            </div>
+            <div className="flex shrink-0 gap-1">
+                <Button variant="ghost" size="icon" className="size-8" onClick={() => onEdit(task)} title="Edit">
+                    {archived ? <ArchiveRestore className="size-3.5" /> : <Pencil className="size-3.5" />}
+                </Button>
+                {task.is_used ? (
+                    !archived && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8"
+                            onClick={() => onArchive(task)}
+                            title="Archive — keeps history, ends the task on its last marked day"
+                        >
+                            <Archive className="size-3.5" />
+                        </Button>
+                    )
+                ) : (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 text-destructive hover:bg-destructive/10"
+                        onClick={() => onDelete(task)}
+                        title="Delete"
+                    >
+                        <Trash2 className="size-3.5" />
+                    </Button>
+                )}
+            </div>
+        </li>
+    );
+}
+
+export default function DailyRoutineIndex({ selectedDate, today, tasks, archivedTasks, tasksForSelectedDay, calendar }: Props) {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<RoutineTask | null>(null);
     const [commentTaskId, setCommentTaskId] = useState<number | null>(null);
+    const [archiveOpen, setArchiveOpen] = useState(false);
 
     const commentTask = useMemo(
         () => (commentTaskId === null ? null : tasksForSelectedDay.find((t) => t.id === commentTaskId) ?? null),
@@ -439,11 +505,19 @@ export default function DailyRoutineIndex({ selectedDate, today, tasks, tasksFor
     };
 
     const handleDelete = (task: RoutineTask) => {
-        if (!confirm(`Delete "${task.name}"? This will remove all its history.`)) {
+        if (!confirm(`Delete "${task.name}"? It has never been marked, so nothing is lost.`)) {
             return;
         }
 
         router.delete(destroyTask.url(task.id), { preserveScroll: true });
+    };
+
+    const handleArchive = (task: RoutineTask) => {
+        if (!confirm(`Archive "${task.name}"? It stops showing up in your day, but its history is kept.`)) {
+            return;
+        }
+
+        router.post(archiveTask.url(task.id), {}, { preserveScroll: true });
     };
 
     const summary = useMemo(() => {
@@ -686,51 +760,60 @@ export default function DailyRoutineIndex({ selectedDate, today, tasks, tasksFor
                     {/* All tasks */}
                     <div className="rounded-xl border border-emerald-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm dark:border-emerald-800/50 dark:bg-black/40">
                         <div className="mb-3 flex items-center justify-between">
-                            <h3 className="text-sm font-semibold">All routine tasks ({tasks.length})</h3>
+                            <h3 className="text-sm font-semibold">Active routine tasks ({tasks.length})</h3>
                         </div>
 
                         {tasks.length === 0 ? (
                             <p className="text-sm text-muted-foreground">
-                                No tasks yet. Click <strong>New task</strong> to add your first routine.
+                                No active tasks. Click <strong>New task</strong> to add your first routine.
                             </p>
                         ) : (
                             <ul className="divide-y divide-border">
-                                {tasks.map((task) => {
-                                    const colorClass = COLOR_DOT[task.color ?? 'emerald'] ?? COLOR_DOT.emerald;
-                                    const days = WEEKDAYS.filter((d) => task.weekdays.includes(d.value))
-                                        .map((d) => d.short)
-                                        .join(', ');
-
-                                    return (
-                                        <li key={task.id} className="flex items-center justify-between gap-3 py-2.5">
-                                            <div className="flex min-w-0 items-center gap-3">
-                                                <span className={cn('size-2.5 shrink-0 rounded-full', colorClass)} />
-                                                <div className="min-w-0">
-                                                    <p className="truncate text-sm font-medium">{task.name}</p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {days} · {task.starts_on} → {task.ends_on}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="flex shrink-0 gap-1">
-                                                <Button variant="ghost" size="icon" className="size-8" onClick={() => handleEdit(task)}>
-                                                    <Pencil className="size-3.5" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="size-8 text-destructive hover:bg-destructive/10"
-                                                    onClick={() => handleDelete(task)}
-                                                >
-                                                    <Trash2 className="size-3.5" />
-                                                </Button>
-                                            </div>
-                                        </li>
-                                    );
-                                })}
+                                {tasks.map((task) => (
+                                    <TaskRow
+                                        key={task.id}
+                                        task={task}
+                                        archived={false}
+                                        onEdit={handleEdit}
+                                        onArchive={handleArchive}
+                                        onDelete={handleDelete}
+                                    />
+                                ))}
                             </ul>
                         )}
                     </div>
+
+                    {/* Archived tasks */}
+                    {archivedTasks.length > 0 && (
+                        <div className="rounded-xl border border-border bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-black/30">
+                            <button
+                                type="button"
+                                onClick={() => setArchiveOpen((open) => !open)}
+                                className="flex w-full items-center justify-between gap-3 text-left"
+                            >
+                                <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                                    <Archive className="size-3.5" />
+                                    Archive ({archivedTasks.length})
+                                </h3>
+                                <ChevronDown className={cn('size-4 text-muted-foreground transition-transform', archiveOpen && 'rotate-180')} />
+                            </button>
+
+                            {archiveOpen && (
+                                <ul className="mt-2 divide-y divide-border">
+                                    {archivedTasks.map((task) => (
+                                        <TaskRow
+                                            key={task.id}
+                                            task={task}
+                                            archived
+                                            onEdit={handleEdit}
+                                            onArchive={handleArchive}
+                                            onDelete={handleDelete}
+                                        />
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 

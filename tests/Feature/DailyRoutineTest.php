@@ -117,7 +117,7 @@ test('users cannot update tasks that belong to others', function () {
     ])->assertForbidden();
 });
 
-test('users can delete their own routine task', function () {
+test('users can delete an unused routine task', function () {
     $user = User::factory()->create();
     $task = RoutineTask::factory()->for($user)->create();
     $this->actingAs($user);
@@ -125,6 +125,121 @@ test('users can delete their own routine task', function () {
     $this->delete(route('routine-tasks.destroy', $task))->assertRedirect();
 
     $this->assertDatabaseMissing('routine_tasks', ['id' => $task->id]);
+});
+
+test('users cannot delete a routine task that has been used', function () {
+    $user = User::factory()->create();
+    $task = RoutineTask::factory()->for($user)->create();
+    RoutineTaskLog::factory()->for($task, 'routineTask')->create([
+        'log_date' => now()->subDay()->toDateString(),
+        'status' => RoutineTaskStatus::Done,
+    ]);
+    $this->actingAs($user);
+
+    $this->delete(route('routine-tasks.destroy', $task))->assertForbidden();
+
+    $this->assertDatabaseHas('routine_tasks', ['id' => $task->id]);
+});
+
+test('archiving a used task ends it on the date it was last marked', function () {
+    $user = User::factory()->create();
+    $task = RoutineTask::factory()->for($user)->create([
+        'starts_on' => now()->subDays(10)->toDateString(),
+        'ends_on' => now()->addYear()->toDateString(),
+    ]);
+    RoutineTaskLog::factory()->for($task, 'routineTask')->create([
+        'log_date' => now()->subDays(5)->toDateString(),
+        'status' => RoutineTaskStatus::Done,
+    ]);
+    RoutineTaskLog::factory()->for($task, 'routineTask')->create([
+        'log_date' => now()->subDays(3)->toDateString(),
+        'status' => RoutineTaskStatus::Skipped,
+    ]);
+    $this->actingAs($user);
+
+    $this->post(route('routine-tasks.archive', $task))->assertRedirect();
+
+    expect($task->fresh()->ends_on->toDateString())->toBe(now()->subDays(3)->toDateString());
+    expect($task->fresh()->isArchived())->toBeTrue();
+});
+
+test('an unused task cannot be archived', function () {
+    $user = User::factory()->create();
+    $task = RoutineTask::factory()->for($user)->create();
+    $this->actingAs($user);
+
+    $this->post(route('routine-tasks.archive', $task))->assertForbidden();
+});
+
+test('users cannot archive tasks that belong to others', function () {
+    $owner = User::factory()->create();
+    $other = User::factory()->create();
+    $task = RoutineTask::factory()->for($owner)->create();
+    RoutineTaskLog::factory()->for($task, 'routineTask')->create([
+        'log_date' => now()->subDay()->toDateString(),
+        'status' => RoutineTaskStatus::Done,
+    ]);
+
+    $this->actingAs($other);
+
+    $this->post(route('routine-tasks.archive', $task))->assertForbidden();
+});
+
+test('outdated tasks are listed separately from active ones', function () {
+    $user = User::factory()->create();
+
+    $active = RoutineTask::factory()->for($user)->create([
+        'starts_on' => now()->subMonth()->toDateString(),
+        'ends_on' => now()->addMonth()->toDateString(),
+    ]);
+
+    $outdated = RoutineTask::factory()->for($user)->create([
+        'starts_on' => now()->subMonths(3)->toDateString(),
+        'ends_on' => now()->subDay()->toDateString(),
+    ]);
+
+    $this->actingAs($user);
+
+    $this->get(route('daily-routine.index'))->assertInertia(fn ($page) => $page
+        ->count('tasks', 1)
+        ->where('tasks.0.id', $active->id)
+        ->count('archivedTasks', 1)
+        ->where('archivedTasks.0.id', $outdated->id)
+    );
+});
+
+test('a task ending today stays active', function () {
+    $user = User::factory()->create();
+    RoutineTask::factory()->for($user)->create([
+        'starts_on' => now()->subMonth()->toDateString(),
+        'ends_on' => now()->toDateString(),
+    ]);
+
+    $this->actingAs($user);
+
+    $this->get(route('daily-routine.index'))->assertInertia(fn ($page) => $page
+        ->count('tasks', 1)
+        ->count('archivedTasks', 0)
+    );
+});
+
+test('task usage is reported so the ui can choose delete or archive', function () {
+    $user = User::factory()->create();
+
+    $used = RoutineTask::factory()->for($user)->create();
+    RoutineTaskLog::factory()->for($used, 'routineTask')->create([
+        'log_date' => now()->toDateString(),
+        'status' => RoutineTaskStatus::Done,
+    ]);
+
+    RoutineTask::factory()->for($user)->create();
+
+    $this->actingAs($user);
+
+    $this->get(route('daily-routine.index'))->assertInertia(fn ($page) => $page
+        ->where('tasks.0.is_used', true)
+        ->where('tasks.1.is_used', false)
+    );
 });
 
 test('users can mark a task done for today', function () {
