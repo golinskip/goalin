@@ -3,6 +3,7 @@
 namespace Domain\Tools\GoalTracker\Models;
 
 use Database\Factories\ActivityFactory;
+use Domain\Tools\GoalTracker\Enums\ActivityType;
 use Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'description', 'point_cost', 'color', 'needs_timer', 'duration_minutes', 'sort_order'])]
+#[Fillable(['name', 'description', 'type', 'event_key', 'event_parameters', 'point_cost', 'color', 'needs_timer', 'duration_minutes', 'sort_order'])]
 class Activity extends Model
 {
     /** @use HasFactory<ActivityFactory> */
@@ -24,6 +25,8 @@ class Activity extends Model
     protected function casts(): array
     {
         return [
+            'type' => ActivityType::class,
+            'event_parameters' => 'array',
             'point_cost' => 'integer',
             'needs_timer' => 'boolean',
             'duration_minutes' => 'integer',

@@ -1,5 +1,18 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { CheckCircle2, ChevronDown, Loader2, Music, Pause, Play, RotateCcw, SkipBack, SkipForward, Volume2, VolumeX, X } from 'lucide-react';
+import {
+    CheckCircle2,
+    ChevronDown,
+    Loader2,
+    Music,
+    Pause,
+    Play,
+    RotateCcw,
+    SkipBack,
+    SkipForward,
+    Volume2,
+    VolumeX,
+    X,
+} from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
@@ -67,8 +80,8 @@ function MiniPlayer({ tracks }: { tracks: TimerMusicFile[] }) {
         const audio = audioRef.current;
 
         if (!audio || !currentTrack) {
-return;
-}
+            return;
+        }
 
         if (audio.src !== `/music/${currentTrack.id}/stream`) {
             audio.src = `/music/${currentTrack.id}/stream`;
@@ -100,8 +113,8 @@ return;
             audio.src = `/music/${tracks[nextIndex].id}/stream`;
 
             if (isPlaying) {
-audio.play();
-}
+                audio.play();
+            }
         }
     }, [currentIndex, tracks, isPlaying]);
 
@@ -121,8 +134,8 @@ audio.play();
             audio.src = `/music/${tracks[prevIndex].id}/stream`;
 
             if (isPlaying) {
-audio.play();
-}
+                audio.play();
+            }
         }
     }, [currentIndex, tracks, isPlaying]);
 
@@ -139,8 +152,8 @@ audio.play();
         const audio = audioRef.current;
 
         if (!audio) {
-return;
-}
+            return;
+        }
 
         const handleEnded = () => {
             if (tracks.length > 1) {
@@ -170,8 +183,8 @@ return;
     }, []);
 
     if (!currentTrack) {
-return null;
-}
+        return null;
+    }
 
     return (
         <div className="flex items-center gap-3 rounded-xl border border-border/30 bg-black/5 px-4 py-2.5 backdrop-blur-sm dark:bg-white/5">
@@ -180,9 +193,13 @@ return null;
             <Music className="size-4 shrink-0 text-muted-foreground/50" />
 
             <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-medium">{currentTrack.title}</p>
+                <p className="truncate text-xs font-medium">
+                    {currentTrack.title}
+                </p>
                 {currentTrack.artist && (
-                    <p className="truncate text-[10px] text-muted-foreground">{currentTrack.artist}</p>
+                    <p className="truncate text-[10px] text-muted-foreground">
+                        {currentTrack.artist}
+                    </p>
                 )}
             </div>
 
@@ -199,7 +216,11 @@ return null;
                     onClick={togglePlay}
                     className="flex size-7 items-center justify-center rounded-full bg-foreground/10 text-foreground transition-colors hover:bg-foreground/20"
                 >
-                    {isPlaying ? <Pause className="size-3.5" /> : <Play className="size-3.5 translate-x-px" />}
+                    {isPlaying ? (
+                        <Pause className="size-3.5" />
+                    ) : (
+                        <Play className="size-3.5 translate-x-px" />
+                    )}
                 </button>
                 {tracks.length > 1 && (
                     <button
@@ -213,7 +234,11 @@ return null;
                     onClick={toggleMute}
                     className="rounded-md p-1 text-muted-foreground/60 hover:text-foreground"
                 >
-                    {isMuted ? <VolumeX className="size-3.5" /> : <Volume2 className="size-3.5" />}
+                    {isMuted ? (
+                        <VolumeX className="size-3.5" />
+                    ) : (
+                        <Volume2 className="size-3.5" />
+                    )}
                 </button>
             </div>
         </div>
@@ -221,7 +246,9 @@ return null;
 }
 
 function PlaylistMusicPlayer({ playlists }: { playlists: PlaylistInfo[] }) {
-    const [selectedPlaylistId, setSelectedPlaylistId] = useState<number | null>(null);
+    const [selectedPlaylistId, setSelectedPlaylistId] = useState<number | null>(
+        null,
+    );
     const [tracks, setTracks] = useState<TimerMusicFile[]>([]);
     const [loading, setLoading] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -244,15 +271,15 @@ function PlaylistMusicPlayer({ playlists }: { playlists: PlaylistInfo[] }) {
             });
 
             if (!response.ok) {
-throw new Error('Failed to load tracks');
-}
+                throw new Error('Failed to load tracks');
+            }
 
             const data: TimerMusicFile[] = await response.json();
             setTracks(data);
         } catch (e) {
             if (e instanceof DOMException && e.name === 'AbortError') {
-return;
-}
+                return;
+            }
 
             setTracks([]);
         } finally {
@@ -285,7 +312,9 @@ return;
         return (
             <div className="flex items-center gap-2.5 rounded-xl border border-border/30 bg-black/5 px-4 py-2.5 backdrop-blur-sm dark:bg-white/5">
                 <Music className="size-4 shrink-0 text-muted-foreground/40" />
-                <p className="text-xs text-muted-foreground">Create a playlist in the Music Player to play music here.</p>
+                <p className="text-xs text-muted-foreground">
+                    Create a playlist in the Music Player to play music here.
+                </p>
             </div>
         );
     }
@@ -298,23 +327,37 @@ return;
                     onClick={() => setDropdownOpen(!dropdownOpen)}
                     className="flex w-full items-center justify-between gap-2 rounded-xl border border-border/30 bg-black/5 px-4 py-2.5 text-left backdrop-blur-sm transition-colors hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10"
                 >
-                    <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex min-w-0 items-center gap-2.5">
                         {selectedPlaylist ? (
                             <>
-                                <div className="size-3 shrink-0 rounded-full" style={{ backgroundColor: selectedPlaylist.color }} />
-                                <span className="truncate text-xs font-medium">{selectedPlaylist.name}</span>
+                                <div
+                                    className="size-3 shrink-0 rounded-full"
+                                    style={{
+                                        backgroundColor: selectedPlaylist.color,
+                                    }}
+                                />
+                                <span className="truncate text-xs font-medium">
+                                    {selectedPlaylist.name}
+                                </span>
                                 <span className="shrink-0 text-[10px] text-muted-foreground">
-                                    {selectedPlaylist.track_count} {selectedPlaylist.track_count === 1 ? 'track' : 'tracks'}
+                                    {selectedPlaylist.track_count}{' '}
+                                    {selectedPlaylist.track_count === 1
+                                        ? 'track'
+                                        : 'tracks'}
                                 </span>
                             </>
                         ) : (
                             <>
                                 <Music className="size-4 shrink-0 text-muted-foreground/50" />
-                                <span className="text-xs text-muted-foreground">Select a playlist...</span>
+                                <span className="text-xs text-muted-foreground">
+                                    Select a playlist...
+                                </span>
                             </>
                         )}
                     </div>
-                    <ChevronDown className={`size-3.5 shrink-0 text-muted-foreground transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown
+                        className={`size-3.5 shrink-0 text-muted-foreground transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
+                    />
                 </button>
 
                 {dropdownOpen && (
@@ -334,8 +377,13 @@ return;
                                 onClick={() => selectPlaylist(playlist.id)}
                                 className={`flex w-full items-center gap-2.5 px-4 py-2 text-left transition-colors hover:bg-accent ${playlist.id === selectedPlaylistId ? 'bg-accent/50' : ''}`}
                             >
-                                <div className="size-3 shrink-0 rounded-full" style={{ backgroundColor: playlist.color }} />
-                                <span className="truncate text-xs font-medium">{playlist.name}</span>
+                                <div
+                                    className="size-3 shrink-0 rounded-full"
+                                    style={{ backgroundColor: playlist.color }}
+                                />
+                                <span className="truncate text-xs font-medium">
+                                    {playlist.name}
+                                </span>
                                 <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">
                                     {playlist.track_count}
                                 </span>
@@ -349,14 +397,18 @@ return;
             {loading && (
                 <div className="flex items-center justify-center gap-2 rounded-xl border border-border/30 bg-black/5 px-4 py-2.5 backdrop-blur-sm dark:bg-white/5">
                     <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">Loading tracks...</span>
+                    <span className="text-xs text-muted-foreground">
+                        Loading tracks...
+                    </span>
                 </div>
             )}
             {!loading && tracks.length > 0 && <MiniPlayer tracks={tracks} />}
             {!loading && selectedPlaylistId && tracks.length === 0 && (
                 <div className="flex items-center gap-2.5 rounded-xl border border-border/30 bg-black/5 px-4 py-2.5 backdrop-blur-sm dark:bg-white/5">
                     <Music className="size-4 shrink-0 text-muted-foreground/40" />
-                    <p className="text-xs text-muted-foreground">This playlist has no tracks.</p>
+                    <p className="text-xs text-muted-foreground">
+                        This playlist has no tracks.
+                    </p>
                 </div>
             )}
         </div>
@@ -381,7 +433,9 @@ export default function ActivityTimer({ activity, playlists }: Props) {
     const elapsedBeforePauseRef = useRef<number>(0);
 
     const computeSecondsLeft = useCallback(() => {
-        const elapsed = elapsedBeforePauseRef.current + (Date.now() - startedAtRef.current) / 1000;
+        const elapsed =
+            elapsedBeforePauseRef.current +
+            (Date.now() - startedAtRef.current) / 1000;
 
         return Math.max(0, Math.round(totalSeconds - elapsed));
     }, [totalSeconds]);
@@ -410,13 +464,17 @@ export default function ActivityTimer({ activity, playlists }: Props) {
     // Sync on tab re-focus (catches throttled intervals in background tabs)
     useEffect(() => {
         const handleVisibility = () => {
-            if (document.visibilityState === 'visible' && timerState === 'running') {
+            if (
+                document.visibilityState === 'visible' &&
+                timerState === 'running'
+            ) {
                 setSecondsLeft(computeSecondsLeft());
             }
         };
         document.addEventListener('visibilitychange', handleVisibility);
 
-        return () => document.removeEventListener('visibilitychange', handleVisibility);
+        return () =>
+            document.removeEventListener('visibilitychange', handleVisibility);
     }, [timerState, computeSecondsLeft]);
 
     useEffect(() => {
@@ -430,7 +488,8 @@ export default function ActivityTimer({ activity, playlists }: Props) {
 
     const timerPause = useCallback(() => {
         // Capture elapsed time so far
-        elapsedBeforePauseRef.current += (Date.now() - startedAtRef.current) / 1000;
+        elapsedBeforePauseRef.current +=
+            (Date.now() - startedAtRef.current) / 1000;
         clearTimer();
         setTimerState('paused');
     }, [clearTimer]);
@@ -481,7 +540,8 @@ export default function ActivityTimer({ activity, playlists }: Props) {
         async function requestWakeLock() {
             if ('wakeLock' in navigator) {
                 try {
-                    wakeLockRef.current = await navigator.wakeLock.request('screen');
+                    wakeLockRef.current =
+                        await navigator.wakeLock.request('screen');
                 } catch {
                     // Wake lock request failed (e.g. low battery)
                 }
@@ -498,7 +558,10 @@ export default function ActivityTimer({ activity, playlists }: Props) {
         document.addEventListener('visibilitychange', handleVisibilityChange);
 
         return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            document.removeEventListener(
+                'visibilitychange',
+                handleVisibilityChange,
+            );
             wakeLockRef.current?.release();
             wakeLockRef.current = null;
         };
@@ -507,7 +570,10 @@ export default function ActivityTimer({ activity, playlists }: Props) {
     const minutes = Math.floor(secondsLeft / 60);
     const seconds = secondsLeft % 60;
     const timeDisplay = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    const progress = totalSeconds > 0 ? ((totalSeconds - secondsLeft) / totalSeconds) * 100 : 0;
+    const progress =
+        totalSeconds > 0
+            ? ((totalSeconds - secondsLeft) / totalSeconds) * 100
+            : 0;
 
     const circumference = 2 * Math.PI * 140;
     const strokeDashoffset = circumference - (progress / 100) * circumference;
@@ -543,18 +609,27 @@ export default function ActivityTimer({ activity, playlists }: Props) {
                             {activity.name}
                         </div>
                         {activity.description && (
-                            <p className="text-sm text-muted-foreground">{activity.description}</p>
+                            <p className="text-sm text-muted-foreground">
+                                {activity.description}
+                            </p>
                         )}
                     </div>
 
                     {/* Completion buttons - above timer when finished */}
                     {showConfirm && (
                         <div className="flex flex-col items-center gap-4">
-                            <div className="flex items-center gap-2" style={{ color: activity.color }}>
+                            <div
+                                className="flex items-center gap-2"
+                                style={{ color: activity.color }}
+                            >
                                 <CheckCircle2 className="size-6" />
-                                <span className="text-lg font-semibold">Time&apos;s up!</span>
+                                <span className="text-lg font-semibold">
+                                    Time&apos;s up!
+                                </span>
                             </div>
-                            <p className="text-sm text-muted-foreground">Did you complete the activity?</p>
+                            <p className="text-sm text-muted-foreground">
+                                Did you complete the activity?
+                            </p>
                             <textarea
                                 value={comment}
                                 onChange={(e) => setComment(e.target.value)}
@@ -570,7 +645,9 @@ export default function ActivityTimer({ activity, playlists }: Props) {
                                     disabled={submitting}
                                     className="px-8"
                                 >
-                                    {submitting ? 'Saving...' : 'Yes, completed!'}
+                                    {submitting
+                                        ? 'Saving...'
+                                        : 'Yes, completed!'}
                                 </Button>
                                 <Button
                                     size="lg"
@@ -621,7 +698,7 @@ export default function ActivityTimer({ activity, playlists }: Props) {
                             />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="font-mono text-6xl font-bold tabular-nums tracking-tight">
+                            <span className="font-mono text-6xl font-bold tracking-tight tabular-nums">
                                 {timeDisplay}
                             </span>
                             <span className="mt-1 text-sm text-muted-foreground">
@@ -634,18 +711,32 @@ export default function ActivityTimer({ activity, playlists }: Props) {
                     {!showConfirm && (
                         <div className="flex items-center gap-3">
                             {timerState === 'running' && (
-                                <Button size="lg" variant="outline" onClick={timerPause} className="gap-2 px-8">
+                                <Button
+                                    size="lg"
+                                    variant="outline"
+                                    onClick={timerPause}
+                                    className="gap-2 px-8"
+                                >
                                     <Pause className="size-5" />
                                     Pause
                                 </Button>
                             )}
                             {timerState === 'paused' && (
                                 <>
-                                    <Button size="lg" onClick={resume} className="gap-2 px-8">
+                                    <Button
+                                        size="lg"
+                                        onClick={resume}
+                                        className="gap-2 px-8"
+                                    >
                                         <Play className="size-5" />
                                         Resume
                                     </Button>
-                                    <Button size="lg" variant="outline" onClick={reset} className="gap-2">
+                                    <Button
+                                        size="lg"
+                                        variant="outline"
+                                        onClick={reset}
+                                        className="gap-2"
+                                    >
                                         <RotateCcw className="size-5" />
                                         Reset
                                     </Button>

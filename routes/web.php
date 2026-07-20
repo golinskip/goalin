@@ -7,6 +7,8 @@ use Domain\Admin\Support\RegistrationSetting;
 use Domain\Tools\DailyRoutine\Controllers\DailyRoutineController;
 use Domain\Tools\DailyRoutine\Controllers\RoutineTaskController;
 use Domain\Tools\DailyRoutine\Controllers\RoutineTaskLogController;
+use Domain\Tools\DailyTodo\Controllers\DailyTodoController;
+use Domain\Tools\DailyTodo\Controllers\TodoTaskController;
 use Domain\Tools\Diary\Controllers\DiaryController;
 use Domain\Tools\Flashcards\Controllers\MemoCardController;
 use Domain\Tools\Flashcards\Controllers\MemoFolderController;
@@ -120,6 +122,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('routine-tasks/{routine_task}/archive', [RoutineTaskController::class, 'archive'])->name('routine-tasks.archive');
     Route::post('routine-tasks/{routine_task}/log', [RoutineTaskLogController::class, 'store'])->name('routine-tasks.log');
     Route::post('routine-tasks/{routine_task}/comment', [RoutineTaskLogController::class, 'comment'])->name('routine-tasks.comment');
+
+    // Daily Todo
+    Route::get('daily-todo', [DailyTodoController::class, 'index'])->name('daily-todo.index');
+    Route::post('todo-tasks', [TodoTaskController::class, 'store'])->name('todo-tasks.store');
+    Route::put('todo-tasks/{todoTask}', [TodoTaskController::class, 'update'])->name('todo-tasks.update');
+    Route::post('todo-tasks/{todoTask}/toggle', [TodoTaskController::class, 'toggle'])->name('todo-tasks.toggle');
+    Route::delete('todo-tasks/{todoTask}', [TodoTaskController::class, 'destroy'])->name('todo-tasks.destroy');
 
     // RSS Feeds
     Route::get('rss-feeds', [RssFeedController::class, 'index'])->name('rss-feeds.index');

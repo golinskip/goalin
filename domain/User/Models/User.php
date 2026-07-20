@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Domain\ExternalServices\Enums\ServiceType;
 use Domain\ExternalServices\Models\ServiceConnection;
 use Domain\Tools\DailyRoutine\Models\RoutineTask;
+use Domain\Tools\DailyTodo\Models\TodoTask;
 use Domain\Tools\Diary\Models\DiaryEntry;
 use Domain\Tools\Flashcards\Models\MemoFolder;
 use Domain\Tools\Flashcards\Models\MemoSet;
@@ -147,6 +148,11 @@ class User extends Authenticatable
     public function routineTasks(): HasMany
     {
         return $this->hasMany(RoutineTask::class);
+    }
+
+    public function todoTasks(): HasMany
+    {
+        return $this->hasMany(TodoTask::class);
     }
 
     public function serviceConnections(): HasMany

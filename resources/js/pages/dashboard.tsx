@@ -99,6 +99,15 @@ const tools: Tool[] = [
         iconColor: 'text-emerald-600 dark:text-emerald-400',
     },
     {
+        title: 'Daily Todo',
+        description: 'Plan tasks and subtasks on a calendar',
+        href: '/daily-todo',
+        icon: ListTodo,
+        card: 'border-indigo-200/80 dark:border-indigo-800/50',
+        iconWrapper: 'bg-indigo-500/15 group-hover:bg-indigo-500/25',
+        iconColor: 'text-indigo-600 dark:text-indigo-400',
+    },
+    {
         title: 'Long Term Goals',
         description: 'Plan and review yearly & monthly goals',
         href: '/long-term-goals',

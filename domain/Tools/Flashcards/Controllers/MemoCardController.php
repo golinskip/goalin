@@ -3,6 +3,8 @@
 namespace Domain\Tools\Flashcards\Controllers;
 
 use App\Http\Controllers\Controller;
+use Domain\Automation\AutomationRunner;
+use Domain\Tools\Flashcards\Events\ReviewedFlashcardsEvent;
 use Domain\Tools\Flashcards\Models\MemoCard;
 use Domain\Tools\Flashcards\Models\MemoSet;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -66,7 +68,7 @@ class MemoCardController extends Controller
         return back();
     }
 
-    public function review(Request $request, MemoCard $memoCard): RedirectResponse
+    public function review(Request $request, MemoCard $memoCard, AutomationRunner $automation): RedirectResponse
     {
         $this->authorize('update', $memoCard->memoSet);
 
@@ -81,6 +83,8 @@ class MemoCardController extends Controller
         }
 
         $memoCard->update(['last_reviewed_at' => now()]);
+
+        $automation->fire(ReviewedFlashcardsEvent::KEY, $request->user());
 
         return back();
     }
