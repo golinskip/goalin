@@ -5,6 +5,8 @@ use Domain\Tools\DailyRoutine\Enums\RoutineTaskStatus;
 use Domain\Tools\DailyRoutine\Events\DailyRoutineTasksEvent;
 use Domain\Tools\DailyRoutine\Events\SpecificRoutineTaskEvent;
 use Domain\Tools\DailyRoutine\Models\RoutineTask;
+use Domain\Tools\DailyTodo\Events\CompletedTodosEvent;
+use Domain\Tools\DailyTodo\Models\TodoTask;
 use Domain\Tools\Diary\Events\NoEmptyDiaryDaysEvent;
 use Domain\Tools\GoalTracker\Enums\ActivityType;
 use Domain\Tools\GoalTracker\Models\Activity;
@@ -358,6 +360,116 @@ it('fires the rss event when an article is marked read through the controller', 
 
     $this->actingAs($user)
         ->post(route('rss-articles.mark-read', $article))
+        ->assertRedirect();
+
+    expect($automated->logs()->count())->toBe(1);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Daily Todo — complete todo tasks
+|--------------------------------------------------------------------------
+*/
+
+function todayTodo(User $user, bool $completed = false): TodoTask
+{
+    $factory = TodoTask::factory()->for($user);
+
+    if ($completed) {
+        $factory = $factory->completed();
+    }
+
+    return $factory->create(['due_date' => now()->toDateString()]);
+}
+
+it('awards the todo event once the target number of tasks is finished', function () {
+    $user = User::factory()->create();
+    todayTodo($user, completed: true);
+    $second = todayTodo($user);
+
+    $automated = Activity::factory()->for($user)
+        ->automated(CompletedTodosEvent::KEY, ['count' => 2])
+        ->create(['point_cost' => 15]);
+
+    app(AutomationRunner::class)->fire(CompletedTodosEvent::KEY, $user);
+    expect($automated->logs()->count())->toBe(0);
+
+    $second->update(['completed_at' => now()]);
+    app(AutomationRunner::class)->fire(CompletedTodosEvent::KEY, $user);
+
+    expect($automated->logs()->count())->toBe(1)
+        ->and((int) $automated->logs()->sum('points_earned'))->toBe(15);
+});
+
+it('treats a todo count of zero as every task planned today', function () {
+    $user = User::factory()->create();
+    $a = todayTodo($user, completed: true);
+    $b = todayTodo($user);
+
+    $automated = Activity::factory()->for($user)
+        ->automated(CompletedTodosEvent::KEY, ['count' => 0])
+        ->create();
+
+    app(AutomationRunner::class)->fire(CompletedTodosEvent::KEY, $user);
+    expect($automated->logs()->count())->toBe(0);
+
+    $b->update(['completed_at' => now()]);
+    app(AutomationRunner::class)->fire(CompletedTodosEvent::KEY, $user);
+
+    expect($automated->logs()->count())->toBe(1);
+});
+
+it('does not award the todo event when there are no tasks planned today', function () {
+    $user = User::factory()->create();
+
+    $automated = Activity::factory()->for($user)
+        ->automated(CompletedTodosEvent::KEY, ['count' => 0])
+        ->create();
+
+    app(AutomationRunner::class)->fire(CompletedTodosEvent::KEY, $user);
+
+    expect($automated->logs()->count())->toBe(0);
+});
+
+it('counts only top-level tasks planned for today', function () {
+    $user = User::factory()->create();
+    $parent = todayTodo($user, completed: true);
+    TodoTask::factory()->subtaskOf($parent)->create();
+    TodoTask::factory()->for($user)->completed()->create(['due_date' => now()->addDay()->toDateString()]);
+
+    $automated = Activity::factory()->for($user)
+        ->automated(CompletedTodosEvent::KEY, ['count' => 1])
+        ->create();
+
+    app(AutomationRunner::class)->fire(CompletedTodosEvent::KEY, $user);
+
+    expect($automated->logs()->count())->toBe(1);
+});
+
+it('never awards the todo event twice in one day', function () {
+    $user = User::factory()->create();
+    todayTodo($user, completed: true);
+
+    $automated = Activity::factory()->for($user)
+        ->automated(CompletedTodosEvent::KEY, ['count' => 1])
+        ->create();
+
+    app(AutomationRunner::class)->fire(CompletedTodosEvent::KEY, $user);
+    app(AutomationRunner::class)->fire(CompletedTodosEvent::KEY, $user);
+
+    expect($automated->logs()->count())->toBe(1);
+});
+
+it('fires the todo event when a task is toggled complete through the controller', function () {
+    $user = User::factory()->create();
+    $task = todayTodo($user);
+
+    $automated = Activity::factory()->for($user)
+        ->automated(CompletedTodosEvent::KEY, ['count' => 1])
+        ->create();
+
+    $this->actingAs($user)
+        ->post(route('todo-tasks.toggle', $task))
         ->assertRedirect();
 
     expect($automated->logs()->count())->toBe(1);
