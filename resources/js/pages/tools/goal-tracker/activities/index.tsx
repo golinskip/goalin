@@ -4,7 +4,10 @@ import { useCallback, useRef, useState } from 'react';
 import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
-import { index as activitiesIndex, create as activitiesCreate } from '@/routes/activities';
+import {
+    index as activitiesIndex,
+    create as activitiesCreate,
+} from '@/routes/activities';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -18,6 +21,8 @@ type Activity = {
     id: number;
     name: string;
     description: string | null;
+    type: 'manual' | 'automated';
+    event_key: string | null;
     point_cost: number;
     color: string;
     needs_timer: boolean;
@@ -70,7 +75,9 @@ function formatDuration(minutes: number): string {
     return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
 }
 
-export default function ActivitiesIndex({ activities: initialActivities }: Props) {
+export default function ActivitiesIndex({
+    activities: initialActivities,
+}: Props) {
     const [activities, setActivities] = useState(initialActivities);
     const dragItem = useRef<number | null>(null);
     const dragOverItem = useRef<number | null>(null);
@@ -143,9 +150,12 @@ export default function ActivitiesIndex({ activities: initialActivities }: Props
                     {activities.length === 0 ? (
                         <div className="flex flex-col items-center justify-center rounded-xl border border-yellow-200/80 bg-white/70 py-20 text-center shadow-sm backdrop-blur-sm dark:border-yellow-800/50 dark:bg-black/40">
                             <Zap className="mb-3 size-12 text-yellow-400/50 dark:text-yellow-600/50" />
-                            <p className="text-muted-foreground">No activities yet</p>
+                            <p className="text-muted-foreground">
+                                No activities yet
+                            </p>
                             <p className="mt-1 text-sm text-muted-foreground/75">
-                                Create your first activity type to start tracking.
+                                Create your first activity type to start
+                                tracking.
                             </p>
                             <Button asChild className="mt-4">
                                 <Link href={activitiesCreate()}>
@@ -161,13 +171,27 @@ export default function ActivitiesIndex({ activities: initialActivities }: Props
                                     <thead>
                                         <tr className="border-b border-border/50 text-left text-muted-foreground">
                                             <th className="w-10 px-3 py-3"></th>
-                                            <th className="px-3 py-3 font-medium">Name</th>
-                                            <th className="px-3 py-3 font-medium">Color</th>
-                                            <th className="px-3 py-3 text-right font-medium">Points</th>
-                                            <th className="px-3 py-3 font-medium">Timer</th>
-                                            <th className="px-3 py-3 font-medium">Tags</th>
-                                            <th className="px-3 py-3 font-medium">Goals</th>
-                                            <th className="px-3 py-3 font-medium">Last Changed</th>
+                                            <th className="px-3 py-3 font-medium">
+                                                Name
+                                            </th>
+                                            <th className="px-3 py-3 font-medium">
+                                                Color
+                                            </th>
+                                            <th className="px-3 py-3 text-right font-medium">
+                                                Points
+                                            </th>
+                                            <th className="px-3 py-3 font-medium">
+                                                Timer
+                                            </th>
+                                            <th className="px-3 py-3 font-medium">
+                                                Tags
+                                            </th>
+                                            <th className="px-3 py-3 font-medium">
+                                                Goals
+                                            </th>
+                                            <th className="px-3 py-3 font-medium">
+                                                Last Changed
+                                            </th>
                                             <th className="w-24 px-3 py-3"></th>
                                         </tr>
                                     </thead>
@@ -176,20 +200,39 @@ export default function ActivitiesIndex({ activities: initialActivities }: Props
                                             <tr
                                                 key={activity.id}
                                                 draggable
-                                                onDragStart={() => handleDragStart(index)}
-                                                onDragEnter={() => handleDragEnter(index)}
+                                                onDragStart={() =>
+                                                    handleDragStart(index)
+                                                }
+                                                onDragEnter={() =>
+                                                    handleDragEnter(index)
+                                                }
                                                 onDragEnd={handleDragEnd}
-                                                onDragOver={(e) => e.preventDefault()}
+                                                onDragOver={(e) =>
+                                                    e.preventDefault()
+                                                }
                                                 className="border-b border-border/30 transition-colors last:border-0 hover:bg-white/50 dark:hover:bg-white/5"
                                             >
                                                 <td className="px-3 py-3">
                                                     <GripVertical className="size-4 cursor-grab text-muted-foreground/50 active:cursor-grabbing" />
                                                 </td>
                                                 <td className="px-3 py-3">
-                                                    <div className="font-medium">{activity.name}</div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-medium">
+                                                            {activity.name}
+                                                        </span>
+                                                        {activity.type ===
+                                                            'automated' && (
+                                                            <span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2 py-0.5 text-[10px] font-medium tracking-wide text-green-700 uppercase dark:text-green-400">
+                                                                <Zap className="size-3" />
+                                                                Auto
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     {activity.description && (
                                                         <div className="mt-0.5 max-w-xs truncate text-xs text-muted-foreground">
-                                                            {activity.description}
+                                                            {
+                                                                activity.description
+                                                            }
                                                         </div>
                                                     )}
                                                 </td>
@@ -197,12 +240,17 @@ export default function ActivitiesIndex({ activities: initialActivities }: Props
                                                     <div className="flex items-center gap-2">
                                                         <div
                                                             className="size-4 rounded-full border border-border/50"
-                                                            style={{ backgroundColor: activity.color }}
+                                                            style={{
+                                                                backgroundColor:
+                                                                    activity.color,
+                                                            }}
                                                         />
-                                                        <span className="text-xs text-muted-foreground">{activity.color}</span>
+                                                        <span className="text-xs text-muted-foreground">
+                                                            {activity.color}
+                                                        </span>
                                                     </div>
                                                 </td>
-                                                <td className="px-3 py-3 text-right tabular-nums font-medium">
+                                                <td className="px-3 py-3 text-right font-medium tabular-nums">
                                                     {activity.point_cost}
                                                 </td>
                                                 <td className="px-3 py-3">
@@ -210,60 +258,93 @@ export default function ActivitiesIndex({ activities: initialActivities }: Props
                                                         <div className="inline-flex items-center gap-1 text-primary">
                                                             <Clock className="size-3.5" />
                                                             <span className="text-xs">
-                                                                {formatDuration(activity.duration_minutes!)}
+                                                                {formatDuration(
+                                                                    activity.duration_minutes!,
+                                                                )}
                                                             </span>
                                                         </div>
                                                     ) : (
-                                                        <span className="text-xs text-muted-foreground/50">—</span>
+                                                        <span className="text-xs text-muted-foreground/50">
+                                                            —
+                                                        </span>
                                                     )}
                                                 </td>
                                                 <td className="px-3 py-3">
                                                     <div className="flex flex-wrap gap-1">
-                                                        {activity.tags.length > 0 ? (
-                                                            activity.tags.map((tag) => (
-                                                                <span
-                                                                    key={tag}
-                                                                    className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
-                                                                    style={{
-                                                                        backgroundColor: activity.color + '20',
-                                                                        color: activity.color,
-                                                                    }}
-                                                                >
-                                                                    {tag}
-                                                                </span>
-                                                            ))
+                                                        {activity.tags.length >
+                                                        0 ? (
+                                                            activity.tags.map(
+                                                                (tag) => (
+                                                                    <span
+                                                                        key={
+                                                                            tag
+                                                                        }
+                                                                        className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
+                                                                        style={{
+                                                                            backgroundColor:
+                                                                                activity.color +
+                                                                                '20',
+                                                                            color: activity.color,
+                                                                        }}
+                                                                    >
+                                                                        {tag}
+                                                                    </span>
+                                                                ),
+                                                            )
                                                         ) : (
-                                                            <span className="text-xs text-muted-foreground/50">—</span>
+                                                            <span className="text-xs text-muted-foreground/50">
+                                                                —
+                                                            </span>
                                                         )}
                                                     </div>
                                                 </td>
                                                 <td className="px-3 py-3">
                                                     <div className="flex flex-wrap gap-1">
-                                                        {activity.goals.length > 0 ? (
-                                                            activity.goals.map((goal) => (
-                                                                <span
-                                                                    key={goal.id}
-                                                                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
-                                                                    style={{
-                                                                        backgroundColor: goal.color + '20',
-                                                                        color: goal.color,
-                                                                    }}
-                                                                >
-                                                                    {goal.name}
-                                                                </span>
-                                                            ))
+                                                        {activity.goals.length >
+                                                        0 ? (
+                                                            activity.goals.map(
+                                                                (goal) => (
+                                                                    <span
+                                                                        key={
+                                                                            goal.id
+                                                                        }
+                                                                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                                                                        style={{
+                                                                            backgroundColor:
+                                                                                goal.color +
+                                                                                '20',
+                                                                            color: goal.color,
+                                                                        }}
+                                                                    >
+                                                                        {
+                                                                            goal.name
+                                                                        }
+                                                                    </span>
+                                                                ),
+                                                            )
                                                         ) : (
-                                                            <span className="text-xs text-muted-foreground/50">—</span>
+                                                            <span className="text-xs text-muted-foreground/50">
+                                                                —
+                                                            </span>
                                                         )}
                                                     </div>
                                                 </td>
                                                 <td className="px-3 py-3 text-muted-foreground">
-                                                    {timeAgo(activity.updated_at)}
+                                                    {timeAgo(
+                                                        activity.updated_at,
+                                                    )}
                                                 </td>
                                                 <td className="px-3 py-3">
                                                     <div className="flex items-center justify-end gap-1">
-                                                        <Button variant="ghost" size="icon" className="size-8" asChild>
-                                                            <Link href={`/activities/${activity.id}/edit`}>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="size-8"
+                                                            asChild
+                                                        >
+                                                            <Link
+                                                                href={`/activities/${activity.id}/edit`}
+                                                            >
                                                                 <Pencil className="size-3.5" />
                                                             </Link>
                                                         </Button>
@@ -271,7 +352,11 @@ export default function ActivitiesIndex({ activities: initialActivities }: Props
                                                             variant="ghost"
                                                             size="icon"
                                                             className="size-8 text-destructive hover:text-destructive"
-                                                            onClick={() => handleDelete(activity.id)}
+                                                            onClick={() =>
+                                                                handleDelete(
+                                                                    activity.id,
+                                                                )
+                                                            }
                                                         >
                                                             <Trash2 className="size-3.5" />
                                                         </Button>

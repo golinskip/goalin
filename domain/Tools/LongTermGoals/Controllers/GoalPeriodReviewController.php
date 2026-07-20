@@ -3,14 +3,17 @@
 namespace Domain\Tools\LongTermGoals\Controllers;
 
 use App\Http\Controllers\Controller;
+use Domain\Automation\AutomationRunner;
 use Domain\Tools\LongTermGoals\Enums\GoalStatus;
+use Domain\Tools\LongTermGoals\Events\LongTermGoalsProgressEvent;
+use Domain\Tools\LongTermGoals\Events\ReviewedLongTermGoalsEvent;
 use Domain\Tools\LongTermGoals\Models\GoalPeriod;
 use Domain\Tools\LongTermGoals\Requests\ReviewGoalPeriodRequest;
 use Illuminate\Http\RedirectResponse;
 
 class GoalPeriodReviewController extends Controller
 {
-    public function __invoke(ReviewGoalPeriodRequest $request, GoalPeriod $goalPeriod): RedirectResponse
+    public function __invoke(ReviewGoalPeriodRequest $request, GoalPeriod $goalPeriod, AutomationRunner $automation): RedirectResponse
     {
         $validated = $request->validated();
 
@@ -29,6 +32,9 @@ class GoalPeriodReviewController extends Controller
                 ]);
             }
         }
+
+        $automation->fire(ReviewedLongTermGoalsEvent::KEY, $request->user());
+        $automation->fire(LongTermGoalsProgressEvent::KEY, $request->user());
 
         return back();
     }

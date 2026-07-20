@@ -16,6 +16,12 @@ domain/
 ├── Alerts/                       # Cross-tool alert system (shared globally via Inertia, shown in top-bar dropdown)
 │   ├── Alert.php                 # Abstract base class — each tool extends it in its own Alerts/ subdirectory
 │   └── AlertManager.php          # Aggregates registered alerts; registered in AppServiceProvider
+├── Automation/                   # Event-driven "automated activities" for Goal Tracker
+│   ├── AutomationEvent.php       # Abstract base — each tool extends it in its own Events/ subdirectory
+│   ├── EventParameter.php        # Typed parameter (integer/choice) driving both the form and stored payload
+│   ├── EventRegistry.php         # Aggregates registered events; registered in AppServiceProvider
+│   └── AutomationRunner.php      # Fired synchronously from a tool controller; awards ActivityLog rows,
+│                                 # guards against earning an activity twice in one day (see below)
 ├── Admin/                        # Super-admin panel (user list, lock accounts, toggle new registration)
 │   ├── Models/                   # AppSetting (generic key/value store used for registration_enabled)
 │   ├── Controllers/              # AdminController, UserLockController, RegistrationSettingController
@@ -58,6 +64,11 @@ domain/
     │   ├── Requests/             # StoreRssFeed, UpdateRssFeed form requests
     │   ├── Services/             # FeedParserService (RSS 1.0/2.0/Atom parsing)
     │   └── Policies/             # RssFeed policy
+    ├── DailyTodo/                # Subdomain: one-off todos planned on a calendar, with subtasks
+    │   ├── Models/               # TodoTask (self-nesting: top-level tasks carry a due_date, subtasks reference a parent)
+    │   ├── Controllers/          # DailyTodo (index + calendar), TodoTask (store/update/toggle/destroy)
+    │   ├── Requests/             # StoreTodoTask, UpdateTodoTask form requests
+    │   └── Policies/             # TodoTask policy
     └── Games/                    # Subdomain: games with shared results tracking
         ├── Models/               # GameResult (shared results table: game, result, played_at)
         ├── Controllers/          # Games (index), GameResult (store results API)
@@ -77,6 +88,16 @@ domain/
             └── Memory/           # Memory sequence — pick 5 memorized symbols from 4×4 grid
                 └── MemoryController.php
 ```
+
+## Adding Automation Events
+
+An "automated activity" is a Goal Tracker `Activity` with `type = automated`, an `event_key`, and a JSON `event_parameters` payload. To add a new event:
+
+1. Create a class under `domain/Tools/{Tool}/Events/{Name}Event.php` extending `Domain\Automation\AutomationEvent`. Declare its `key`/`tool`/`label`/`description`, the `parameters()` it exposes (via `EventParameter::integer`/`choice`), and `evaluate(User, array): int` returning how many units are currently earned (multiplied by the activity's `point_cost`). Override `isRepeatableWithinDay()` when the event reports a running daily total rather than a one-shot condition.
+2. Register it in `AppServiceProvider` inside the `EventRegistry` singleton.
+3. Fire it from the tool controller after the relevant write: `app(AutomationRunner::class)->fire({Event}::KEY, $user)` (or inject `AutomationRunner`).
+
+The runner awards normal `activity_logs` rows, so points, rewards, goals and statistics need no changes. It also enforces the once-per-day guard: a non-repeatable event is skipped once the activity has any log dated today; a repeatable one only pays for units beyond what today's logs already cover. The activity form renders each event's parameters dynamically from `EventRegistry::toArray()` (see `resources/js/pages/tools/goal-tracker/activities/automation-fields.tsx`).
 
 ## Adding New Games
 

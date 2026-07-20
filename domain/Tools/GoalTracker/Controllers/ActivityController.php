@@ -3,6 +3,9 @@
 namespace Domain\Tools\GoalTracker\Controllers;
 
 use App\Http\Controllers\Controller;
+use Domain\Automation\EventRegistry;
+use Domain\Tools\DailyRoutine\Models\RoutineTask;
+use Domain\Tools\GoalTracker\Enums\ActivityType;
 use Domain\Tools\GoalTracker\Models\Activity;
 use Domain\Tools\GoalTracker\Requests\StoreActivityRequest;
 use Domain\Tools\GoalTracker\Requests\UpdateActivityRequest;
@@ -10,6 +13,7 @@ use Domain\User\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Date;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -26,6 +30,8 @@ class ActivityController extends Controller
                 'id' => $activity->id,
                 'name' => $activity->name,
                 'description' => $activity->description,
+                'type' => $activity->type->value,
+                'event_key' => $activity->event_key,
                 'point_cost' => $activity->point_cost,
                 'color' => $activity->color,
                 'needs_timer' => $activity->needs_timer,
@@ -38,17 +44,19 @@ class ActivityController extends Controller
         ]);
     }
 
-    public function create(Request $request): Response
+    public function create(Request $request, EventRegistry $registry): Response
     {
         $user = $request->user();
 
         return Inertia::render('tools/goal-tracker/activities/create', [
             'availableTags' => $user->tags()->pluck('name')->toArray(),
             'availableGoals' => $user->goals()->get()->map(fn ($g) => ['id' => $g->id, 'name' => $g->name, 'color' => $g->color])->toArray(),
+            'availableRoutineTasks' => $this->routineTaskOptions($user),
+            'automationEvents' => $registry->toArray(),
         ]);
     }
 
-    public function store(StoreActivityRequest $request): RedirectResponse
+    public function store(StoreActivityRequest $request, EventRegistry $registry): RedirectResponse
     {
         $user = $request->user();
         $data = $request->validated();
@@ -56,6 +64,8 @@ class ActivityController extends Controller
         $tags = $data['tags'] ?? [];
         $goalIds = $data['goal_ids'] ?? [];
         unset($data['tags'], $data['goal_ids']);
+
+        $data = $this->normalizeAutomation($data, $registry);
 
         if (! $data['needs_timer']) {
             $data['duration_minutes'] = null;
@@ -71,7 +81,7 @@ class ActivityController extends Controller
         return to_route('activities.index');
     }
 
-    public function edit(Request $request, Activity $activity): Response
+    public function edit(Request $request, Activity $activity, EventRegistry $registry): Response
     {
         $this->authorize('update', $activity);
 
@@ -82,6 +92,9 @@ class ActivityController extends Controller
                 'id' => $activity->id,
                 'name' => $activity->name,
                 'description' => $activity->description,
+                'type' => $activity->type->value,
+                'event_key' => $activity->event_key,
+                'event_parameters' => $activity->event_parameters ?? (object) [],
                 'point_cost' => $activity->point_cost,
                 'color' => $activity->color,
                 'needs_timer' => $activity->needs_timer,
@@ -91,10 +104,12 @@ class ActivityController extends Controller
             ],
             'availableTags' => $user->tags()->pluck('name')->toArray(),
             'availableGoals' => $user->goals()->get()->map(fn ($g) => ['id' => $g->id, 'name' => $g->name, 'color' => $g->color])->toArray(),
+            'availableRoutineTasks' => $this->routineTaskOptions($user),
+            'automationEvents' => $registry->toArray(),
         ]);
     }
 
-    public function update(UpdateActivityRequest $request, Activity $activity): RedirectResponse
+    public function update(UpdateActivityRequest $request, Activity $activity, EventRegistry $registry): RedirectResponse
     {
         $this->authorize('update', $activity);
 
@@ -103,6 +118,8 @@ class ActivityController extends Controller
         $tags = $data['tags'] ?? [];
         $goalIds = $data['goal_ids'] ?? [];
         unset($data['tags'], $data['goal_ids']);
+
+        $data = $this->normalizeAutomation($data, $registry);
 
         if (! $data['needs_timer']) {
             $data['duration_minutes'] = null;
@@ -142,6 +159,52 @@ class ActivityController extends Controller
         }
 
         return to_route('activities.index');
+    }
+
+    /**
+     * Clean the automation columns so a manual activity never keeps a stale
+     * event binding and an automated one stores only declared parameters.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function normalizeAutomation(array $data, EventRegistry $registry): array
+    {
+        $isAutomated = ($data['type'] ?? ActivityType::Manual->value) === ActivityType::Automated->value;
+        $event = $isAutomated && is_string($data['event_key'] ?? null)
+            ? $registry->find($data['event_key'])
+            : null;
+
+        if ($event === null) {
+            $data['type'] = ActivityType::Manual->value;
+            $data['event_key'] = null;
+            $data['event_parameters'] = null;
+
+            return $data;
+        }
+
+        $data['event_parameters'] = $event->normalizeParameters($data['event_parameters'] ?? []);
+        $data['needs_timer'] = false;
+
+        return $data;
+    }
+
+    /**
+     * The user's currently enabled routine tasks that a "specific routine task"
+     * event can target. Archived tasks (whose usage period has ended) are left
+     * out since they can no longer be completed.
+     *
+     * @return list<array{id: int, name: string}>
+     */
+    private function routineTaskOptions(User $user): array
+    {
+        return $user->routineTasks()
+            ->whereDate('ends_on', '>=', Date::today())
+            ->orderBy('name')
+            ->get()
+            ->map(fn (RoutineTask $task): array => ['id' => $task->id, 'name' => $task->name])
+            ->values()
+            ->all();
     }
 
     /**

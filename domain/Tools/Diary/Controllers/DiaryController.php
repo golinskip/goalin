@@ -4,6 +4,8 @@ namespace Domain\Tools\Diary\Controllers;
 
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
+use Domain\Automation\AutomationRunner;
+use Domain\Tools\Diary\Events\NoEmptyDiaryDaysEvent;
 use Domain\Tools\Diary\Models\DiaryEntry;
 use Domain\Tools\Diary\Requests\ExportDiaryRequest;
 use Domain\Tools\Diary\Requests\StoreDiaryEntryRequest;
@@ -209,9 +211,11 @@ class DiaryController extends Controller
         ]);
     }
 
-    public function store(StoreDiaryEntryRequest $request): RedirectResponse
+    public function store(StoreDiaryEntryRequest $request, AutomationRunner $automation): RedirectResponse
     {
         $request->user()->diaryEntries()->create($request->validated());
+
+        $automation->fire(NoEmptyDiaryDaysEvent::KEY, $request->user());
 
         $date = $request->validated('entry_date');
         $month = Carbon::parse($date)->format('Y-m');

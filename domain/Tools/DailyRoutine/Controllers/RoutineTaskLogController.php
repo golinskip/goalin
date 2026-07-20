@@ -4,7 +4,10 @@ namespace Domain\Tools\DailyRoutine\Controllers;
 
 use App\Http\Controllers\Controller;
 use Carbon\CarbonImmutable;
+use Domain\Automation\AutomationRunner;
 use Domain\Tools\DailyRoutine\Enums\RoutineTaskStatus;
+use Domain\Tools\DailyRoutine\Events\DailyRoutineTasksEvent;
+use Domain\Tools\DailyRoutine\Events\SpecificRoutineTaskEvent;
 use Domain\Tools\DailyRoutine\Models\RoutineTask;
 use Domain\Tools\DailyRoutine\Requests\CommentRoutineTaskRequest;
 use Domain\Tools\DailyRoutine\Requests\LogRoutineTaskRequest;
@@ -15,7 +18,7 @@ class RoutineTaskLogController extends Controller
 {
     use AuthorizesRequests;
 
-    public function store(LogRoutineTaskRequest $request, RoutineTask $routineTask): RedirectResponse
+    public function store(LogRoutineTaskRequest $request, RoutineTask $routineTask, AutomationRunner $automation): RedirectResponse
     {
         $this->authorize('update', $routineTask);
 
@@ -52,6 +55,9 @@ class RoutineTaskLogController extends Controller
                 'status' => $statusEnum,
             ]);
         }
+
+        $automation->fire(DailyRoutineTasksEvent::KEY, $request->user());
+        $automation->fire(SpecificRoutineTaskEvent::KEY, $request->user());
 
         return back();
     }

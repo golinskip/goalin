@@ -11,6 +11,12 @@ import AppLayout from '@/layouts/app-layout';
 import { randomColor } from '@/lib/utils';
 import { index as activitiesIndex } from '@/routes/activities';
 import type { BreadcrumbItem } from '@/types';
+import AutomationFields, {
+    type ActivityType,
+    type AutomationEventDef,
+    type EventParameterValues,
+    type RoutineTaskOption,
+} from './automation-fields';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Activities', href: activitiesIndex() },
@@ -26,12 +32,22 @@ type GoalOption = {
 type Props = {
     availableTags: string[];
     availableGoals: GoalOption[];
+    availableRoutineTasks: RoutineTaskOption[];
+    automationEvents: AutomationEventDef[];
 };
 
-export default function ActivityCreate({ availableTags, availableGoals }: Props) {
+export default function ActivityCreate({
+    availableTags,
+    availableGoals,
+    availableRoutineTasks,
+    automationEvents,
+}: Props) {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         description: '',
+        type: 'manual' as ActivityType,
+        event_key: '',
+        event_parameters: {} as EventParameterValues,
         point_cost: '',
         color: randomColor(),
         needs_timer: false,
@@ -111,7 +127,9 @@ export default function ActivityCreate({ availableTags, availableGoals }: Props)
                                 <Input
                                     id="name"
                                     value={data.name}
-                                    onChange={(e) => setData('name', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('name', e.target.value)
+                                    }
                                     placeholder="e.g. Morning run"
                                     required
                                 />
@@ -123,7 +141,9 @@ export default function ActivityCreate({ availableTags, availableGoals }: Props)
                                 <textarea
                                     id="description"
                                     value={data.description}
-                                    onChange={(e) => setData('description', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('description', e.target.value)
+                                    }
                                     placeholder="Details about this activity..."
                                     rows={3}
                                     className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
@@ -133,13 +153,20 @@ export default function ActivityCreate({ availableTags, availableGoals }: Props)
 
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="point_cost">Point Cost</Label>
+                                    <Label htmlFor="point_cost">
+                                        Point Cost
+                                    </Label>
                                     <Input
                                         id="point_cost"
                                         type="number"
                                         min="1"
                                         value={data.point_cost}
-                                        onChange={(e) => setData('point_cost', e.target.value)}
+                                        onChange={(e) =>
+                                            setData(
+                                                'point_cost',
+                                                e.target.value,
+                                            )
+                                        }
                                         placeholder="10"
                                         required
                                     />
@@ -153,12 +180,16 @@ export default function ActivityCreate({ availableTags, availableGoals }: Props)
                                             id="color"
                                             type="color"
                                             value={data.color}
-                                            onChange={(e) => setData('color', e.target.value)}
+                                            onChange={(e) =>
+                                                setData('color', e.target.value)
+                                            }
                                             className="h-9 w-14 cursor-pointer rounded-md border border-input"
                                         />
                                         <Input
                                             value={data.color}
-                                            onChange={(e) => setData('color', e.target.value)}
+                                            onChange={(e) =>
+                                                setData('color', e.target.value)
+                                            }
                                             placeholder="#3a9a4e"
                                             className="max-w-32"
                                         />
@@ -179,7 +210,9 @@ export default function ActivityCreate({ availableTags, availableGoals }: Props)
                                                 {tag}
                                                 <button
                                                     type="button"
-                                                    onClick={() => removeTag(tag)}
+                                                    onClick={() =>
+                                                        removeTag(tag)
+                                                    }
                                                     className="rounded-full p-0.5 hover:bg-primary/20"
                                                 >
                                                     <X className="size-3" />
@@ -194,67 +227,112 @@ export default function ActivityCreate({ availableTags, availableGoals }: Props)
                                                 setTagInput(e.target.value);
                                                 setShowSuggestions(true);
                                             }}
-                                            onFocus={() => setShowSuggestions(true)}
-                                            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                                            onFocus={() =>
+                                                setShowSuggestions(true)
+                                            }
+                                            onBlur={() =>
+                                                setTimeout(
+                                                    () =>
+                                                        setShowSuggestions(
+                                                            false,
+                                                        ),
+                                                    200,
+                                                )
+                                            }
                                             onKeyDown={handleTagKeyDown}
-                                            placeholder={data.tags.length === 0 ? 'Type and press Enter to add...' : ''}
+                                            placeholder={
+                                                data.tags.length === 0
+                                                    ? 'Type and press Enter to add...'
+                                                    : ''
+                                            }
                                             className="min-w-[120px] flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
                                         />
                                     </div>
-                                    {showSuggestions && filteredSuggestions.length > 0 && tagInput && (
-                                        <div className="absolute z-20 mt-1 w-full rounded-md border border-border bg-popover shadow-md">
-                                            {filteredSuggestions.map((tag) => (
-                                                <button
-                                                    key={tag}
-                                                    type="button"
-                                                    onMouseDown={(e) => {
-                                                        e.preventDefault();
-                                                        addTag(tag);
-                                                    }}
-                                                    className="block w-full px-3 py-2 text-left text-sm hover:bg-accent"
-                                                >
-                                                    {tag}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
+                                    {showSuggestions &&
+                                        filteredSuggestions.length > 0 &&
+                                        tagInput && (
+                                            <div className="absolute z-20 mt-1 w-full rounded-md border border-border bg-popover shadow-md">
+                                                {filteredSuggestions.map(
+                                                    (tag) => (
+                                                        <button
+                                                            key={tag}
+                                                            type="button"
+                                                            onMouseDown={(
+                                                                e,
+                                                            ) => {
+                                                                e.preventDefault();
+                                                                addTag(tag);
+                                                            }}
+                                                            className="block w-full px-3 py-2 text-left text-sm hover:bg-accent"
+                                                        >
+                                                            {tag}
+                                                        </button>
+                                                    ),
+                                                )}
+                                            </div>
+                                        )}
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    Press Enter to add a tag. You can create new tags or reuse existing ones.
+                                    Press Enter to add a tag. You can create new
+                                    tags or reuse existing ones.
                                 </p>
                                 <InputError message={errors.tags} />
                             </div>
 
                             {availableGoals.length > 0 && (
                                 <div className="grid gap-2">
-                                    <Label>Goals this activity helps achieve</Label>
+                                    <Label>
+                                        Goals this activity helps achieve
+                                    </Label>
                                     <div className="grid gap-2 sm:grid-cols-2">
                                         {availableGoals.map((goal) => (
                                             <label
                                                 key={goal.id}
                                                 className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${
-                                                    data.goal_ids.includes(goal.id)
+                                                    data.goal_ids.includes(
+                                                        goal.id,
+                                                    )
                                                         ? 'border-primary bg-primary/5'
                                                         : 'border-border/50 hover:border-border'
                                                 }`}
                                             >
                                                 <input
                                                     type="checkbox"
-                                                    checked={data.goal_ids.includes(goal.id)}
+                                                    checked={data.goal_ids.includes(
+                                                        goal.id,
+                                                    )}
                                                     onChange={(e) => {
                                                         if (e.target.checked) {
-                                                            setData('goal_ids', [...data.goal_ids, goal.id]);
+                                                            setData(
+                                                                'goal_ids',
+                                                                [
+                                                                    ...data.goal_ids,
+                                                                    goal.id,
+                                                                ],
+                                                            );
                                                         } else {
-                                                            setData('goal_ids', data.goal_ids.filter((id) => id !== goal.id));
+                                                            setData(
+                                                                'goal_ids',
+                                                                data.goal_ids.filter(
+                                                                    (id) =>
+                                                                        id !==
+                                                                        goal.id,
+                                                                ),
+                                                            );
                                                         }
                                                     }}
                                                     className="size-4 rounded border-input"
                                                 />
                                                 <div
                                                     className="size-3 shrink-0 rounded-full"
-                                                    style={{ backgroundColor: goal.color }}
+                                                    style={{
+                                                        backgroundColor:
+                                                            goal.color,
+                                                    }}
                                                 />
-                                                <span className="text-sm font-medium">{goal.name}</span>
+                                                <span className="text-sm font-medium">
+                                                    {goal.name}
+                                                </span>
                                             </label>
                                         ))}
                                     </div>
@@ -262,43 +340,85 @@ export default function ActivityCreate({ availableTags, availableGoals }: Props)
                                 </div>
                             )}
 
-                            <div className="space-y-4 rounded-lg border border-border/50 p-4">
-                                <div className="flex items-center gap-3">
-                                    <input
-                                        id="needs_timer"
-                                        type="checkbox"
-                                        checked={data.needs_timer}
-                                        onChange={(e) => {
-                                            setData('needs_timer', e.target.checked);
+                            <AutomationFields
+                                events={automationEvents}
+                                availableRoutineTasks={availableRoutineTasks}
+                                type={data.type}
+                                eventKey={data.event_key}
+                                parameters={data.event_parameters}
+                                errors={errors}
+                                onTypeChange={(type) => setData('type', type)}
+                                onEventChange={(eventKey, parameters) =>
+                                    setData((current) => ({
+                                        ...current,
+                                        event_key: eventKey,
+                                        event_parameters: parameters,
+                                    }))
+                                }
+                                onParameterChange={(parameters) =>
+                                    setData('event_parameters', parameters)
+                                }
+                            />
 
-                                            if (!e.target.checked) {
-                                                setData('duration_minutes', '');
-                                            }
-                                        }}
-                                        className="size-4 rounded border-input"
-                                    />
-                                    <Label htmlFor="needs_timer" className="cursor-pointer">
-                                        This activity needs a timer
-                                    </Label>
-                                </div>
+                            {data.type === 'manual' && (
+                                <div className="space-y-4 rounded-lg border border-border/50 p-4">
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            id="needs_timer"
+                                            type="checkbox"
+                                            checked={data.needs_timer}
+                                            onChange={(e) => {
+                                                setData(
+                                                    'needs_timer',
+                                                    e.target.checked,
+                                                );
 
-                                {data.needs_timer && (
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="duration_minutes">Duration (minutes)</Label>
-                                        <Input
-                                            id="duration_minutes"
-                                            type="number"
-                                            min="1"
-                                            max="1440"
-                                            value={data.duration_minutes}
-                                            onChange={(e) => setData('duration_minutes', e.target.value)}
-                                            placeholder="30"
-                                            required
+                                                if (!e.target.checked) {
+                                                    setData(
+                                                        'duration_minutes',
+                                                        '',
+                                                    );
+                                                }
+                                            }}
+                                            className="size-4 rounded border-input"
                                         />
-                                        <InputError message={errors.duration_minutes} />
+                                        <Label
+                                            htmlFor="needs_timer"
+                                            className="cursor-pointer"
+                                        >
+                                            This activity needs a timer
+                                        </Label>
                                     </div>
-                                )}
-                            </div>
+
+                                    {data.needs_timer && (
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="duration_minutes">
+                                                Duration (minutes)
+                                            </Label>
+                                            <Input
+                                                id="duration_minutes"
+                                                type="number"
+                                                min="1"
+                                                max="1440"
+                                                value={data.duration_minutes}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'duration_minutes',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                placeholder="30"
+                                                required
+                                            />
+                                            <InputError
+                                                message={
+                                                    errors.duration_minutes
+                                                }
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             <div className="flex items-center gap-3 pt-2">
                                 <Button type="submit" disabled={processing}>

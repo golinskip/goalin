@@ -1,15 +1,12 @@
 <?php
 
-namespace Domain\Tools\GoalTracker\Requests;
+namespace Domain\Tools\DailyTodo\Requests;
 
-use Domain\Tools\GoalTracker\Concerns\ActivityValidationRules;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreActivityRequest extends FormRequest
+class UpdateTodoTaskRequest extends FormRequest
 {
-    use ActivityValidationRules;
-
     /**
      * Get the validation rules that apply to the request.
      *
@@ -17,6 +14,9 @@ class StoreActivityRequest extends FormRequest
      */
     public function rules(): array
     {
-        return $this->activityRules();
+        return [
+            'title' => ['required', 'string', 'max:255'],
+            'due_date' => ['nullable', 'date'],
+        ];
     }
 }

@@ -3,6 +3,8 @@
 namespace Domain\Tools\RssFeeds\Controllers;
 
 use App\Http\Controllers\Controller;
+use Domain\Automation\AutomationRunner;
+use Domain\Tools\RssFeeds\Events\ReadArticlesEvent;
 use Domain\Tools\RssFeeds\Models\RssArticle;
 use Domain\Tools\RssFeeds\Models\RssFeed;
 use Domain\Tools\RssFeeds\Requests\StoreRssFeedRequest;
@@ -151,7 +153,7 @@ class RssFeedController extends Controller
         return to_route('rss-feeds.index');
     }
 
-    public function toggleRead(Request $request, RssArticle $rssArticle): RedirectResponse
+    public function toggleRead(Request $request, RssArticle $rssArticle, AutomationRunner $automation): RedirectResponse
     {
         $feed = $rssArticle->feed;
 
@@ -161,10 +163,12 @@ class RssFeedController extends Controller
             'read_at' => $rssArticle->read_at ? null : now(),
         ]);
 
+        $automation->fire(ReadArticlesEvent::KEY, $request->user());
+
         return back();
     }
 
-    public function markRead(Request $request, RssArticle $rssArticle): RedirectResponse
+    public function markRead(Request $request, RssArticle $rssArticle, AutomationRunner $automation): RedirectResponse
     {
         $feed = $rssArticle->feed;
 
@@ -173,6 +177,8 @@ class RssFeedController extends Controller
         if ($rssArticle->read_at === null) {
             $rssArticle->update(['read_at' => now()]);
         }
+
+        $automation->fire(ReadArticlesEvent::KEY, $request->user());
 
         return back();
     }

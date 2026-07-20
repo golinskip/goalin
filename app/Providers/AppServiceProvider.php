@@ -4,13 +4,20 @@ namespace App\Providers;
 
 use Carbon\CarbonImmutable;
 use Domain\Alerts\AlertManager;
+use Domain\Automation\EventRegistry;
 use Domain\Tools\DailyRoutine\Alerts\UnmarkedRoutineTasksAlert;
+use Domain\Tools\DailyRoutine\Events\DailyRoutineTasksEvent;
+use Domain\Tools\DailyRoutine\Events\SpecificRoutineTaskEvent;
 use Domain\Tools\DailyRoutine\Models\RoutineTask;
 use Domain\Tools\DailyRoutine\Policies\RoutineTaskPolicy;
+use Domain\Tools\DailyTodo\Models\TodoTask;
+use Domain\Tools\DailyTodo\Policies\TodoTaskPolicy;
 use Domain\Tools\Diary\Alerts\EmptyDiaryDaysAlert;
+use Domain\Tools\Diary\Events\NoEmptyDiaryDaysEvent;
 use Domain\Tools\Diary\Models\DiaryEntry;
 use Domain\Tools\Diary\Policies\DiaryEntryPolicy;
 use Domain\Tools\Flashcards\Alerts\NoReviewTodayAlert;
+use Domain\Tools\Flashcards\Events\ReviewedFlashcardsEvent;
 use Domain\Tools\Flashcards\Models\MemoFolder;
 use Domain\Tools\Flashcards\Models\MemoSet;
 use Domain\Tools\Flashcards\Policies\MemoFolderPolicy;
@@ -25,6 +32,8 @@ use Domain\Tools\GoalTracker\Policies\ActivityPolicy;
 use Domain\Tools\GoalTracker\Policies\GoalPolicy;
 use Domain\Tools\GoalTracker\Policies\RewardPolicy;
 use Domain\Tools\LongTermGoals\Alerts\NoGoalsThisPeriodAlert;
+use Domain\Tools\LongTermGoals\Events\LongTermGoalsProgressEvent;
+use Domain\Tools\LongTermGoals\Events\ReviewedLongTermGoalsEvent;
 use Domain\Tools\LongTermGoals\Models\GoalCategory;
 use Domain\Tools\LongTermGoals\Models\GoalPeriod;
 use Domain\Tools\LongTermGoals\Models\LongTermGoal;
@@ -36,6 +45,7 @@ use Domain\Tools\MusicPlayer\Models\Playlist;
 use Domain\Tools\MusicPlayer\Policies\MusicFilePolicy;
 use Domain\Tools\MusicPlayer\Policies\PlaylistPolicy;
 use Domain\Tools\RssFeeds\Alerts\UncheckedNewsTodayAlert;
+use Domain\Tools\RssFeeds\Events\ReadArticlesEvent;
 use Domain\Tools\RssFeeds\Models\RssFeed;
 use Domain\Tools\RssFeeds\Policies\RssFeedPolicy;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -59,6 +69,16 @@ class AppServiceProvider extends ServiceProvider
             new NoGoalsThisPeriodAlert,
             new UncheckedNewsTodayAlert,
             new UnmarkedRoutineTasksAlert,
+        ));
+
+        $this->app->singleton(EventRegistry::class, fn () => new EventRegistry(
+            new ReviewedFlashcardsEvent,
+            new ReadArticlesEvent,
+            new DailyRoutineTasksEvent,
+            new SpecificRoutineTaskEvent,
+            new NoEmptyDiaryDaysEvent,
+            new ReviewedLongTermGoalsEvent,
+            new LongTermGoalsProgressEvent,
         ));
     }
 
@@ -103,6 +123,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(GameResult::class, GameResultPolicy::class);
         Gate::policy(RssFeed::class, RssFeedPolicy::class);
         Gate::policy(RoutineTask::class, RoutineTaskPolicy::class);
+        Gate::policy(TodoTask::class, TodoTaskPolicy::class);
     }
 
     /**
