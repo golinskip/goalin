@@ -3,6 +3,8 @@
 namespace Domain\Tools\GoalTracker\Controllers;
 
 use App\Http\Controllers\Controller;
+use Carbon\CarbonImmutable;
+use Domain\Tools\DailyTodo\Support\TodoPresenter;
 use Domain\Tools\GoalTracker\Models\Activity;
 use Domain\Tools\GoalTracker\Requests\StoreActivityLogRequest;
 use Domain\Tools\MusicPlayer\Models\Playlist;
@@ -60,6 +62,7 @@ class ActivityLogController extends Controller
                 'point_cost' => $activity->point_cost,
             ],
             'playlists' => $playlists,
+            'todayTodos' => TodoPresenter::forDay($user, CarbonImmutable::today()),
         ]);
     }
 }

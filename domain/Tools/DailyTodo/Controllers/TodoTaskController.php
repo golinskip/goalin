@@ -3,7 +3,10 @@
 namespace Domain\Tools\DailyTodo\Controllers;
 
 use App\Http\Controllers\Controller;
+use Domain\Automation\AutomationRunner;
+use Domain\Tools\DailyTodo\Events\CompletedTodosEvent;
 use Domain\Tools\DailyTodo\Models\TodoTask;
+use Domain\Tools\DailyTodo\Requests\MarkTodoNotDoneRequest;
 use Domain\Tools\DailyTodo\Requests\StoreTodoTaskRequest;
 use Domain\Tools\DailyTodo\Requests\UpdateTodoTaskRequest;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -41,13 +44,48 @@ class TodoTaskController extends Controller
         return back();
     }
 
-    public function toggle(TodoTask $todoTask): RedirectResponse
+    public function toggle(TodoTask $todoTask, AutomationRunner $automation): RedirectResponse
     {
         $this->authorize('update', $todoTask);
 
         $todoTask->update([
             'completed_at' => $todoTask->isCompleted() ? null : now(),
+            'not_done' => false,
         ]);
+
+        $automation->fire(CompletedTodosEvent::KEY, $todoTask->user);
+
+        return back();
+    }
+
+    /**
+     * Flag a main task as not done. Marking it again clears the flag; passing a
+     * date moves the task to that day and gives it a fresh, pending start.
+     */
+    public function markNotDone(MarkTodoNotDoneRequest $request, TodoTask $todoTask, AutomationRunner $automation): RedirectResponse
+    {
+        $this->authorize('update', $todoTask);
+
+        if ($todoTask->isSubtask()) {
+            abort(403);
+        }
+
+        $moveTo = $request->validated()['move_to'] ?? null;
+
+        if ($moveTo !== null) {
+            $todoTask->update([
+                'due_date' => $moveTo,
+                'completed_at' => null,
+                'not_done' => false,
+            ]);
+        } else {
+            $todoTask->update([
+                'completed_at' => null,
+                'not_done' => ! $todoTask->isNotDone(),
+            ]);
+        }
+
+        $automation->fire(CompletedTodosEvent::KEY, $todoTask->user);
 
         return back();
     }

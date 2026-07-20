@@ -3,6 +3,7 @@
 namespace Domain\Tools\DailyTodo\Models;
 
 use Database\Factories\TodoTaskFactory;
+use Domain\Tools\DailyTodo\Enums\TodoPriority;
 use Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['parent_id', 'title', 'due_date', 'completed_at', 'position'])]
+#[Fillable(['parent_id', 'title', 'description', 'links', 'tags', 'estimated_cycles', 'priority', 'due_date', 'completed_at', 'not_done', 'position'])]
 class TodoTask extends Model
 {
     /** @use HasFactory<TodoTaskFactory> */
@@ -24,6 +25,10 @@ class TodoTask extends Model
         return [
             'due_date' => 'date',
             'completed_at' => 'datetime',
+            'not_done' => 'boolean',
+            'links' => 'array',
+            'tags' => 'array',
+            'priority' => TodoPriority::class,
         ];
     }
 
@@ -45,6 +50,11 @@ class TodoTask extends Model
     public function isCompleted(): bool
     {
         return $this->completed_at !== null;
+    }
+
+    public function isNotDone(): bool
+    {
+        return (bool) $this->not_done;
     }
 
     public function isSubtask(): bool

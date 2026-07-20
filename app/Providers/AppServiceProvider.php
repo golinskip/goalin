@@ -10,6 +10,7 @@ use Domain\Tools\DailyRoutine\Events\DailyRoutineTasksEvent;
 use Domain\Tools\DailyRoutine\Events\SpecificRoutineTaskEvent;
 use Domain\Tools\DailyRoutine\Models\RoutineTask;
 use Domain\Tools\DailyRoutine\Policies\RoutineTaskPolicy;
+use Domain\Tools\DailyTodo\Events\CompletedTodosEvent;
 use Domain\Tools\DailyTodo\Models\TodoTask;
 use Domain\Tools\DailyTodo\Policies\TodoTaskPolicy;
 use Domain\Tools\Diary\Alerts\EmptyDiaryDaysAlert;
@@ -79,6 +80,7 @@ class AppServiceProvider extends ServiceProvider
             new NoEmptyDiaryDaysEvent,
             new ReviewedLongTermGoalsEvent,
             new LongTermGoalsProgressEvent,
+            new CompletedTodosEvent,
         ));
     }
 

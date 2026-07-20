@@ -5,6 +5,7 @@ namespace Domain\Tools\DailyTodo\Controllers;
 use App\Http\Controllers\Controller;
 use Carbon\CarbonImmutable;
 use Domain\Tools\DailyTodo\Models\TodoTask;
+use Domain\Tools\DailyTodo\Support\TodoPresenter;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -23,20 +24,11 @@ class DailyTodoController extends Controller
         $gridStart = $month->startOfMonth()->startOfWeek(CarbonImmutable::MONDAY);
         $gridEnd = $month->endOfMonth()->endOfWeek(CarbonImmutable::SUNDAY);
 
-        /** @var Collection<int, TodoTask> $tasksForDay */
-        $tasksForDay = $user->todoTasks()
-            ->whereNull('parent_id')
-            ->whereDate('due_date', $selectedDate)
-            ->with('subtasks')
-            ->orderBy('position')
-            ->orderBy('id')
-            ->get();
-
         return Inertia::render('tools/daily-todo/index', [
             'selectedDate' => $selectedDate->format('Y-m-d'),
             'today' => $today->format('Y-m-d'),
             'month' => $month->format('Y-m'),
-            'tasks' => $tasksForDay->map($this->presentTask(...))->all(),
+            'tasks' => TodoPresenter::forDay($user, $selectedDate),
             'calendar' => $this->buildCalendar($user->id, $gridStart, $gridEnd),
         ]);
     }
@@ -67,24 +59,6 @@ class DailyTodoController extends Controller
         }
 
         return $days;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function presentTask(TodoTask $task): array
-    {
-        return [
-            'id' => $task->id,
-            'title' => $task->title,
-            'due_date' => $task->due_date?->format('Y-m-d'),
-            'completed' => $task->isCompleted(),
-            'subtasks' => $task->subtasks->map(fn (TodoTask $subtask): array => [
-                'id' => $subtask->id,
-                'title' => $subtask->title,
-                'completed' => $subtask->isCompleted(),
-            ])->all(),
-        ];
     }
 
     private function parseDate(mixed $value, CarbonImmutable $fallback): CarbonImmutable

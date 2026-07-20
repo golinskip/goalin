@@ -128,6 +128,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('todo-tasks', [TodoTaskController::class, 'store'])->name('todo-tasks.store');
     Route::put('todo-tasks/{todoTask}', [TodoTaskController::class, 'update'])->name('todo-tasks.update');
     Route::post('todo-tasks/{todoTask}/toggle', [TodoTaskController::class, 'toggle'])->name('todo-tasks.toggle');
+    Route::post('todo-tasks/{todoTask}/not-done', [TodoTaskController::class, 'markNotDone'])->name('todo-tasks.not-done');
     Route::delete('todo-tasks/{todoTask}', [TodoTaskController::class, 'destroy'])->name('todo-tasks.destroy');
 
     // RSS Feeds

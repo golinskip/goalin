@@ -2,6 +2,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
     ChevronDown,
+    ListTodo,
     Loader2,
     Music,
     Pause,
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import PageBackground from '@/components/page-background';
+import { TodayTodoDialog, type TodoItem } from '@/components/today-todo-dialog';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { playRingtone } from '@/lib/ringtones';
@@ -45,6 +47,7 @@ type Props = {
         point_cost: number;
     };
     playlists: PlaylistInfo[];
+    todayTodos: TodoItem[];
 };
 
 type TimerState = 'running' | 'paused' | 'finished';
@@ -415,7 +418,9 @@ function PlaylistMusicPlayer({ playlists }: { playlists: PlaylistInfo[] }) {
     );
 }
 
-export default function ActivityTimer({ activity, playlists }: Props) {
+export default function ActivityTimer({ activity, playlists, todayTodos }: Props) {
+    const [todoOpen, setTodoOpen] = useState(false);
+    const remainingTodos = todayTodos.filter((todo) => !todo.completed).length;
     const { ringtones } = usePage().props;
     const totalSeconds = activity.duration_minutes * 60;
     const [secondsLeft, setSecondsLeft] = useState(totalSeconds);
@@ -592,6 +597,21 @@ export default function ActivityTimer({ activity, playlists }: Props) {
             <div className="relative flex h-full flex-1 flex-col">
                 <PageBackground />
 
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTodoOpen(true)}
+                    className="absolute top-4 right-4 z-20 gap-2 backdrop-blur-sm"
+                >
+                    <ListTodo className="size-4" />
+                    Today&apos;s todo
+                    {remainingTodos > 0 && (
+                        <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-indigo-600 px-1.5 text-xs font-semibold text-white">
+                            {remainingTodos}
+                        </span>
+                    )}
+                </Button>
+
                 <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-8 p-4 lg:p-6">
                     {/* Activity info */}
                     <div className="text-center">
@@ -760,6 +780,8 @@ export default function ActivityTimer({ activity, playlists }: Props) {
                     </div>
                 </div>
             </div>
+
+            <TodayTodoDialog open={todoOpen} onOpenChange={setTodoOpen} todos={todayTodos} />
         </AppLayout>
     );
 }
