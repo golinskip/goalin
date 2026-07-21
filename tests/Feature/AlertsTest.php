@@ -5,6 +5,8 @@ use Domain\Alerts\AlertManager;
 use Domain\Tools\DailyRoutine\Alerts\UnmarkedRoutineTasksAlert;
 use Domain\Tools\DailyRoutine\Enums\RoutineTaskStatus;
 use Domain\Tools\DailyRoutine\Models\RoutineTask;
+use Domain\Tools\DailyTodo\Alerts\NoTodosTodayAlert;
+use Domain\Tools\DailyTodo\Models\TodoTask;
 use Domain\Tools\Diary\Alerts\EmptyDiaryDaysAlert;
 use Domain\Tools\Flashcards\Alerts\NoReviewTodayAlert;
 use Domain\Tools\GoalTracker\Alerts\NoTasksTodayAlert;
@@ -36,6 +38,31 @@ test('no tasks today alert does not trigger when activity log exists today', fun
     $alert = new NoTasksTodayAlert;
 
     expect($alert->check($user))->toBeFalse();
+});
+
+test('no todos today alert triggers when nothing is planned for today', function () {
+    $user = User::factory()->create();
+    $alert = new NoTodosTodayAlert;
+
+    expect($alert->check($user))->toBeTrue();
+    expect($alert->message())->toContain('no tasks planned');
+});
+
+test('no todos today alert does not trigger when a task is planned for today', function () {
+    $user = User::factory()->create();
+    TodoTask::factory()->for($user)->create(['due_date' => today()]);
+    $alert = new NoTodosTodayAlert;
+
+    expect($alert->check($user))->toBeFalse();
+});
+
+test('no todos today alert ignores subtasks and other days', function () {
+    $user = User::factory()->create();
+    $otherDay = TodoTask::factory()->for($user)->create(['due_date' => today()->addDay()]);
+    TodoTask::factory()->subtaskOf($otherDay)->create();
+    $alert = new NoTodosTodayAlert;
+
+    expect($alert->check($user))->toBeTrue();
 });
 
 test('empty diary days alert triggers when days are missing', function () {

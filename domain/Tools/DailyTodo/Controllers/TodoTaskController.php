@@ -11,10 +11,34 @@ use Domain\Tools\DailyTodo\Requests\StoreTodoTaskRequest;
 use Domain\Tools\DailyTodo\Requests\UpdateTodoTaskRequest;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class TodoTaskController extends Controller
 {
     use AuthorizesRequests;
+
+    /**
+     * Persist a new ordering for a set of the user's own tasks or the subtasks
+     * of a single parent. Positions are applied verbatim from the payload.
+     */
+    public function reorder(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'order' => ['required', 'array'],
+            'order.*.id' => ['required', 'integer'],
+            'order.*.position' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $user = $request->user();
+
+        foreach ($data['order'] as $item) {
+            $user->todoTasks()
+                ->where('id', $item['id'])
+                ->update(['position' => $item['position']]);
+        }
+
+        return back();
+    }
 
     public function store(StoreTodoTaskRequest $request): RedirectResponse
     {

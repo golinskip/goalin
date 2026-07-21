@@ -338,6 +338,66 @@ test('a user cannot mark another user task as not done', function () {
     $this->post(route('todo-tasks.not-done', $task))->assertForbidden();
 });
 
+test('a user can reorder their tasks', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $first = TodoTask::factory()->for($user)->create(['due_date' => now()->toDateString(), 'position' => 0]);
+    $second = TodoTask::factory()->for($user)->create(['due_date' => now()->toDateString(), 'position' => 1]);
+    $third = TodoTask::factory()->for($user)->create(['due_date' => now()->toDateString(), 'position' => 2]);
+
+    $this->patch(route('todo-tasks.reorder'), [
+        'order' => [
+            ['id' => $third->id, 'position' => 0],
+            ['id' => $first->id, 'position' => 1],
+            ['id' => $second->id, 'position' => 2],
+        ],
+    ])->assertRedirect();
+
+    expect($third->fresh()->position)->toBe(0)
+        ->and($first->fresh()->position)->toBe(1)
+        ->and($second->fresh()->position)->toBe(2);
+
+    $this->get(route('daily-todo.index'))->assertInertia(fn ($page) => $page
+        ->where('tasks.0.id', $third->id)
+        ->where('tasks.1.id', $first->id)
+        ->where('tasks.2.id', $second->id)
+    );
+});
+
+test('a user can reorder subtasks and the new order is reflected', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $parent = TodoTask::factory()->for($user)->create(['due_date' => now()->toDateString()]);
+    $subA = TodoTask::factory()->subtaskOf($parent)->create(['position' => 0]);
+    $subB = TodoTask::factory()->subtaskOf($parent)->create(['position' => 1]);
+
+    $this->patch(route('todo-tasks.reorder'), [
+        'order' => [
+            ['id' => $subB->id, 'position' => 0],
+            ['id' => $subA->id, 'position' => 1],
+        ],
+    ])->assertRedirect();
+
+    $this->get(route('daily-todo.index'))->assertInertia(fn ($page) => $page
+        ->where('tasks.0.subtasks.0.id', $subB->id)
+        ->where('tasks.0.subtasks.1.id', $subA->id)
+    );
+});
+
+test('reordering never touches another user tasks', function () {
+    $user = User::factory()->create();
+    $otherTask = TodoTask::factory()->create(['position' => 5]);
+    $this->actingAs($user);
+
+    $this->patch(route('todo-tasks.reorder'), [
+        'order' => [['id' => $otherTask->id, 'position' => 0]],
+    ])->assertRedirect();
+
+    expect($otherTask->fresh()->position)->toBe(5);
+});
+
 test('a user cannot modify another user task', function () {
     $user = User::factory()->create();
     $task = TodoTask::factory()->create();

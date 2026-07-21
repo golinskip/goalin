@@ -125,6 +125,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Daily Todo
     Route::get('daily-todo', [DailyTodoController::class, 'index'])->name('daily-todo.index');
+    Route::patch('todo-tasks/reorder', [TodoTaskController::class, 'reorder'])->name('todo-tasks.reorder');
     Route::post('todo-tasks', [TodoTaskController::class, 'store'])->name('todo-tasks.store');
     Route::put('todo-tasks/{todoTask}', [TodoTaskController::class, 'update'])->name('todo-tasks.update');
     Route::post('todo-tasks/{todoTask}/toggle', [TodoTaskController::class, 'toggle'])->name('todo-tasks.toggle');

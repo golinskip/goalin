@@ -10,6 +10,7 @@ use Domain\Tools\DailyRoutine\Events\DailyRoutineTasksEvent;
 use Domain\Tools\DailyRoutine\Events\SpecificRoutineTaskEvent;
 use Domain\Tools\DailyRoutine\Models\RoutineTask;
 use Domain\Tools\DailyRoutine\Policies\RoutineTaskPolicy;
+use Domain\Tools\DailyTodo\Alerts\NoTodosTodayAlert;
 use Domain\Tools\DailyTodo\Events\CompletedTodosEvent;
 use Domain\Tools\DailyTodo\Models\TodoTask;
 use Domain\Tools\DailyTodo\Policies\TodoTaskPolicy;
@@ -70,6 +71,7 @@ class AppServiceProvider extends ServiceProvider
             new NoGoalsThisPeriodAlert,
             new UncheckedNewsTodayAlert,
             new UnmarkedRoutineTasksAlert,
+            new NoTodosTodayAlert,
         ));
 
         $this->app->singleton(EventRegistry::class, fn () => new EventRegistry(

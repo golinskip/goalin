@@ -10,6 +10,7 @@ import {
     CornerDownRight,
     ExternalLink,
     Flag,
+    GripVertical,
     Link2,
     ListTodo,
     Pencil,
@@ -19,7 +20,7 @@ import {
     Trash2,
     X,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     destroy as destroyTask,
     markNotDone as markNotDoneTask,
@@ -40,6 +41,7 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { index as dailyTodoIndex } from '@/routes/daily-todo';
+import { reorder as reorderTasks } from '@/routes/todo-tasks';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 
@@ -461,16 +463,28 @@ function TitleButton({
 
 function TaskItem({
     task,
+    index,
     activeDetailId,
     onEdit,
     onShowDetails,
     onNotDone,
+    onTaskDragStart,
+    onTaskDragEnter,
+    onDragEnd,
+    onSubtaskDragStart,
+    onSubtaskDragEnter,
 }: {
     task: Task;
+    index: number;
     activeDetailId: number | null;
     onEdit: (task: TaskDetails) => void;
     onShowDetails: (item: TaskDetails) => void;
     onNotDone: (task: Task) => void;
+    onTaskDragStart: (index: number) => void;
+    onTaskDragEnter: (index: number) => void;
+    onDragEnd: () => void;
+    onSubtaskDragStart: (parentId: number, index: number) => void;
+    onSubtaskDragEnter: (parentId: number, index: number) => void;
 }) {
     const toggle = (id: number) => {
         router.post(toggleTask.url(id), {}, { preserveScroll: true, preserveState: true });
@@ -488,12 +502,23 @@ function TaskItem({
 
     return (
         <div
+            onDragEnter={() => onTaskDragEnter(index)}
+            onDragOver={(e) => e.preventDefault()}
             className={cn(
                 'rounded-lg border border-border bg-white/60 p-3 dark:bg-black/30',
                 task.not_done && 'border-rose-300/70 bg-rose-50/50 dark:border-rose-800/50 dark:bg-rose-950/20',
             )}
         >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+                <span
+                    draggable
+                    onDragStart={() => onTaskDragStart(index)}
+                    onDragEnd={onDragEnd}
+                    className="shrink-0 cursor-grab text-muted-foreground/40 hover:text-muted-foreground active:cursor-grabbing"
+                    title="Drag to reorder"
+                >
+                    <GripVertical className="size-4" />
+                </span>
                 <button
                     type="button"
                     onClick={() => toggle(task.id)}
@@ -582,8 +607,22 @@ function TaskItem({
 
             {task.subtasks.length > 0 && (
                 <ul className="mt-2 space-y-1">
-                    {task.subtasks.map((subtask) => (
-                        <li key={subtask.id} className="flex items-center gap-2 pl-8">
+                    {task.subtasks.map((subtask, subtaskIndex) => (
+                        <li
+                            key={subtask.id}
+                            onDragEnter={() => onSubtaskDragEnter(task.id, subtaskIndex)}
+                            onDragOver={(e) => e.preventDefault()}
+                            className="flex items-center gap-2 pl-4"
+                        >
+                            <span
+                                draggable
+                                onDragStart={() => onSubtaskDragStart(task.id, subtaskIndex)}
+                                onDragEnd={onDragEnd}
+                                className="shrink-0 cursor-grab text-muted-foreground/40 hover:text-muted-foreground active:cursor-grabbing"
+                                title="Drag to reorder"
+                            >
+                                <GripVertical className="size-3.5" />
+                            </span>
                             <button
                                 type="button"
                                 onClick={() => toggle(subtask.id)}
@@ -797,6 +836,15 @@ export default function DailyTodoIndex({ selectedDate, today, month, tasks, cale
     const [editingTask, setEditingTask] = useState<TaskDetails | null>(null);
     const [detailId, setDetailId] = useState<number | null>(null);
     const [notDoneTask, setNotDoneTask] = useState<Task | null>(null);
+    const [orderedTasks, setOrderedTasks] = useState<Task[]>(tasks);
+
+    useEffect(() => {
+        setOrderedTasks(tasks);
+    }, [tasks]);
+
+    const dragTaskFrom = useRef<number | null>(null);
+    const dragTaskTo = useRef<number | null>(null);
+    const dragSubtask = useRef<{ parentId: number; from: number; to: number } | null>(null);
 
     const addForm = useForm({ title: '', due_date: selectedDate });
 
@@ -810,12 +858,67 @@ export default function DailyTodoIndex({ selectedDate, today, month, tasks, cale
         setNotDoneTask(task);
     };
 
+    const persistOrder = (items: TaskDetails[]) => {
+        router.patch(
+            reorderTasks.url(),
+            { order: items.map((item, position) => ({ id: item.id, position })) },
+            { preserveScroll: true, preserveState: true },
+        );
+    };
+
+    const handleTaskDragStart = (index: number) => {
+        dragTaskFrom.current = index;
+        dragSubtask.current = null;
+    };
+
+    const handleTaskDragEnter = (index: number) => {
+        if (dragTaskFrom.current !== null) {
+            dragTaskTo.current = index;
+        }
+    };
+
+    const handleSubtaskDragStart = (parentId: number, index: number) => {
+        dragSubtask.current = { parentId, from: index, to: index };
+        dragTaskFrom.current = null;
+    };
+
+    const handleSubtaskDragEnter = (parentId: number, index: number) => {
+        if (dragSubtask.current && dragSubtask.current.parentId === parentId) {
+            dragSubtask.current.to = index;
+        }
+    };
+
+    const handleDragEnd = () => {
+        if (dragTaskFrom.current !== null && dragTaskTo.current !== null && dragTaskFrom.current !== dragTaskTo.current) {
+            const items = [...orderedTasks];
+            const [moved] = items.splice(dragTaskFrom.current, 1);
+            items.splice(dragTaskTo.current, 0, moved);
+            setOrderedTasks(items);
+            persistOrder(items);
+        } else if (dragSubtask.current && dragSubtask.current.from !== dragSubtask.current.to) {
+            const { parentId, from, to } = dragSubtask.current;
+            const parent = orderedTasks.find((t) => t.id === parentId);
+
+            if (parent) {
+                const subtasks = [...parent.subtasks];
+                const [moved] = subtasks.splice(from, 1);
+                subtasks.splice(to, 0, moved);
+                setOrderedTasks(orderedTasks.map((t) => (t.id === parentId ? { ...t, subtasks } : t)));
+                persistOrder(subtasks);
+            }
+        }
+
+        dragTaskFrom.current = null;
+        dragTaskTo.current = null;
+        dragSubtask.current = null;
+    };
+
     const detailItem = useMemo<TaskDetails | null>(() => {
         if (detailId === null) {
             return null;
         }
 
-        for (const task of tasks) {
+        for (const task of orderedTasks) {
             if (task.id === detailId) {
                 return task;
             }
@@ -828,7 +931,7 @@ export default function DailyTodoIndex({ selectedDate, today, month, tasks, cale
         }
 
         return null;
-    }, [detailId, tasks]);
+    }, [detailId, orderedTasks]);
 
     const navigate = (params: { date?: string; month?: string }) => {
         router.get(
@@ -866,7 +969,7 @@ export default function DailyTodoIndex({ selectedDate, today, month, tasks, cale
         return chunks;
     }, [calendar]);
 
-    const remaining = tasks.filter((t) => !t.completed).length;
+    const remaining = orderedTasks.filter((t) => !t.completed).length;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -904,9 +1007,9 @@ export default function DailyTodoIndex({ selectedDate, today, month, tasks, cale
                             <div className="mb-4">
                                 <h2 className="text-lg font-semibold">{formatDateLabel(selectedDate)}</h2>
                                 <p className="text-xs text-muted-foreground">
-                                    {tasks.length === 0
+                                    {orderedTasks.length === 0
                                         ? 'Nothing planned yet'
-                                        : `${remaining} of ${tasks.length} task${tasks.length === 1 ? '' : 's'} remaining`}
+                                        : `${remaining} of ${orderedTasks.length} task${orderedTasks.length === 1 ? '' : 's'} remaining`}
                                 </p>
                             </div>
 
@@ -925,21 +1028,27 @@ export default function DailyTodoIndex({ selectedDate, today, month, tasks, cale
                             {addForm.errors.title && <p className="-mt-2 mb-3 text-xs text-destructive">{addForm.errors.title}</p>}
 
                             <div className="space-y-2">
-                                {tasks.length === 0 ? (
+                                {orderedTasks.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-10 text-center">
                                         <ListTodo className="mb-2 size-8 text-muted-foreground/40" />
                                         <p className="text-sm text-muted-foreground">No tasks for this day.</p>
                                         <p className="mt-1 text-xs text-muted-foreground">Add one above, or pick another day on the calendar.</p>
                                     </div>
                                 ) : (
-                                    tasks.map((task) => (
+                                    orderedTasks.map((task, taskIndex) => (
                                         <TaskItem
                                             key={task.id}
                                             task={task}
+                                            index={taskIndex}
                                             activeDetailId={detailId}
                                             onEdit={setEditingTask}
                                             onShowDetails={(item) => setDetailId(item.id)}
                                             onNotDone={handleNotDone}
+                                            onTaskDragStart={handleTaskDragStart}
+                                            onTaskDragEnter={handleTaskDragEnter}
+                                            onDragEnd={handleDragEnd}
+                                            onSubtaskDragStart={handleSubtaskDragStart}
+                                            onSubtaskDragEnter={handleSubtaskDragEnter}
                                         />
                                     ))
                                 )}
