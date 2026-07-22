@@ -23,6 +23,7 @@ use Domain\Tools\LongTermGoals\Models\LongTermGoal;
 use Domain\Tools\MusicPlayer\Models\MusicFile;
 use Domain\Tools\MusicPlayer\Models\Playlist;
 use Domain\Tools\RssFeeds\Models\RssFeed;
+use Domain\Tools\TaskMindmap\Models\MindmapTask;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -153,6 +154,11 @@ class User extends Authenticatable
     public function todoTasks(): HasMany
     {
         return $this->hasMany(TodoTask::class);
+    }
+
+    public function mindmapTasks(): HasMany
+    {
+        return $this->hasMany(MindmapTask::class);
     }
 
     public function serviceConnections(): HasMany

@@ -8,12 +8,15 @@ import {
     Flag,
     Link2,
     ListTodo,
+    Pencil,
     RefreshCw,
     Tag,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toggle as toggleTask } from '@/actions/Domain/Tools/DailyTodo/Controllers/TodoTaskController';
+import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { index as dailyTodoIndex } from '@/routes/daily-todo';
 import { cn } from '@/lib/utils';
 
 type Priority = 'low' | 'medium' | 'high';
@@ -220,15 +223,24 @@ export function TodayTodoDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                        <ListTodo className="size-5 text-indigo-600 dark:text-indigo-400" />
-                        Today&apos;s todo
-                        {todos.length > 0 && (
-                            <span className="text-sm font-normal text-muted-foreground">
-                                · {remaining} of {todos.length} left
-                            </span>
-                        )}
-                    </DialogTitle>
+                    <div className="flex items-center justify-between gap-3 pr-6">
+                        <DialogTitle className="flex items-center gap-2">
+                            <ListTodo className="size-5 text-indigo-600 dark:text-indigo-400" />
+                            Today&apos;s todo
+                            {todos.length > 0 && (
+                                <span className="text-sm font-normal text-muted-foreground">
+                                    · {remaining} of {todos.length} left
+                                </span>
+                            )}
+                        </DialogTitle>
+                        <Button variant="outline" size="sm" className="shrink-0 gap-1.5" asChild>
+                            <a href={dailyTodoIndex.url()} target="_blank" rel="noopener noreferrer">
+                                <Pencil className="size-3.5" />
+                                Open editor
+                                <ExternalLink className="size-3 opacity-60" />
+                            </a>
+                        </Button>
+                    </div>
                 </DialogHeader>
 
                 {todos.length === 0 ? (

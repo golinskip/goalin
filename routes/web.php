@@ -35,6 +35,8 @@ use Domain\Tools\LongTermGoals\Controllers\LongTermGoalsController;
 use Domain\Tools\MusicPlayer\Controllers\MusicFileController;
 use Domain\Tools\MusicPlayer\Controllers\PlaylistController;
 use Domain\Tools\RssFeeds\Controllers\RssFeedController;
+use Domain\Tools\TaskMindmap\Controllers\MindmapTaskController;
+use Domain\Tools\TaskMindmap\Controllers\TaskMindmapController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -131,6 +133,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('todo-tasks/{todoTask}/toggle', [TodoTaskController::class, 'toggle'])->name('todo-tasks.toggle');
     Route::post('todo-tasks/{todoTask}/not-done', [TodoTaskController::class, 'markNotDone'])->name('todo-tasks.not-done');
     Route::delete('todo-tasks/{todoTask}', [TodoTaskController::class, 'destroy'])->name('todo-tasks.destroy');
+
+    // Task Mindmap
+    Route::get('task-mindmap', [TaskMindmapController::class, 'index'])->name('task-mindmap.index');
+    Route::patch('mindmap-tasks/reorder', [MindmapTaskController::class, 'reorder'])->name('mindmap-tasks.reorder');
+    Route::post('mindmap-tasks', [MindmapTaskController::class, 'store'])->name('mindmap-tasks.store');
+    Route::put('mindmap-tasks/{mindmapTask}', [MindmapTaskController::class, 'update'])->name('mindmap-tasks.update');
+    Route::post('mindmap-tasks/{mindmapTask}/status', [MindmapTaskController::class, 'status'])->name('mindmap-tasks.status');
+    Route::delete('mindmap-tasks/{mindmapTask}', [MindmapTaskController::class, 'destroy'])->name('mindmap-tasks.destroy');
 
     // RSS Feeds
     Route::get('rss-feeds', [RssFeedController::class, 'index'])->name('rss-feeds.index');

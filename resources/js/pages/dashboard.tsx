@@ -8,6 +8,7 @@ import {
     Layers,
     ListTodo,
     Music,
+    Network,
     NotebookPen,
     Repeat2,
     Rss,
@@ -106,6 +107,15 @@ const tools: Tool[] = [
         card: 'border-indigo-200/80 dark:border-indigo-800/50',
         iconWrapper: 'bg-indigo-500/15 group-hover:bg-indigo-500/25',
         iconColor: 'text-indigo-600 dark:text-indigo-400',
+    },
+    {
+        title: 'Task Mindmap',
+        description: 'Break goals into a nested task tree',
+        href: '/task-mindmap',
+        icon: Network,
+        card: 'border-cyan-200/80 dark:border-cyan-800/50',
+        iconWrapper: 'bg-cyan-500/15 group-hover:bg-cyan-500/25',
+        iconColor: 'text-cyan-600 dark:text-cyan-400',
     },
     {
         title: 'Long Term Goals',

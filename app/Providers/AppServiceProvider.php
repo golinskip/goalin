@@ -50,6 +50,8 @@ use Domain\Tools\RssFeeds\Alerts\UncheckedNewsTodayAlert;
 use Domain\Tools\RssFeeds\Events\ReadArticlesEvent;
 use Domain\Tools\RssFeeds\Models\RssFeed;
 use Domain\Tools\RssFeeds\Policies\RssFeedPolicy;
+use Domain\Tools\TaskMindmap\Models\MindmapTask;
+use Domain\Tools\TaskMindmap\Policies\MindmapTaskPolicy;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -128,6 +130,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(RssFeed::class, RssFeedPolicy::class);
         Gate::policy(RoutineTask::class, RoutineTaskPolicy::class);
         Gate::policy(TodoTask::class, TodoTaskPolicy::class);
+        Gate::policy(MindmapTask::class, MindmapTaskPolicy::class);
     }
 
     /**

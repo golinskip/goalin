@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, ChevronDown, Compass, Gamepad2, Layers, LayoutGrid, ListTodo, Menu, Music, NotebookPen, Repeat2, Rss, Shield, Target } from 'lucide-react';
+import { BookOpen, ChevronDown, Compass, Gamepad2, Layers, LayoutGrid, ListTodo, Menu, Music, Network, NotebookPen, Repeat2, Rss, Shield, Target } from 'lucide-react';
 import { AlertsMenu } from '@/components/alerts-menu';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -32,6 +32,7 @@ import { dashboard } from '@/routes';
 import { index as dailyRoutineIndex } from '@/routes/daily-routine';
 import { index as dailyTodoIndex } from '@/routes/daily-todo';
 import { index as diaryIndex } from '@/routes/diary';
+import { index as taskMindmapIndex } from '@/routes/task-mindmap';
 import { index as memoSetsIndex } from '@/routes/memo-sets';
 import { index as musicIndex } from '@/routes/music';
 import type { BreadcrumbItem, NavItem } from '@/types';
@@ -65,6 +66,11 @@ const toolsNavItems: NavItem[] = [
         title: 'Daily Todo',
         href: dailyTodoIndex(),
         icon: ListTodo,
+    },
+    {
+        title: 'Task Mindmap',
+        href: taskMindmapIndex(),
+        icon: Network,
     },
     {
         title: 'Long Term Goals',

@@ -69,6 +69,13 @@ domain/
     │   ├── Controllers/          # DailyTodo (index + calendar), TodoTask (store/update/toggle/destroy)
     │   ├── Requests/             # StoreTodoTask, UpdateTodoTask form requests
     │   └── Policies/             # TodoTask policy
+    ├── TaskMindmap/              # Subdomain: arbitrarily nested task tree (no fixed dates); status todo/done/rejected
+    │   ├── Models/               # MindmapTask (self-nesting tree with color, icon, priority, deadline, links, tags)
+    │   ├── Enums/                # TaskStatus, TaskPriority
+    │   ├── Controllers/          # TaskMindmap (index), MindmapTask (store/update/status/reorder/destroy)
+    │   ├── Requests/             # StoreMindmapTask, UpdateMindmapTask form requests
+    │   ├── Support/              # MindmapTreePresenter (nested tree + per-branch done/total counts)
+    │   └── Policies/             # MindmapTask policy
     └── Games/                    # Subdomain: games with shared results tracking
         ├── Models/               # GameResult (shared results table: game, result, played_at)
         ├── Controllers/          # Games (index), GameResult (store results API)
