@@ -8,6 +8,7 @@ import {
     Pause,
     Play,
     RotateCcw,
+    Shuffle,
     SkipBack,
     SkipForward,
     Volume2,
@@ -142,6 +143,28 @@ function MiniPlayer({ tracks }: { tracks: TimerMusicFile[] }) {
         }
     }, [currentIndex, tracks, isPlaying]);
 
+    const pickRandom = useCallback(() => {
+        if (tracks.length === 0) {
+            return;
+        }
+
+        let randomIndex = Math.floor(Math.random() * tracks.length);
+
+        // Avoid replaying the current track when there are alternatives.
+        if (tracks.length > 1 && randomIndex === currentIndex) {
+            randomIndex = (randomIndex + 1) % tracks.length;
+        }
+
+        setCurrentIndex(randomIndex);
+        const audio = audioRef.current;
+
+        if (audio) {
+            audio.src = `/music/${tracks[randomIndex].id}/stream`;
+            audio.play();
+            setIsPlaying(true);
+        }
+    }, [tracks, currentIndex]);
+
     const toggleMute = useCallback(() => {
         const audio = audioRef.current;
 
@@ -231,6 +254,15 @@ function MiniPlayer({ tracks }: { tracks: TimerMusicFile[] }) {
                         className="rounded-md p-1 text-muted-foreground/60 hover:text-foreground"
                     >
                         <SkipForward className="size-3.5" />
+                    </button>
+                )}
+                {tracks.length > 1 && (
+                    <button
+                        onClick={pickRandom}
+                        title="Play a random track"
+                        className="rounded-md p-1 text-muted-foreground/60 hover:text-foreground"
+                    >
+                        <Shuffle className="size-3.5" />
                     </button>
                 )}
                 <button
