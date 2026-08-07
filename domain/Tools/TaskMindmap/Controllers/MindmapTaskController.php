@@ -33,7 +33,7 @@ class MindmapTaskController extends Controller
     {
         $this->authorize('update', $mindmapTask);
 
-        $mindmapTask->update($request->validated());
+        $mindmapTask->update($this->withResolvedProgress($request->validated(), $mindmapTask));
 
         return back();
     }
@@ -44,11 +44,29 @@ class MindmapTaskController extends Controller
 
         $data = $request->validate([
             'status' => ['required', Rule::enum(TaskStatus::class)],
+            'progress' => ['nullable', 'integer', 'between:0,100'],
         ]);
 
-        $mindmapTask->update(['status' => $data['status']]);
+        $mindmapTask->update($this->withResolvedProgress($data, $mindmapTask));
 
         return back();
+    }
+
+    /**
+     * Reconcile the status/progress pair against the task's current state so the
+     * two always agree, whichever of them the request supplied.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function withResolvedProgress(array $data, MindmapTask $mindmapTask): array
+    {
+        $status = isset($data['status']) ? TaskStatus::from($data['status']) : $mindmapTask->status;
+
+        $data['status'] = $status;
+        $data['progress'] = $status->normalizeProgress($data['progress'] ?? $mindmapTask->progress);
+
+        return $data;
     }
 
     /**

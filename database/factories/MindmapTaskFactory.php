@@ -33,13 +33,19 @@ class MindmapTaskFactory extends Factory
             'priority' => null,
             'deadline' => null,
             'status' => TaskStatus::Todo,
+            'progress' => 0,
             'position' => 0,
         ];
     }
 
     public function done(): static
     {
-        return $this->state(fn (): array => ['status' => TaskStatus::Done]);
+        return $this->state(fn (): array => ['status' => TaskStatus::Done, 'progress' => 100]);
+    }
+
+    public function inProgress(int $progress = 50): static
+    {
+        return $this->state(fn (): array => ['status' => TaskStatus::InProgress, 'progress' => $progress]);
     }
 
     public function rejected(): static
