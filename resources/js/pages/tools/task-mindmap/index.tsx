@@ -10,6 +10,7 @@ import {
     Check,
     CheckSquare,
     ChevronRight,
+    CircleDashed,
     Code,
     ExternalLink,
     Flag,
@@ -53,7 +54,7 @@ import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Task Mindmap', href: taskMindmapIndex() }];
 
-type Status = 'todo' | 'done' | 'rejected';
+type Status = 'todo' | 'in_progress' | 'done' | 'rejected';
 type Priority = 'low' | 'medium' | 'high';
 
 type TaskLink = { label: string | null; url: string };
@@ -62,6 +63,7 @@ type TaskNode = {
     id: number;
     title: string;
     status: Status;
+    progress: number;
     description: string | null;
     links: TaskLink[];
     tags: string[];
@@ -71,6 +73,7 @@ type TaskNode = {
     deadline: string | null;
     done_count: number;
     total_count: number;
+    progress_sum: number;
     children: TaskNode[];
 };
 
@@ -78,7 +81,7 @@ type Props = {
     tree: TaskNode[];
 };
 
-type View = 'all' | 'todo';
+type View = 'open' | 'all';
 
 const ICONS: Record<string, LucideIcon> = {
     target: Target,
@@ -111,6 +114,22 @@ function formatDeadline(dateStr: string): string {
     return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+function isOpen(node: TaskNode): boolean {
+    return node.status === 'todo' || node.status === 'in_progress';
+}
+
+/**
+ * Completion of a node: the whole branch when it has children (in-progress
+ * descendants counting for their own share), otherwise the task's own percent.
+ */
+function completionOf(node: TaskNode): number {
+    if (node.total_count === 0) {
+        return node.progress;
+    }
+
+    return Math.round((node.progress_sum / node.total_count) * 100);
+}
+
 function hasDetails(node: TaskNode): boolean {
     return (
         (node.description !== null && node.description.trim() !== '') ||
@@ -129,8 +148,9 @@ type NodeContext = {
     onStatus: (node: TaskNode, status: Status) => void;
     onDelete: (node: TaskNode) => void;
     onAdded: (parentId: number) => void;
-    dragStart: (parentId: number | null, index: number) => void;
-    dragEnter: (parentId: number | null, index: number) => void;
+    onShowAll: () => void;
+    dragStart: (parentId: number | null, id: number) => void;
+    dragEnter: (parentId: number | null, id: number) => void;
     dragEnd: () => void;
 };
 
@@ -180,7 +200,32 @@ function AddTaskForm({
     );
 }
 
-function StatusIcon({ status, color }: { status: Status; color: string | null }) {
+function ProgressMeter({ percent, branch }: { percent: number; branch: boolean }) {
+    return (
+        <span
+            className="hidden shrink-0 items-center gap-1.5 sm:inline-flex"
+            title={branch ? `${percent}% of this branch complete` : `${percent}% done`}
+        >
+            <span className="h-1.5 w-12 overflow-hidden rounded-full bg-muted">
+                <span
+                    className={cn('block h-full rounded-full transition-[width]', branch ? 'bg-indigo-500' : 'bg-amber-500')}
+                    style={{ width: `${percent}%` }}
+                />
+            </span>
+            <span className="text-[11px] font-medium tabular-nums text-muted-foreground">{percent}%</span>
+        </span>
+    );
+}
+
+function StatusIcon({ status, progress, color }: { status: Status; progress: number; color: string | null }) {
+    if (status === 'in_progress') {
+        return (
+            <span className="relative flex size-5 shrink-0 overflow-hidden rounded-md border border-amber-500" title={`In progress — ${progress}%`}>
+                <span className="absolute inset-x-0 bottom-0 bg-amber-500/70" style={{ height: `${Math.max(progress, 8)}%` }} />
+            </span>
+        );
+    }
+
     if (status === 'done') {
         return (
             <span className="flex size-5 shrink-0 items-center justify-center rounded-md border border-emerald-600 bg-emerald-600 text-white">
@@ -200,19 +245,21 @@ function StatusIcon({ status, color }: { status: Status; color: string | null })
     return <span className="size-5 shrink-0 rounded-md border border-muted-foreground/40" style={color ? { borderColor: color } : undefined} />;
 }
 
-function TaskRow({ node, parentId, index, ctx }: { node: TaskNode; parentId: number | null; index: number; ctx: NodeContext }) {
-    const visibleChildren = ctx.view === 'todo' ? node.children.filter((c) => c.status === 'todo') : node.children;
+function TaskRow({ node, parentId, ctx }: { node: TaskNode; parentId: number | null; ctx: NodeContext }) {
+    const visibleChildren = ctx.view === 'open' ? node.children.filter(isOpen) : node.children;
+    const hiddenChildren = node.children.length - visibleChildren.length;
     const isExpanded = ctx.expanded.has(node.id);
     const hasChildren = node.children.length > 0;
-    const canReorder = ctx.view === 'all';
     const Icon = node.icon ? ICONS[node.icon] : null;
-    const resolved = node.status !== 'todo';
+    const resolved = node.status === 'done' || node.status === 'rejected';
+    const completion = completionOf(node);
+    const showCompletion = node.total_count > 0 ? completion > 0 : node.status === 'in_progress';
 
     return (
         <li>
             <div
-                onDragEnter={() => canReorder && ctx.dragEnter(parentId, index)}
-                onDragOver={(e) => canReorder && e.preventDefault()}
+                onDragEnter={() => ctx.dragEnter(parentId, node.id)}
+                onDragOver={(e) => e.preventDefault()}
                 className={cn(
                     'group flex items-center gap-1.5 rounded-lg border border-transparent px-2 py-1.5 hover:border-border hover:bg-white/60 dark:hover:bg-black/20',
                     node.status === 'done' && 'opacity-80',
@@ -220,19 +267,15 @@ function TaskRow({ node, parentId, index, ctx }: { node: TaskNode; parentId: num
                 )}
                 style={node.color ? { borderLeft: `3px solid ${node.color}` } : undefined}
             >
-                {canReorder ? (
-                    <span
-                        draggable
-                        onDragStart={() => ctx.dragStart(parentId, index)}
-                        onDragEnd={ctx.dragEnd}
-                        className="shrink-0 cursor-grab text-muted-foreground/30 hover:text-muted-foreground active:cursor-grabbing"
-                        title="Drag to reorder"
-                    >
-                        <GripVertical className="size-4" />
-                    </span>
-                ) : (
-                    <span className="w-4 shrink-0" />
-                )}
+                <span
+                    draggable
+                    onDragStart={() => ctx.dragStart(parentId, node.id)}
+                    onDragEnd={ctx.dragEnd}
+                    className="shrink-0 cursor-grab text-muted-foreground/30 hover:text-muted-foreground active:cursor-grabbing"
+                    title="Drag to reorder"
+                >
+                    <GripVertical className="size-4" />
+                </span>
 
                 <button
                     type="button"
@@ -248,7 +291,7 @@ function TaskRow({ node, parentId, index, ctx }: { node: TaskNode; parentId: num
                     onClick={() => ctx.onStatus(node, 'done')}
                     title={node.status === 'done' ? 'Mark as to do' : 'Mark as done'}
                 >
-                    <StatusIcon status={node.status} color={node.color} />
+                    <StatusIcon status={node.status} progress={node.progress} color={node.color} />
                 </button>
 
                 {Icon && <Icon className="size-4 shrink-0" style={node.color ? { color: node.color } : undefined} />}
@@ -280,6 +323,8 @@ function TaskRow({ node, parentId, index, ctx }: { node: TaskNode; parentId: num
                     </span>
                 ))}
 
+                {showCompletion && <ProgressMeter percent={completion} branch={node.total_count > 0} />}
+
                 {node.total_count > 0 && (
                     <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground" title="Done / total in this branch">
                         {node.done_count}/{node.total_count}
@@ -289,6 +334,15 @@ function TaskRow({ node, parentId, index, ctx }: { node: TaskNode; parentId: num
                 <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
                     <Button variant="ghost" size="icon" className="size-7" onClick={() => ctx.onStatus(node, 'done')} title="Mark as done">
                         <Check className="size-3.5" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn('size-7', node.status === 'in_progress' ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground')}
+                        onClick={() => ctx.onStatus(node, 'in_progress')}
+                        title={node.status === 'in_progress' ? 'Mark as to do' : 'Mark as in progress'}
+                    >
+                        <CircleDashed className="size-3.5" />
                     </Button>
                     <Button
                         variant="ghost"
@@ -321,12 +375,21 @@ function TaskRow({ node, parentId, index, ctx }: { node: TaskNode; parentId: num
                 <div className="ml-6 border-l border-border/60 pl-2">
                     {visibleChildren.length > 0 ? (
                         <ul className="space-y-0.5 py-0.5">
-                            {visibleChildren.map((child, childIndex) => (
-                                <TaskRow key={child.id} node={child} parentId={node.id} index={childIndex} ctx={ctx} />
+                            {visibleChildren.map((child) => (
+                                <TaskRow key={child.id} node={child} parentId={node.id} ctx={ctx} />
                             ))}
                         </ul>
                     ) : (
-                        ctx.view === 'todo' && <p className="py-1 text-xs text-muted-foreground/70">No open subtasks.</p>
+                        ctx.view === 'open' && hasChildren && <p className="py-1 text-xs text-muted-foreground/70">No open subtasks.</p>
+                    )}
+                    {ctx.view === 'open' && hiddenChildren > 0 && (
+                        <button
+                            type="button"
+                            onClick={ctx.onShowAll}
+                            className="py-1 text-xs text-muted-foreground/70 hover:text-foreground"
+                        >
+                            {hiddenChildren} finished subtask{hiddenChildren === 1 ? '' : 's'} hidden — show
+                        </button>
                     )}
                     <div className="py-1">
                         <AddTaskForm parentId={node.id} onAdded={() => ctx.onAdded(node.id)} placeholder="Add a subtask…" compact />
@@ -344,8 +407,17 @@ type EditFormData = {
     color: string;
     icon: string;
     priority: '' | Priority;
+    status: Status;
+    progress: number;
     tags: string[];
     links: TaskLink[];
+};
+
+const STATUS_LABELS: Record<Status, string> = {
+    todo: 'To do',
+    in_progress: 'In progress',
+    done: 'Done',
+    rejected: 'Rejected',
 };
 
 function EditTaskDialog({ open, onOpenChange, task }: { open: boolean; onOpenChange: (open: boolean) => void; task: TaskNode | null }) {
@@ -356,6 +428,8 @@ function EditTaskDialog({ open, onOpenChange, task }: { open: boolean; onOpenCha
         color: task?.color ?? '',
         icon: task?.icon ?? '',
         priority: task?.priority ?? '',
+        status: task?.status ?? 'todo',
+        progress: task?.progress ?? 0,
         tags: task?.tags ?? [],
         links: task?.links ?? [],
     });
@@ -375,6 +449,20 @@ function EditTaskDialog({ open, onOpenChange, task }: { open: boolean; onOpenCha
         }
         form.setData('tags', [...form.data.tags, value]);
         setTagDraft('');
+    };
+
+    /** Keep the pair consistent the same way the server does. */
+    const setStatus = (status: Status) => {
+        const progress = status === 'done' ? 100 : status === 'todo' ? 0 : Math.min(99, form.data.progress);
+        form.setData({ ...form.data, status, progress });
+    };
+
+    const setProgress = (value: number) => {
+        const progress = Math.min(100, Math.max(0, Number.isNaN(value) ? 0 : value));
+        const status =
+            progress === 100 ? 'done' : progress > 0 && form.data.status !== 'rejected' ? 'in_progress' : form.data.status;
+
+        form.setData({ ...form.data, progress, status });
     };
 
     const updateLink = (index: number, field: keyof TaskLink, value: string) => {
@@ -407,6 +495,48 @@ function EditTaskDialog({ open, onOpenChange, task }: { open: boolean; onOpenCha
                         <label className="text-sm font-medium">Title</label>
                         <Input value={form.data.title} onChange={(e) => form.setData('title', e.target.value)} autoFocus />
                         {form.errors.title && <p className="text-xs text-destructive">{form.errors.title}</p>}
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium">Status</label>
+                            <Select value={form.data.status} onValueChange={(value) => setStatus(value as Status)}>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {(['todo', 'in_progress', 'done', 'rejected'] as const).map((status) => (
+                                        <SelectItem key={status} value={status}>
+                                            {STATUS_LABELS[status]}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium">Progress</label>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="range"
+                                    min={0}
+                                    max={100}
+                                    step={5}
+                                    value={form.data.progress}
+                                    onChange={(e) => setProgress(Number(e.target.value))}
+                                    className="h-2 flex-1 accent-indigo-600"
+                                    aria-label="Percent done"
+                                />
+                                <Input
+                                    type="number"
+                                    min={0}
+                                    max={100}
+                                    value={form.data.progress}
+                                    onChange={(e) => setProgress(Number(e.target.value))}
+                                    className="h-9 w-16 text-sm"
+                                />
+                                <span className="text-sm text-muted-foreground">%</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -568,11 +698,11 @@ function EditTaskDialog({ open, onOpenChange, task }: { open: boolean; onOpenCha
 
 export default function TaskMindmapIndex({ tree }: Props) {
     const [expanded, setExpanded] = useState<Set<number>>(new Set());
-    const [view, setView] = useState<View>('all');
+    const [view, setView] = useState<View>('open');
     const [editing, setEditing] = useState<TaskNode | null>(null);
 
-    const dragFrom = useRef<{ parentId: number | null; index: number } | null>(null);
-    const dragTo = useRef<{ parentId: number | null; index: number } | null>(null);
+    const dragFrom = useRef<{ parentId: number | null; id: number } | null>(null);
+    const dragTo = useRef<{ parentId: number | null; id: number } | null>(null);
 
     const toggleExpand = (id: number) => {
         setExpanded((current) => {
@@ -613,6 +743,7 @@ export default function TaskMindmapIndex({ tree }: Props) {
             const next = node.status === status ? 'todo' : status;
             router.post(statusTask.url(node.id), { status: next }, { preserveScroll: true, preserveState: true });
         },
+        onShowAll: () => setView('all'),
         onDelete: (node) => {
             const warning = node.children.length > 0 ? `Delete "${node.title}" and all its subtasks?` : `Delete "${node.title}"?`;
             if (confirm(warning)) {
@@ -620,12 +751,12 @@ export default function TaskMindmapIndex({ tree }: Props) {
             }
         },
         onAdded: (parentId) => setExpanded((current) => new Set(current).add(parentId)),
-        dragStart: (parentId, index) => {
-            dragFrom.current = { parentId, index };
+        dragStart: (parentId, id) => {
+            dragFrom.current = { parentId, id };
         },
-        dragEnter: (parentId, index) => {
+        dragEnter: (parentId, id) => {
             if (dragFrom.current && dragFrom.current.parentId === parentId) {
-                dragTo.current = { parentId, index };
+                dragTo.current = { parentId, id };
             }
         },
         dragEnd: () => {
@@ -634,13 +765,21 @@ export default function TaskMindmapIndex({ tree }: Props) {
             dragFrom.current = null;
             dragTo.current = null;
 
-            if (!from || !to || from.parentId !== to.parentId || from.index === to.index) {
+            if (!from || !to || from.parentId !== to.parentId || from.id === to.id) {
                 return;
             }
 
+            /** Resolve against the unfiltered siblings so a filtered view still reorders correctly. */
             const siblings = [...siblingsOf(from.parentId)];
-            const [moved] = siblings.splice(from.index, 1);
-            siblings.splice(to.index, 0, moved);
+            const fromIndex = siblings.findIndex((item) => item.id === from.id);
+            const toIndex = siblings.findIndex((item) => item.id === to.id);
+
+            if (fromIndex === -1 || toIndex === -1) {
+                return;
+            }
+
+            const [moved] = siblings.splice(fromIndex, 1);
+            siblings.splice(toIndex, 0, moved);
 
             router.patch(
                 reorderTasks.url(),
@@ -653,15 +792,19 @@ export default function TaskMindmapIndex({ tree }: Props) {
     const totals = useMemo(() => {
         let done = 0;
         let total = 0;
+        let progress = 0;
         for (const node of tree) {
-            total += node.total_count + (node.status === 'rejected' ? 0 : 1);
+            const counts = node.status === 'rejected' ? 0 : 1;
+            total += node.total_count + counts;
             done += node.done_count + (node.status === 'done' ? 1 : 0);
+            progress += node.progress_sum + (counts * node.progress) / 100;
         }
 
-        return { done, total };
+        return { done, total, percent: total === 0 ? 0 : Math.round((progress / total) * 100) };
     }, [tree]);
 
-    const rootNodes = view === 'todo' ? tree.filter((n) => n.status === 'todo') : tree;
+    const rootNodes = view === 'open' ? tree.filter(isOpen) : tree;
+    const hiddenRoots = tree.length - rootNodes.length;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -675,11 +818,13 @@ export default function TaskMindmapIndex({ tree }: Props) {
                         <div>
                             <h1 className="text-2xl font-semibold">Task Mindmap</h1>
                             <p className="text-sm text-muted-foreground">
-                                {totals.total === 0 ? 'Break big goals into a tree of tasks' : `${totals.done} of ${totals.total} tasks done`}
+                                {totals.total === 0
+                                    ? 'Break big goals into a tree of tasks'
+                                    : `${totals.done} of ${totals.total} tasks done · ${totals.percent}% complete`}
                             </p>
                         </div>
                         <div className="flex items-center gap-0.5 rounded-lg border border-border bg-white/60 p-0.5 text-sm dark:bg-black/30">
-                            {(['all', 'todo'] as const).map((v) => (
+                            {(['open', 'all'] as const).map((v) => (
                                 <button
                                     key={v}
                                     type="button"
@@ -689,7 +834,7 @@ export default function TaskMindmapIndex({ tree }: Props) {
                                         view === v ? 'bg-indigo-600 text-white' : 'text-muted-foreground hover:text-foreground',
                                     )}
                                 >
-                                    {v === 'all' ? 'All' : 'To do'}
+                                    {v === 'open' ? 'Open' : 'All'}
                                 </button>
                             ))}
                         </div>
@@ -704,15 +849,26 @@ export default function TaskMindmapIndex({ tree }: Props) {
                             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12 text-center">
                                 <ListTree className="mb-2 size-8 text-muted-foreground/40" />
                                 <p className="text-sm text-muted-foreground">
-                                    {view === 'todo' && tree.length > 0 ? 'No open tasks — switch to “All” to see finished ones.' : 'No tasks yet. Add your first one above.'}
+                                    {view === 'open' && tree.length > 0 ? 'No open tasks — switch to “All” to see finished ones.' : 'No tasks yet. Add your first one above.'}
                                 </p>
                             </div>
                         ) : (
-                            <ul className="space-y-0.5">
-                                {rootNodes.map((node, index) => (
-                                    <TaskRow key={node.id} node={node} parentId={null} index={index} ctx={ctx} />
-                                ))}
-                            </ul>
+                            <>
+                                <ul className="space-y-0.5">
+                                    {rootNodes.map((node) => (
+                                        <TaskRow key={node.id} node={node} parentId={null} ctx={ctx} />
+                                    ))}
+                                </ul>
+                                {view === 'open' && hiddenRoots > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setView('all')}
+                                        className="mt-2 text-xs text-muted-foreground/70 hover:text-foreground"
+                                    >
+                                        {hiddenRoots} finished task{hiddenRoots === 1 ? '' : 's'} hidden — show all
+                                    </button>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>

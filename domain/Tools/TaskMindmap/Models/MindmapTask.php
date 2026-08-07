@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['parent_id', 'title', 'description', 'links', 'tags', 'color', 'icon', 'priority', 'deadline', 'status', 'position'])]
+#[Fillable(['parent_id', 'title', 'description', 'links', 'tags', 'color', 'icon', 'priority', 'deadline', 'status', 'progress', 'position'])]
 class MindmapTask extends Model
 {
     /** @use HasFactory<MindmapTaskFactory> */
@@ -29,6 +29,7 @@ class MindmapTask extends Model
             'deadline' => 'date',
             'priority' => TaskPriority::class,
             'status' => TaskStatus::class,
+            'progress' => 'integer',
         ];
     }
 

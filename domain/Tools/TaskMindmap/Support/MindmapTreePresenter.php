@@ -11,9 +11,9 @@ class MindmapTreePresenter
 {
     /**
      * Build the user's full task tree as nested arrays. Each node carries a
-     * subtree summary (done vs. total, rejected excluded from the total) so the
-     * client can show progress on collapsed branches without loading anything
-     * extra.
+     * subtree summary (done vs. total, rejected excluded from the total, plus
+     * the fractional completion of in-progress descendants) so the client can
+     * show progress on collapsed branches without loading anything extra.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -45,16 +45,21 @@ class MindmapTreePresenter
 
             $doneDescendants = 0;
             $totalDescendants = 0;
+            $progressDescendants = 0.0;
 
             foreach ($childNodes as $child) {
-                $totalDescendants += $child['total_count'] + ($child['status'] === TaskStatus::Rejected->value ? 0 : 1);
+                $counts = $child['status'] === TaskStatus::Rejected->value ? 0 : 1;
+
+                $totalDescendants += $child['total_count'] + $counts;
                 $doneDescendants += $child['done_count'] + ($child['status'] === TaskStatus::Done->value ? 1 : 0);
+                $progressDescendants += $child['progress_sum'] + $counts * $child['progress'] / 100;
             }
 
             return [
                 'id' => $task->id,
                 'title' => $task->title,
                 'status' => $task->status->value,
+                'progress' => $task->progress,
                 'description' => $task->description,
                 'links' => $task->links ?? [],
                 'tags' => $task->tags ?? [],
@@ -64,6 +69,7 @@ class MindmapTreePresenter
                 'deadline' => $task->deadline?->format('Y-m-d'),
                 'done_count' => $doneDescendants,
                 'total_count' => $totalDescendants,
+                'progress_sum' => round($progressDescendants, 4),
                 'children' => $childNodes,
             ];
         })->all();

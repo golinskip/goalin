@@ -3,6 +3,7 @@
 namespace Domain\Tools\TaskMindmap\Requests;
 
 use Domain\Tools\TaskMindmap\Enums\TaskPriority;
+use Domain\Tools\TaskMindmap\Enums\TaskStatus;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -23,6 +24,8 @@ class UpdateMindmapTaskRequest extends FormRequest
             'color' => ['nullable', 'string', 'max:32'],
             'icon' => ['nullable', 'string', 'max:48'],
             'priority' => ['nullable', Rule::enum(TaskPriority::class)],
+            'status' => ['nullable', Rule::enum(TaskStatus::class)],
+            'progress' => ['nullable', 'integer', 'between:0,100'],
             'links' => ['nullable', 'array', 'max:20'],
             'links.*.url' => ['required', 'string', 'url', 'max:2048'],
             'links.*.label' => ['nullable', 'string', 'max:120'],
