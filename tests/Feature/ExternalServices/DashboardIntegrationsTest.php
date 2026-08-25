@@ -20,15 +20,18 @@ test('dashboard shows hidden integrations section when nothing is connected', fu
 
 test('dashboard flags Todoist as connected when a connection exists', function () {
     Http::fake([
-        'api.todoist.com/rest/v2/tasks*' => Http::response([
-            [
-                'id' => '123',
-                'content' => 'Buy groceries',
-                'url' => 'https://app.todoist.com/task/123',
-                'due' => ['date' => '2026-04-23'],
-                'priority' => 2,
-                'project_id' => '42',
+        'api.todoist.com/api/v1/tasks/filter*' => Http::response([
+            'results' => [
+                [
+                    'id' => '123',
+                    'content' => 'Buy groceries',
+                    'due' => ['date' => '2026-04-23'],
+                    'priority' => 2,
+                    'project_id' => '42',
+                    'labels' => ['errands'],
+                ],
             ],
+            'next_cursor' => null,
         ], 200),
     ]);
 

@@ -4,6 +4,7 @@ namespace Domain\Tools\DailyTodo\Controllers;
 
 use App\Http\Controllers\Controller;
 use Carbon\CarbonImmutable;
+use Domain\ExternalServices\Enums\ServiceType;
 use Domain\Tools\DailyTodo\Models\TodoTask;
 use Domain\Tools\DailyTodo\Support\TodoPresenter;
 use Illuminate\Database\Eloquent\Collection;
@@ -30,6 +31,7 @@ class DailyTodoController extends Controller
             'month' => $month->format('Y-m'),
             'tasks' => TodoPresenter::forDay($user, $selectedDate),
             'calendar' => $this->buildCalendar($user->id, $gridStart, $gridEnd),
+            'todoistConnected' => $user->serviceConnection(ServiceType::Todoist) !== null,
         ]);
     }
 

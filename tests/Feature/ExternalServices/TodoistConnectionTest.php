@@ -19,7 +19,7 @@ test('user can view external services settings', function () {
 
 test('user can connect Todoist with a valid api token', function () {
     Http::fake([
-        'api.todoist.com/rest/v2/projects' => Http::response([], 200),
+        'api.todoist.com/api/v1/projects*' => Http::response([], 200),
     ]);
 
     $user = User::factory()->create();
@@ -42,7 +42,7 @@ test('user can connect Todoist with a valid api token', function () {
 
 test('invalid Todoist tokens are rejected', function () {
     Http::fake([
-        'api.todoist.com/rest/v2/projects' => Http::response(['error' => 'unauthorized'], 401),
+        'api.todoist.com/api/v1/projects*' => Http::response(['error' => 'unauthorized'], 401),
     ]);
 
     $user = User::factory()->create();

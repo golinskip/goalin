@@ -8,6 +8,7 @@ import {
     ChevronRight,
     CircleSlash,
     CornerDownRight,
+    DownloadCloud,
     ExternalLink,
     Flag,
     GripVertical,
@@ -22,6 +23,10 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+    preview as todoistPreview,
+    store as todoistImport,
+} from '@/actions/Domain/Tools/DailyTodo/Controllers/TodoistImportController';
+import {
     destroy as destroyTask,
     markNotDone as markNotDoneTask,
     store as storeTask,
@@ -30,6 +35,7 @@ import {
 } from '@/actions/Domain/Tools/DailyTodo/Controllers/TodoTaskController';
 import PageBackground from '@/components/page-background';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
@@ -75,6 +81,16 @@ type Task = TaskDetails & {
     subtasks: Subtask[];
 };
 
+type TodoistTask = {
+    id: string;
+    content: string;
+    description: string | null;
+    url: string;
+    priority: number;
+    labels: string[];
+    already_imported: boolean;
+};
+
 type CalendarDay = {
     date: string;
     total: number;
@@ -87,6 +103,7 @@ type Props = {
     month: string;
     tasks: Task[];
     calendar: CalendarDay[];
+    todoistConnected: boolean;
 };
 
 const PRIORITY_META: Record<Priority, { label: string; badge: string; dot: string }> = {
@@ -832,10 +849,229 @@ function DetailPanel({ item, onClose, onEdit }: { item: TaskDetails; onClose: ()
     );
 }
 
-export default function DailyTodoIndex({ selectedDate, today, month, tasks, calendar }: Props) {
+function TodoistImportDialog({
+    open,
+    onOpenChange,
+    date,
+}: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    date: string;
+}) {
+    const [tasks, setTasks] = useState<TodoistTask[]>([]);
+    const [selected, setSelected] = useState<string[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [importing, setImporting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const controller = new AbortController();
+
+        fetch(todoistPreview.url({ query: { date } }), {
+            signal: controller.signal,
+            headers: { Accept: 'application/json' },
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to load Todoist tasks');
+                }
+
+                return response.json();
+            })
+            .then((data: { tasks: TodoistTask[] }) => {
+                setTasks(data.tasks);
+                setSelected(
+                    data.tasks
+                        .filter((task) => !task.already_imported)
+                        .map((task) => task.id),
+                );
+            })
+            .catch((e: unknown) => {
+                if (e instanceof DOMException && e.name === 'AbortError') {
+                    return;
+                }
+
+                setTasks([]);
+                setSelected([]);
+                setError(
+                    'Could not reach Todoist. Check your API token in settings and try again.',
+                );
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) {
+                    setLoading(false);
+                }
+            });
+
+        return () => controller.abort();
+    }, [date]);
+
+    const importable = tasks.filter((task) => !task.already_imported);
+    const allSelected =
+        importable.length > 0 &&
+        importable.every((task) => selected.includes(task.id));
+
+    const toggle = (id: string) => {
+        setSelected((current) =>
+            current.includes(id)
+                ? current.filter((value) => value !== id)
+                : [...current, id],
+        );
+    };
+
+    const submit = () => {
+        setImporting(true);
+
+        router.post(
+            todoistImport.url(),
+            { date, ids: selected },
+            {
+                preserveScroll: true,
+                onFinish: () => setImporting(false),
+                onSuccess: () => onOpenChange(false),
+            },
+        );
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Import from Todoist</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                        Todoist tasks due on{' '}
+                        <span className="font-medium text-foreground">
+                            {formatDateLabel(date)}
+                        </span>
+                        . Pick the ones to add to this day.
+                    </p>
+
+                    {loading ? (
+                        <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
+                            <RefreshCw className="size-4 animate-spin" />
+                            Loading tasks…
+                        </div>
+                    ) : error !== null ? (
+                        <p className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+                            {error}
+                        </p>
+                    ) : tasks.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-8 text-center">
+                            <ListTodo className="mb-2 size-8 text-muted-foreground/40" />
+                            <p className="text-sm text-muted-foreground">
+                                No Todoist tasks due on this day.
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            {importable.length > 0 && (
+                                <button
+                                    type="button"
+                                    className="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                                    onClick={() =>
+                                        setSelected(
+                                            allSelected
+                                                ? []
+                                                : importable.map(
+                                                      (task) => task.id,
+                                                  ),
+                                        )
+                                    }
+                                >
+                                    {allSelected
+                                        ? 'Deselect all'
+                                        : 'Select all'}
+                                </button>
+                            )}
+                            <ul className="max-h-72 space-y-1 overflow-y-auto pr-1">
+                                {tasks.map((task) => (
+                                    <li key={task.id}>
+                                        <label
+                                            className={cn(
+                                                'flex cursor-pointer items-start gap-2.5 rounded-lg border border-transparent p-2 hover:bg-muted/60',
+                                                task.already_imported &&
+                                                    'cursor-not-allowed opacity-60 hover:bg-transparent',
+                                            )}
+                                        >
+                                            <Checkbox
+                                                className="mt-0.5"
+                                                checked={selected.includes(
+                                                    task.id,
+                                                )}
+                                                disabled={task.already_imported}
+                                                onCheckedChange={() =>
+                                                    toggle(task.id)
+                                                }
+                                            />
+                                            <span className="min-w-0 flex-1">
+                                                <span className="block text-sm">
+                                                    {task.content}
+                                                </span>
+                                                {task.description !== null &&
+                                                    task.description.trim() !==
+                                                        '' && (
+                                                        <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                                                            {task.description}
+                                                        </span>
+                                                    )}
+                                                <span className="mt-1 flex flex-wrap items-center gap-1.5">
+                                                    {task.already_imported && (
+                                                        <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                                            Already imported
+                                                        </span>
+                                                    )}
+                                                    {task.labels.map(
+                                                        (label) => (
+                                                            <span
+                                                                key={label}
+                                                                className="rounded-full bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-medium text-indigo-700 dark:text-indigo-300"
+                                                            >
+                                                                {label}
+                                                            </span>
+                                                        ),
+                                                    )}
+                                                </span>
+                                            </span>
+                                        </label>
+                                    </li>
+                                ))}
+                            </ul>
+                        </>
+                    )}
+                </div>
+                <DialogFooter>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => onOpenChange(false)}
+                        disabled={importing}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        type="button"
+                        onClick={submit}
+                        disabled={importing || loading || selected.length === 0}
+                    >
+                        <DownloadCloud className="mr-1.5 size-4" />
+                        Import{' '}
+                        {selected.length > 0
+                            ? `${selected.length} task${selected.length === 1 ? '' : 's'}`
+                            : 'tasks'}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+export default function DailyTodoIndex({ selectedDate, today, month, tasks, calendar, todoistConnected }: Props) {
     const [editingTask, setEditingTask] = useState<TaskDetails | null>(null);
     const [detailId, setDetailId] = useState<number | null>(null);
     const [notDoneTask, setNotDoneTask] = useState<Task | null>(null);
+    const [todoistOpen, setTodoistOpen] = useState(false);
     const [orderedTasks, setOrderedTasks] = useState<Task[]>(tasks);
 
     useEffect(() => {
@@ -1002,6 +1238,12 @@ export default function DailyTodoIndex({ selectedDate, today, month, tasks, cale
                                         </Button>
                                     )}
                                 </div>
+                                {todoistConnected && (
+                                    <Button variant="outline" size="sm" className="text-xs" onClick={() => setTodoistOpen(true)}>
+                                        <DownloadCloud className="mr-1.5 size-3.5" />
+                                        Import from Todoist
+                                    </Button>
+                                )}
                             </div>
 
                             <div className="mb-4">
@@ -1149,6 +1391,8 @@ export default function DailyTodoIndex({ selectedDate, today, month, tasks, cale
                 }}
                 task={editingTask}
             />
+
+            {todoistOpen && <TodoistImportDialog open onOpenChange={setTodoistOpen} date={selectedDate} />}
 
             <MarkNotDoneDialog
                 key={notDoneTask ? `not-done-${notDoneTask.id}` : 'not-done-none'}
