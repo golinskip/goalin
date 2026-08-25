@@ -8,6 +8,7 @@ use Domain\Tools\DailyRoutine\Controllers\DailyRoutineController;
 use Domain\Tools\DailyRoutine\Controllers\RoutineTaskController;
 use Domain\Tools\DailyRoutine\Controllers\RoutineTaskLogController;
 use Domain\Tools\DailyTodo\Controllers\DailyTodoController;
+use Domain\Tools\DailyTodo\Controllers\TodoistImportController;
 use Domain\Tools\DailyTodo\Controllers\TodoTaskController;
 use Domain\Tools\Diary\Controllers\DiaryController;
 use Domain\Tools\Flashcards\Controllers\MemoCardController;
@@ -127,6 +128,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Daily Todo
     Route::get('daily-todo', [DailyTodoController::class, 'index'])->name('daily-todo.index');
+    Route::get('daily-todo/todoist/tasks', [TodoistImportController::class, 'preview'])->name('daily-todo.todoist.preview');
+    Route::post('daily-todo/todoist/import', [TodoistImportController::class, 'store'])->name('daily-todo.todoist.import');
     Route::patch('todo-tasks/reorder', [TodoTaskController::class, 'reorder'])->name('todo-tasks.reorder');
     Route::post('todo-tasks', [TodoTaskController::class, 'store'])->name('todo-tasks.store');
     Route::put('todo-tasks/{todoTask}', [TodoTaskController::class, 'update'])->name('todo-tasks.update');

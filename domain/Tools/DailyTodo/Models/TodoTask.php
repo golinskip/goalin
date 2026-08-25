@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['parent_id', 'title', 'description', 'links', 'tags', 'estimated_cycles', 'priority', 'due_date', 'completed_at', 'not_done', 'position'])]
+#[Fillable(['parent_id', 'todoist_id', 'title', 'description', 'links', 'tags', 'estimated_cycles', 'priority', 'due_date', 'completed_at', 'not_done', 'position'])]
 class TodoTask extends Model
 {
     /** @use HasFactory<TodoTaskFactory> */
