@@ -7,6 +7,8 @@ import {
     ChevronLeft,
     ChevronRight,
     CircleSlash,
+    Cloud,
+    CloudUpload,
     CornerDownRight,
     DownloadCloud,
     ExternalLink,
@@ -26,6 +28,10 @@ import {
     preview as todoistPreview,
     store as todoistImport,
 } from '@/actions/Domain/Tools/DailyTodo/Controllers/TodoistImportController';
+import {
+    day as todoistSyncDay,
+    store as todoistSendTask,
+} from '@/actions/Domain/Tools/DailyTodo/Controllers/TodoistSyncController';
 import {
     destroy as destroyTask,
     markNotDone as markNotDoneTask,
@@ -72,6 +78,7 @@ type TaskDetails = {
     tags: string[];
     estimated_cycles: number | null;
     priority: Priority | null;
+    todoist_linked: boolean;
 };
 
 type Subtask = TaskDetails;
@@ -136,6 +143,12 @@ function hasDetails(item: TaskDetails): boolean {
         item.estimated_cycles !== null ||
         item.priority !== null
     );
+}
+
+function getXsrfToken(): string {
+    const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+
+    return match ? decodeURIComponent(match[1]) : '';
 }
 
 function formatDateLabel(dateStr: string): string {
@@ -482,6 +495,7 @@ function TaskItem({
     task,
     index,
     activeDetailId,
+    todoistConnected,
     onEdit,
     onShowDetails,
     onNotDone,
@@ -494,6 +508,7 @@ function TaskItem({
     task: Task;
     index: number;
     activeDetailId: number | null;
+    todoistConnected: boolean;
     onEdit: (task: TaskDetails) => void;
     onShowDetails: (item: TaskDetails) => void;
     onNotDone: (task: Task) => void;
@@ -513,6 +528,10 @@ function TaskItem({
         }
 
         router.delete(destroyTask.url(id), { preserveScroll: true });
+    };
+
+    const sendToTodoist = (id: number) => {
+        router.post(todoistSendTask.url(id), {}, { preserveScroll: true, preserveState: true });
     };
 
     const doneSubtasks = task.subtasks.filter((s) => s.completed).length;
@@ -570,6 +589,9 @@ function TaskItem({
                                 </span>
                             )}
                             {hasDetails(task) && <AlignLeft className="size-3.5 shrink-0 text-muted-foreground/60" />}
+                            {task.todoist_linked && (
+                                <Cloud className="size-3.5 shrink-0 text-red-500/70" aria-label="Linked with Todoist" />
+                            )}
                         </div>
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
                             {task.subtasks.length > 0 && (
@@ -593,6 +615,17 @@ function TaskItem({
                 </div>
 
                 <div className="flex shrink-0 gap-1">
+                    {todoistConnected && !task.todoist_linked && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 text-muted-foreground hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
+                            onClick={() => sendToTodoist(task.id)}
+                            title="Send to Todoist"
+                        >
+                            <CloudUpload className="size-3.5" />
+                        </Button>
+                    )}
                     <Button
                         variant="ghost"
                         size="icon"
@@ -1072,6 +1105,8 @@ export default function DailyTodoIndex({ selectedDate, today, month, tasks, cale
     const [detailId, setDetailId] = useState<number | null>(null);
     const [notDoneTask, setNotDoneTask] = useState<Task | null>(null);
     const [todoistOpen, setTodoistOpen] = useState(false);
+    const [syncing, setSyncing] = useState(false);
+    const [syncResult, setSyncResult] = useState<string | null>(null);
     const [orderedTasks, setOrderedTasks] = useState<Task[]>(tasks);
 
     useEffect(() => {
@@ -1179,7 +1214,48 @@ export default function DailyTodoIndex({ selectedDate, today, month, tasks, cale
 
     const selectDate = (date: string) => {
         setDetailId(null);
+        setSyncResult(null);
         navigate({ date, month: date.slice(0, 7) });
+    };
+
+    const syncDayWithTodoist = async () => {
+        setSyncing(true);
+        setSyncResult(null);
+
+        try {
+            const response = await fetch(todoistSyncDay.url(), {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-XSRF-TOKEN': getXsrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ date: selectedDate }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Sync failed');
+            }
+
+            const data: { synced: number; failed: number; unlinked: number } = await response.json();
+            const parts = [`${data.synced} synced`];
+
+            if (data.failed > 0) {
+                parts.push(`${data.failed} failed`);
+            }
+
+            if (data.unlinked > 0) {
+                parts.push(`${data.unlinked} not linked`);
+            }
+
+            setSyncResult(parts.join(' · '));
+        } catch {
+            setSyncResult('Could not reach Todoist.');
+        } finally {
+            setSyncing(false);
+        }
     };
 
     const addTask = (e: React.FormEvent) => {
@@ -1239,10 +1315,26 @@ export default function DailyTodoIndex({ selectedDate, today, month, tasks, cale
                                     )}
                                 </div>
                                 {todoistConnected && (
-                                    <Button variant="outline" size="sm" className="text-xs" onClick={() => setTodoistOpen(true)}>
-                                        <DownloadCloud className="mr-1.5 size-3.5" />
-                                        Import from Todoist
-                                    </Button>
+                                    <div className="flex items-center gap-2">
+                                        {syncResult !== null && (
+                                            <span className="text-xs text-muted-foreground">{syncResult}</span>
+                                        )}
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-xs"
+                                            onClick={syncDayWithTodoist}
+                                            disabled={syncing}
+                                            title="Push this day's linked tasks back to Todoist"
+                                        >
+                                            <RefreshCw className={cn('mr-1.5 size-3.5', syncing && 'animate-spin')} />
+                                            Sync day
+                                        </Button>
+                                        <Button variant="outline" size="sm" className="text-xs" onClick={() => setTodoistOpen(true)}>
+                                            <DownloadCloud className="mr-1.5 size-3.5" />
+                                            Import from Todoist
+                                        </Button>
+                                    </div>
                                 )}
                             </div>
 
@@ -1283,6 +1375,7 @@ export default function DailyTodoIndex({ selectedDate, today, month, tasks, cale
                                             task={task}
                                             index={taskIndex}
                                             activeDetailId={detailId}
+                                            todoistConnected={todoistConnected}
                                             onEdit={setEditingTask}
                                             onShowDetails={(item) => setDetailId(item.id)}
                                             onNotDone={handleNotDone}

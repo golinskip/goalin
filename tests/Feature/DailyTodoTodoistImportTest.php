@@ -4,6 +4,7 @@ use Domain\ExternalServices\Enums\ServiceType;
 use Domain\Tools\DailyTodo\Models\TodoTask;
 use Domain\User\Models\User;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @param  array<int, array<string, mixed>>  $tasks
@@ -276,7 +277,8 @@ test('completing a task imported from Todoist closes it in Todoist', function ()
     expect($task->fresh()->isCompleted())->toBeTrue();
 
     Http::assertSent(fn ($request): bool => $request->method() === 'POST'
-        && $request->url() === 'https://api.todoist.com/api/v1/tasks/901/close');
+        && $request->url() === 'https://api.todoist.com/api/v1/tasks/901/close'
+        && $request->body() === '{}');
 });
 
 test('un-completing a task imported from Todoist reopens it in Todoist', function () {
@@ -298,7 +300,8 @@ test('un-completing a task imported from Todoist reopens it in Todoist', functio
     expect($task->fresh()->isCompleted())->toBeFalse();
 
     Http::assertSent(fn ($request): bool => $request->method() === 'POST'
-        && $request->url() === 'https://api.todoist.com/api/v1/tasks/901/reopen');
+        && $request->url() === 'https://api.todoist.com/api/v1/tasks/901/reopen'
+        && $request->body() === '{}');
 });
 
 test('tasks that did not come from Todoist are not synced', function () {
@@ -324,6 +327,8 @@ test('a task stays completed locally when Todoist rejects the sync', function ()
         'api.todoist.com/api/v1/tasks/*' => Http::response(['error' => 'not found'], 400),
     ]);
 
+    Log::spy();
+
     $user = User::factory()->create();
     connectTodoist($user);
 
@@ -337,6 +342,10 @@ test('a task stays completed locally when Todoist rejects the sync', function ()
         ->assertSessionHasNoErrors();
 
     expect($task->fresh()->isCompleted())->toBeTrue();
+
+    Log::shouldHaveReceived('warning')
+        ->once()
+        ->withArgs(fn (string $message): bool => $message === 'Todoist task sync failed.');
 });
 
 test('an imported task is not synced once the Todoist connection is gone', function () {
@@ -352,6 +361,73 @@ test('an imported task is not synced once the Todoist connection is gone', funct
     $this->actingAs($user)->post(route('todo-tasks.toggle', $task));
 
     expect($task->fresh()->isCompleted())->toBeTrue();
+
+    Http::assertNothingSent();
+});
+
+test('marking a completed Todoist task as not done reopens it in Todoist', function () {
+    Http::fake([
+        'api.todoist.com/api/v1/tasks/901/reopen' => Http::response('', 204),
+    ]);
+
+    $user = User::factory()->create();
+    connectTodoist($user);
+
+    $task = TodoTask::factory()->for($user)->create([
+        'todoist_id' => '901',
+        'due_date' => '2026-08-25',
+        'completed_at' => now(),
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('todo-tasks.not-done', $task))
+        ->assertSessionHasNoErrors();
+
+    expect($task->fresh()->isNotDone())->toBeTrue();
+
+    Http::assertSent(fn ($request): bool => $request->method() === 'POST'
+        && $request->url() === 'https://api.todoist.com/api/v1/tasks/901/reopen'
+        && $request->body() === '{}');
+});
+
+test('moving a completed Todoist task to another day reopens it in Todoist', function () {
+    Http::fake([
+        'api.todoist.com/api/v1/tasks/901/reopen' => Http::response('', 204),
+    ]);
+
+    $user = User::factory()->create();
+    connectTodoist($user);
+
+    $task = TodoTask::factory()->for($user)->create([
+        'todoist_id' => '901',
+        'due_date' => '2026-08-25',
+        'completed_at' => now(),
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('todo-tasks.not-done', $task), ['move_to' => '2026-08-26'])
+        ->assertSessionHasNoErrors();
+
+    expect($task->fresh()->due_date->toDateString())->toBe('2026-08-26');
+
+    Http::assertSent(fn ($request): bool => str_ends_with($request->url(), '/tasks/901/reopen'));
+});
+
+test('marking a pending Todoist task as not done leaves Todoist alone', function () {
+    Http::fake();
+
+    $user = User::factory()->create();
+    connectTodoist($user);
+
+    $task = TodoTask::factory()->for($user)->create([
+        'todoist_id' => '901',
+        'due_date' => '2026-08-25',
+        'completed_at' => null,
+    ]);
+
+    $this->actingAs($user)->post(route('todo-tasks.not-done', $task));
+
+    expect($task->fresh()->isNotDone())->toBeTrue();
 
     Http::assertNothingSent();
 });

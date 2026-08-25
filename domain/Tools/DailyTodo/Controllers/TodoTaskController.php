@@ -10,6 +10,7 @@ use Domain\Tools\DailyTodo\Models\TodoTask;
 use Domain\Tools\DailyTodo\Requests\MarkTodoNotDoneRequest;
 use Domain\Tools\DailyTodo\Requests\StoreTodoTaskRequest;
 use Domain\Tools\DailyTodo\Requests\UpdateTodoTaskRequest;
+use Domain\Tools\DailyTodo\Support\TodoistTaskMapper;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -54,7 +55,11 @@ class TodoTaskController extends Controller
         return back();
     }
 
-    public function update(UpdateTodoTaskRequest $request, TodoTask $todoTask): RedirectResponse
+    /**
+     * Update a task, pushing a changed title or due date onto its linked
+     * Todoist task.
+     */
+    public function update(UpdateTodoTaskRequest $request, TodoTask $todoTask, TodoistService $todoist): RedirectResponse
     {
         $this->authorize('update', $todoTask);
 
@@ -65,6 +70,10 @@ class TodoTaskController extends Controller
         }
 
         $todoTask->update($data);
+
+        if ($todoTask->todoist_id !== null && $todoTask->wasChanged(['title', 'due_date'])) {
+            $todoist->updateTask($todoTask->user, $todoTask->todoist_id, TodoistTaskMapper::updatePayload($todoTask));
+        }
 
         return back();
     }
@@ -98,8 +107,10 @@ class TodoTaskController extends Controller
     /**
      * Flag a main task as not done. Marking it again clears the flag; passing a
      * date moves the task to that day and gives it a fresh, pending start.
+     * Either way the task ends up pending, so a task that had been completed is
+     * re-opened on Todoist as well.
      */
-    public function markNotDone(MarkTodoNotDoneRequest $request, TodoTask $todoTask, AutomationRunner $automation): RedirectResponse
+    public function markNotDone(MarkTodoNotDoneRequest $request, TodoTask $todoTask, AutomationRunner $automation, TodoistService $todoist): RedirectResponse
     {
         $this->authorize('update', $todoTask);
 
@@ -107,6 +118,7 @@ class TodoTaskController extends Controller
             abort(403);
         }
 
+        $wasCompleted = $todoTask->isCompleted();
         $moveTo = $request->validated()['move_to'] ?? null;
 
         if ($moveTo !== null) {
@@ -120,6 +132,10 @@ class TodoTaskController extends Controller
                 'completed_at' => null,
                 'not_done' => ! $todoTask->isNotDone(),
             ]);
+        }
+
+        if ($wasCompleted && $todoTask->todoist_id !== null) {
+            $todoist->reopenTask($todoTask->user, $todoTask->todoist_id);
         }
 
         $automation->fire(CompletedTodosEvent::KEY, $todoTask->user);
