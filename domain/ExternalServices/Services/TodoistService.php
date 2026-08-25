@@ -6,7 +6,6 @@ use Carbon\CarbonInterface;
 use Domain\ExternalServices\Enums\ServiceType;
 use Domain\ExternalServices\Models\ServiceConnection;
 use Domain\User\Models\User;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class TodoistService
@@ -23,28 +22,6 @@ class TodoistService
     }
 
     /**
-     * @return array<int, array{id: string, content: string, description: string|null, url: string, due: string|null, priority: int, project_id: string|null, labels: array<int, string>}>
-     */
-    public function upcomingTasks(User $user, int $limit = 10): array
-    {
-        $connection = $user->serviceConnection(ServiceType::Todoist);
-
-        if ($connection === null) {
-            return [];
-        }
-
-        return Cache::remember(
-            "todoist:tasks:user:{$user->id}",
-            now()->addMinutes(5),
-            fn () => collect($this->fetchFiltered($connection, 'today | overdue | 7 days'))
-                ->sortBy(fn (array $task): string => $task['due'] ?? '9999-12-31')
-                ->take($limit)
-                ->values()
-                ->all(),
-        );
-    }
-
-    /**
      * The user's active Todoist tasks due on the given day.
      *
      * @return array<int, array{id: string, content: string, description: string|null, url: string, due: string|null, priority: int, project_id: string|null, labels: array<int, string>}>
@@ -58,6 +35,42 @@ class TodoistService
         }
 
         return $this->fetchFiltered($connection, 'due: '.$date->format('Y-m-d'));
+    }
+
+    /**
+     * Complete the given task in Todoist. Returns false when the user has no
+     * connection or Todoist could not be reached, so a local completion is
+     * never blocked by the sync.
+     */
+    public function closeTask(User $user, string $taskId): bool
+    {
+        return $this->postTaskAction($user, $taskId, 'close');
+    }
+
+    /**
+     * Re-open a previously completed task in Todoist.
+     */
+    public function reopenTask(User $user, string $taskId): bool
+    {
+        return $this->postTaskAction($user, $taskId, 'reopen');
+    }
+
+    private function postTaskAction(User $user, string $taskId, string $action): bool
+    {
+        $connection = $user->serviceConnection(ServiceType::Todoist);
+
+        if ($connection === null) {
+            return false;
+        }
+
+        try {
+            return Http::withToken($connection->access_token)
+                ->timeout(5)
+                ->post(self::BASE_URL."/tasks/{$taskId}/{$action}")
+                ->successful();
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     /**

@@ -8,7 +8,6 @@ use Domain\ExternalServices\Requests\StoreTodoistConnectionRequest;
 use Domain\ExternalServices\Services\TodoistService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 
 class TodoistConnectionController extends Controller
 {
@@ -29,8 +28,6 @@ class TodoistConnectionController extends Controller
             ['access_token' => $token],
         );
 
-        Cache::forget("todoist:tasks:user:{$user->id}");
-
         return to_route('external-services.edit');
     }
 
@@ -41,8 +38,6 @@ class TodoistConnectionController extends Controller
         $user->serviceConnections()
             ->where('service', ServiceType::Todoist->value)
             ->delete();
-
-        Cache::forget("todoist:tasks:user:{$user->id}");
 
         return to_route('external-services.edit');
     }
