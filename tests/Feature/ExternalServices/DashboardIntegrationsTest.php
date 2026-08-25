@@ -13,27 +13,12 @@ test('dashboard shows hidden integrations section when nothing is connected', fu
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('dashboard')
-            ->where('integrations.todoist.connected', false)
             ->where('integrations.googleCalendar.connected', false)
         );
 });
 
-test('dashboard flags Todoist as connected when a connection exists', function () {
-    Http::fake([
-        'api.todoist.com/api/v1/tasks/filter*' => Http::response([
-            'results' => [
-                [
-                    'id' => '123',
-                    'content' => 'Buy groceries',
-                    'due' => ['date' => '2026-04-23'],
-                    'priority' => 2,
-                    'project_id' => '42',
-                    'labels' => ['errands'],
-                ],
-            ],
-            'next_cursor' => null,
-        ], 200),
-    ]);
+test('the dashboard no longer carries a Todoist widget', function () {
+    Http::fake();
 
     $user = User::factory()->create();
     $user->serviceConnections()->create([
@@ -43,8 +28,11 @@ test('dashboard flags Todoist as connected when a connection exists', function (
 
     $this->actingAs($user)
         ->get(route('dashboard'))
+        ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('integrations.todoist.connected', true)
-            ->where('integrations.googleCalendar.connected', false)
+            ->component('dashboard')
+            ->missing('integrations.todoist')
         );
+
+    Http::assertNothingSent();
 });

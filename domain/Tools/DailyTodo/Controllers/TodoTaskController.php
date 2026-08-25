@@ -4,6 +4,7 @@ namespace Domain\Tools\DailyTodo\Controllers;
 
 use App\Http\Controllers\Controller;
 use Domain\Automation\AutomationRunner;
+use Domain\ExternalServices\Services\TodoistService;
 use Domain\Tools\DailyTodo\Events\CompletedTodosEvent;
 use Domain\Tools\DailyTodo\Models\TodoTask;
 use Domain\Tools\DailyTodo\Requests\MarkTodoNotDoneRequest;
@@ -68,14 +69,26 @@ class TodoTaskController extends Controller
         return back();
     }
 
-    public function toggle(TodoTask $todoTask, AutomationRunner $automation): RedirectResponse
+    /**
+     * Toggle a task's completion, mirroring it onto Todoist for tasks that were
+     * imported from there.
+     */
+    public function toggle(TodoTask $todoTask, AutomationRunner $automation, TodoistService $todoist): RedirectResponse
     {
         $this->authorize('update', $todoTask);
 
+        $completing = ! $todoTask->isCompleted();
+
         $todoTask->update([
-            'completed_at' => $todoTask->isCompleted() ? null : now(),
+            'completed_at' => $completing ? now() : null,
             'not_done' => false,
         ]);
+
+        if ($todoTask->todoist_id !== null) {
+            $completing
+                ? $todoist->closeTask($todoTask->user, $todoTask->todoist_id)
+                : $todoist->reopenTask($todoTask->user, $todoTask->todoist_id);
+        }
 
         $automation->fire(CompletedTodosEvent::KEY, $todoTask->user);
 

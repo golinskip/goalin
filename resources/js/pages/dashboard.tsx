@@ -29,16 +29,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-type TodoistTask = {
-    id: string;
-    content: string;
-    description: string | null;
-    url: string;
-    due: string | null;
-    priority: number;
-    project_id: string | null;
-};
-
 type CalendarEvent = {
     id: string;
     summary: string;
@@ -158,34 +148,12 @@ const tools: Tool[] = [
 
 type Props = {
     integrations: {
-        todoist: {
-            connected: boolean;
-            tasks?: TodoistTask[];
-        };
         googleCalendar: {
             connected: boolean;
             events?: CalendarEvent[];
         };
     };
 };
-
-function formatDueDate(dateStr: string | null): string {
-    if (!dateStr) {
-        return '';
-    }
-
-    const date = new Date(dateStr);
-
-    if (Number.isNaN(date.getTime())) {
-        return dateStr;
-    }
-
-    return date.toLocaleDateString(undefined, {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-    });
-}
 
 function formatEventTime(event: CalendarEvent): string {
     const start = new Date(event.start);
@@ -307,8 +275,6 @@ function ListSkeleton() {
 export default function Dashboard({ integrations }: Props) {
     const { props } = usePage<{ alerts?: AlertItem[] }>();
     const alerts = props.alerts ?? [];
-    const showIntegrations =
-        integrations.todoist.connected || integrations.googleCalendar.connected;
     const featuredTools = tools.filter((tool) => tool.featured);
     const remainingTools = tools.filter((tool) => !tool.featured);
     const alertsFor = (tool: Tool) =>
@@ -348,129 +314,52 @@ export default function Dashboard({ integrations }: Props) {
                         </div>
                     </div>
 
-                    {showIntegrations && (
-                        <div className="grid gap-4 md:grid-cols-2">
-                            {integrations.todoist.connected && (
-                                <section className="rounded-xl border border-red-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm dark:border-red-800/50 dark:bg-black/40">
-                                    <div className="mb-4 flex items-center justify-between gap-2">
-                                        <h3 className="flex items-center gap-2 text-base font-semibold">
-                                            <ListTodo className="size-5 text-red-600 dark:text-red-400" />
-                                            Todoist
-                                        </h3>
-                                        <a
-                                            href="https://app.todoist.com/app/today"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                                        >
-                                            Open Todoist
-                                            <ExternalLink className="size-3" />
-                                        </a>
-                                    </div>
+                    {integrations.googleCalendar.connected && (
+                        <section className="rounded-xl border border-blue-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm dark:border-blue-800/50 dark:bg-black/40">
+                            <div className="mb-4 flex items-center justify-between gap-2">
+                                <h3 className="flex items-center gap-2 text-base font-semibold">
+                                    <Calendar className="size-5 text-blue-600 dark:text-blue-400" />
+                                    Google Calendar
+                                </h3>
+                                <a
+                                    href="https://calendar.google.com/calendar/r"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                                >
+                                    Open Calendar
+                                    <ExternalLink className="size-3" />
+                                </a>
+                            </div>
 
-                                    <Deferred
-                                        data="integrations.todoist.tasks"
-                                        fallback={<ListSkeleton />}
-                                    >
-                                        <TodoistList
-                                            tasks={
-                                                integrations.todoist.tasks ?? []
-                                            }
-                                        />
-                                    </Deferred>
-                                </section>
-                            )}
-
-                            {integrations.googleCalendar.connected && (
-                                <section className="rounded-xl border border-blue-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-sm dark:border-blue-800/50 dark:bg-black/40">
-                                    <div className="mb-4 flex items-center justify-between gap-2">
-                                        <h3 className="flex items-center gap-2 text-base font-semibold">
-                                            <Calendar className="size-5 text-blue-600 dark:text-blue-400" />
-                                            Google Calendar
-                                        </h3>
-                                        <a
-                                            href="https://calendar.google.com/calendar/r"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                                        >
-                                            Open Calendar
-                                            <ExternalLink className="size-3" />
-                                        </a>
-                                    </div>
-
-                                    <Deferred
-                                        data="integrations.googleCalendar.events"
-                                        fallback={<ListSkeleton />}
-                                    >
-                                        <CalendarList
-                                            events={
-                                                integrations.googleCalendar
-                                                    .events ?? []
-                                            }
-                                        />
-                                    </Deferred>
-                                </section>
-                            )}
-                        </div>
+                            <Deferred
+                                data="integrations.googleCalendar.events"
+                                fallback={<ListSkeleton />}
+                            >
+                                <CalendarList
+                                    events={
+                                        integrations.googleCalendar.events ?? []
+                                    }
+                                />
+                            </Deferred>
+                        </section>
                     )}
 
-                    {!showIntegrations && (
+                    {!integrations.googleCalendar.connected && (
                         <p className="text-sm text-muted-foreground">
                             Connect{' '}
                             <Link
                                 href={editExternalServices()}
                                 className="underline"
                             >
-                                Todoist or Google Calendar
+                                Google Calendar
                             </Link>{' '}
-                            to see upcoming todos and events here.
+                            to see upcoming events here.
                         </p>
                     )}
                 </div>
             </div>
         </AppLayout>
-    );
-}
-
-function TodoistList({ tasks }: { tasks: TodoistTask[] }) {
-    if (tasks.length === 0) {
-        return (
-            <p className="text-sm text-muted-foreground">
-                No upcoming tasks. Enjoy the calm.
-            </p>
-        );
-    }
-
-    return (
-        <ul className="space-y-2">
-            {tasks.map((task) => (
-                <li key={task.id}>
-                    <a
-                        href={task.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group flex items-start justify-between gap-3 rounded-md border border-transparent px-2 py-2 transition-colors hover:border-border hover:bg-muted/40"
-                    >
-                        <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium">
-                                {task.content}
-                            </p>
-                            {task.description && (
-                                <p className="truncate text-xs text-muted-foreground">
-                                    {task.description}
-                                </p>
-                            )}
-                        </div>
-                        {task.due && (
-                            <span className="shrink-0 text-xs text-muted-foreground">
-                                {formatDueDate(task.due)}
-                            </span>
-                        )}
-                    </a>
-                </li>
-            ))}
-        </ul>
     );
 }
 
