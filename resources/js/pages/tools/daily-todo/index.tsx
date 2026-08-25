@@ -1239,18 +1239,19 @@ export default function DailyTodoIndex({ selectedDate, today, month, tasks, cale
                 throw new Error('Sync failed');
             }
 
-            const data: { updated: number; created: number; failed: number } = await response.json();
+            const data: { updated: number; imported: number; gone: number } = await response.json();
             const parts = [`${data.updated} updated`];
 
-            if (data.created > 0) {
-                parts.push(`${data.created} added to Todoist`);
+            if (data.imported > 0) {
+                parts.push(`${data.imported} new`);
             }
 
-            if (data.failed > 0) {
-                parts.push(`${data.failed} failed`);
+            if (data.gone > 0) {
+                parts.push(`${data.gone} gone from Todoist`);
             }
 
             setSyncResult(parts.join(' · '));
+            router.reload();
         } catch {
             setSyncResult('Could not reach Todoist.');
         } finally {
@@ -1325,10 +1326,10 @@ export default function DailyTodoIndex({ selectedDate, today, month, tasks, cale
                                             className="text-xs"
                                             onClick={syncDayWithTodoist}
                                             disabled={syncing}
-                                            title="Push every task of this day onto Todoist"
+                                            title="Pull this day's tasks from Todoist"
                                         >
                                             <RefreshCw className={cn('mr-1.5 size-3.5', syncing && 'animate-spin')} />
-                                            Sync day
+                                            Sync from Todoist
                                         </Button>
                                         <Button variant="outline" size="sm" className="text-xs" onClick={() => setTodoistOpen(true)}>
                                             <DownloadCloud className="mr-1.5 size-3.5" />

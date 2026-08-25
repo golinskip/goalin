@@ -31,6 +31,36 @@ class TodoistTaskMapper
     }
 
     /**
+     * The fields a todo takes from its Todoist counterpart. Local-only details
+     * such as estimated cycles, subtasks and links are left untouched.
+     *
+     * @param  array{content: string, description: string|null, priority: int, labels: array<int, string>}  $task
+     * @return array<string, mixed>
+     */
+    public static function attributesFrom(array $task): array
+    {
+        return [
+            'title' => mb_substr($task['content'], 0, 255),
+            'description' => $task['description'] !== null && trim($task['description']) !== ''
+                ? $task['description']
+                : null,
+            'tags' => $task['labels'],
+            'priority' => self::toPriority($task['priority'])?->value,
+        ];
+    }
+
+    /**
+     * The link back to Todoist given to a task when it is first pulled in.
+     *
+     * @param  array{url: string}  $task
+     * @return array<int, array{label: string, url: string}>
+     */
+    public static function linkTo(array $task): array
+    {
+        return [['label' => 'Todoist', 'url' => $task['url']]];
+    }
+
+    /**
      * Everything a fresh Todoist task is given when a todo is sent over.
      *
      * @return array<string, mixed>

@@ -4,8 +4,10 @@ namespace Domain\Tools\DailyTodo\Controllers;
 
 use App\Http\Controllers\Controller;
 use Carbon\CarbonImmutable;
+use Domain\Automation\AutomationRunner;
 use Domain\ExternalServices\Enums\ServiceType;
 use Domain\ExternalServices\Services\TodoistService;
+use Domain\Tools\DailyTodo\Events\CompletedTodosEvent;
 use Domain\Tools\DailyTodo\Models\TodoTask;
 use Domain\Tools\DailyTodo\Support\TodoistTaskMapper;
 use Domain\User\Models\User;
@@ -52,11 +54,11 @@ class TodoistSyncController extends Controller
     }
 
     /**
-     * Make Todoist match this day as Daily Todo has it: linked tasks get their
-     * title, due date and done state pushed across, and tasks that have no
-     * Todoist counterpart yet are created there.
+     * Bring this day's todos in line with Todoist: every linked task takes its
+     * title, details, due date and done state from its Todoist counterpart, and
+     * Todoist tasks due that day that are not here yet are pulled in.
      */
-    public function day(Request $request): JsonResponse
+    public function day(Request $request, AutomationRunner $automation): JsonResponse
     {
         $user = $request->user();
 
@@ -69,30 +71,84 @@ class TodoistSyncController extends Controller
             $request->validate(['date' => ['required', 'date_format:Y-m-d']])['date'],
         )->startOfDay();
 
-        $tasks = $user->todoTasks()
+        $updated = 0;
+        $gone = 0;
+        $completionChanged = false;
+
+        $linkedTasks = $user->todoTasks()
             ->whereNull('parent_id')
             ->whereDate('due_date', $date)
+            ->whereNotNull('todoist_id')
             ->get();
 
-        $updated = 0;
-        $created = 0;
-        $failed = 0;
+        foreach ($linkedTasks as $task) {
+            $remote = $this->todoist->findTask($user, $task->todoist_id);
 
-        foreach ($tasks as $task) {
-            if ($task->todoist_id === null) {
-                $this->createOnTodoist($user, $task) ? $created++ : $failed++;
+            if ($remote === null) {
+                $gone++;
 
                 continue;
             }
 
-            $this->pushOntoTodoist($user, $task) ? $updated++ : $failed++;
+            $wasCompleted = $task->isCompleted();
+
+            $task->update([
+                ...TodoistTaskMapper::attributesFrom($remote),
+                'due_date' => $remote['due'] ?? $task->due_date,
+                'completed_at' => $remote['completed'] ? ($task->completed_at ?? now()) : null,
+                'not_done' => $remote['completed'] ? false : $task->not_done,
+            ]);
+
+            if ($task->wasChanged()) {
+                $updated++;
+            }
+
+            $completionChanged = $completionChanged || $wasCompleted !== $task->isCompleted();
+        }
+
+        $imported = $this->pullNewTasks($user, $date);
+
+        if ($completionChanged) {
+            $automation->fire(CompletedTodosEvent::KEY, $user);
         }
 
         return response()->json([
             'updated' => $updated,
-            'created' => $created,
-            'failed' => $failed,
+            'imported' => $imported,
+            'gone' => $gone,
         ]);
+    }
+
+    /**
+     * Add the Todoist tasks due that day that no todo is linked to yet.
+     */
+    private function pullNewTasks(User $user, CarbonImmutable $date): int
+    {
+        $alreadyHere = $user->todoTasks()
+            ->whereNotNull('todoist_id')
+            ->pluck('todoist_id')
+            ->all();
+
+        $position = $user->todoTasks()->whereNull('parent_id')->max('position') + 1;
+        $imported = 0;
+
+        foreach ($this->todoist->tasksDueOn($user, $date) as $remote) {
+            if (in_array($remote['id'], $alreadyHere, true)) {
+                continue;
+            }
+
+            $user->todoTasks()->create([
+                ...TodoistTaskMapper::attributesFrom($remote),
+                'todoist_id' => $remote['id'],
+                'links' => TodoistTaskMapper::linkTo($remote),
+                'due_date' => $date,
+                'position' => $position++,
+            ]);
+
+            $imported++;
+        }
+
+        return $imported;
     }
 
     /**
@@ -110,17 +166,6 @@ class TodoistSyncController extends Controller
         $task->update(['todoist_id' => $todoistId]);
 
         return ! $task->isCompleted() || $this->todoist->closeTask($user, $todoistId);
-    }
-
-    /**
-     * Bring an already linked Todoist task back in line with the local one.
-     */
-    private function pushOntoTodoist(User $user, TodoTask $task): bool
-    {
-        return $this->todoist->updateTask($user, $task->todoist_id, TodoistTaskMapper::updatePayload($task))
-            && ($task->isCompleted()
-                ? $this->todoist->closeTask($user, $task->todoist_id)
-                : $this->todoist->reopenTask($user, $task->todoist_id));
     }
 
     private function isConnected(User $user): bool

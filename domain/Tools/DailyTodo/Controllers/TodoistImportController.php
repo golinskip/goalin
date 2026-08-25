@@ -91,14 +91,9 @@ class TodoistImportController extends Controller
             }
 
             $user->todoTasks()->create([
+                ...TodoistTaskMapper::attributesFrom($task),
                 'todoist_id' => $task['id'],
-                'title' => mb_substr($task['content'], 0, 255),
-                'description' => $task['description'] !== null && trim($task['description']) !== ''
-                    ? $task['description']
-                    : null,
-                'links' => [['label' => 'Todoist', 'url' => $task['url']]],
-                'tags' => $task['labels'],
-                'priority' => TodoistTaskMapper::toPriority($task['priority'])?->value,
+                'links' => TodoistTaskMapper::linkTo($task),
                 'due_date' => $date,
                 'position' => $position++,
             ]);
