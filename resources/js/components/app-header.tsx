@@ -9,6 +9,8 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -41,16 +43,11 @@ type Props = {
     breadcrumbs?: BreadcrumbItem[];
 };
 
-const toolsNavItems: NavItem[] = [
+const mainToolsNavItems: NavItem[] = [
     {
         title: 'Goal Tracker',
         href: '/goal-tracker',
         icon: Target,
-    },
-    {
-        title: 'Memo Cards',
-        href: memoSetsIndex(),
-        icon: BookOpen,
     },
     {
         title: 'Diary',
@@ -77,6 +74,14 @@ const toolsNavItems: NavItem[] = [
         href: '/long-term-goals',
         icon: Compass,
     },
+];
+
+const additionalToolsNavItems: NavItem[] = [
+    {
+        title: 'Memo Cards',
+        href: memoSetsIndex(),
+        icon: BookOpen,
+    },
     {
         title: 'Music Player',
         href: musicIndex(),
@@ -95,8 +100,70 @@ const toolsNavItems: NavItem[] = [
     },
 ];
 
+const toolsNavItems: NavItem[] = [
+    ...mainToolsNavItems,
+    ...additionalToolsNavItems,
+];
+
 const activeItemStyles =
     'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary';
+
+function ToolsSheetLinks({ items }: { items: NavItem[] }) {
+    return (
+        <>
+            {items.map((item) =>
+                item.external ? (
+                    <a
+                        key={item.title}
+                        href={typeof item.href === 'string' ? item.href : item.href.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center space-x-2 font-medium"
+                    >
+                        {item.icon && <item.icon className="h-5 w-5" />}
+                        <span>{item.title}</span>
+                    </a>
+                ) : (
+                    <Link
+                        key={item.title}
+                        href={item.href}
+                        className="flex items-center space-x-2 font-medium"
+                    >
+                        {item.icon && <item.icon className="h-5 w-5" />}
+                        <span>{item.title}</span>
+                    </Link>
+                ),
+            )}
+        </>
+    );
+}
+
+function ToolsDropdownItems({ items }: { items: NavItem[] }) {
+    return (
+        <>
+            {items.map((item) => (
+                <DropdownMenuItem key={item.title} asChild>
+                    {item.external ? (
+                        <a
+                            href={typeof item.href === 'string' ? item.href : item.href.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2"
+                        >
+                            {item.icon && <item.icon className="h-4 w-4" />}
+                            {item.title}
+                        </a>
+                    ) : (
+                        <Link href={item.href} className="flex items-center gap-2">
+                            {item.icon && <item.icon className="h-4 w-4" />}
+                            {item.title}
+                        </Link>
+                    )}
+                </DropdownMenuItem>
+            ))}
+        </>
+    );
+}
 
 export function AppHeader({ breadcrumbs = [] }: Props) {
     const page = usePage();
@@ -149,36 +216,19 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
 
                                         <div className="pt-2">
                                             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                                Tools
+                                                Main tools
                                             </p>
                                             <div className="flex flex-col space-y-4">
-                                                {toolsNavItems.map((item) =>
-                                                    item.external ? (
-                                                        <a
-                                                            key={item.title}
-                                                            href={typeof item.href === 'string' ? item.href : item.href.url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="flex items-center space-x-2 font-medium"
-                                                        >
-                                                            {item.icon && (
-                                                                <item.icon className="h-5 w-5" />
-                                                            )}
-                                                            <span>{item.title}</span>
-                                                        </a>
-                                                    ) : (
-                                                        <Link
-                                                            key={item.title}
-                                                            href={item.href}
-                                                            className="flex items-center space-x-2 font-medium"
-                                                        >
-                                                            {item.icon && (
-                                                                <item.icon className="h-5 w-5" />
-                                                            )}
-                                                            <span>{item.title}</span>
-                                                        </Link>
-                                                    ),
-                                                )}
+                                                <ToolsSheetLinks items={mainToolsNavItems} />
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-2">
+                                            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                                Additional tools
+                                            </p>
+                                            <div className="flex flex-col space-y-4">
+                                                <ToolsSheetLinks items={additionalToolsNavItems} />
                                             </div>
                                         </div>
                                     </div>
@@ -234,33 +284,15 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                             <ChevronDown className="h-3.5 w-3.5" />
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="start" className="w-48">
-                                            {toolsNavItems.map((item) => (
-                                                <DropdownMenuItem key={item.title} asChild>
-                                                    {item.external ? (
-                                                        <a
-                                                            href={typeof item.href === 'string' ? item.href : item.href.url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="flex items-center gap-2"
-                                                        >
-                                                            {item.icon && (
-                                                                <item.icon className="h-4 w-4" />
-                                                            )}
-                                                            {item.title}
-                                                        </a>
-                                                    ) : (
-                                                        <Link
-                                                            href={item.href}
-                                                            className="flex items-center gap-2"
-                                                        >
-                                                            {item.icon && (
-                                                                <item.icon className="h-4 w-4" />
-                                                            )}
-                                                            {item.title}
-                                                        </Link>
-                                                    )}
-                                                </DropdownMenuItem>
-                                            ))}
+                                            <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                                Main tools
+                                            </DropdownMenuLabel>
+                                            <ToolsDropdownItems items={mainToolsNavItems} />
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                                Additional tools
+                                            </DropdownMenuLabel>
+                                            <ToolsDropdownItems items={additionalToolsNavItems} />
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                     {isToolsActive && (

@@ -1,6 +1,7 @@
 import { Deferred, Head, Link, usePage } from '@inertiajs/react';
 import {
     BookOpen,
+    Boxes,
     Calendar,
     Compass,
     ExternalLink,
@@ -51,7 +52,7 @@ type Tool = {
     iconColor: string;
 };
 
-const tools: Tool[] = [
+const mainTools: Tool[] = [
     {
         title: 'Goal Tracker',
         description: 'Track activities and earn rewards',
@@ -61,15 +62,6 @@ const tools: Tool[] = [
         card: 'border-green-300 ring-1 ring-green-500/20 dark:border-green-700',
         iconWrapper: 'bg-green-500/15 group-hover:bg-green-500/25',
         iconColor: 'text-green-600 dark:text-green-400',
-    },
-    {
-        title: 'Memo Cards',
-        description: 'Flashcards to learn and memorize',
-        href: '/memo-sets',
-        icon: BookOpen,
-        card: 'border-blue-200/80 dark:border-blue-800/50',
-        iconWrapper: 'bg-blue-500/15 group-hover:bg-blue-500/25',
-        iconColor: 'text-blue-600 dark:text-blue-400',
     },
     {
         title: 'Diary',
@@ -115,6 +107,18 @@ const tools: Tool[] = [
         card: 'border-violet-200/80 dark:border-violet-800/50',
         iconWrapper: 'bg-violet-500/15 group-hover:bg-violet-500/25',
         iconColor: 'text-violet-600 dark:text-violet-400',
+    },
+];
+
+const additionalTools: Tool[] = [
+    {
+        title: 'Memo Cards',
+        description: 'Flashcards to learn and memorize',
+        href: '/memo-sets',
+        icon: BookOpen,
+        card: 'border-blue-200/80 dark:border-blue-800/50',
+        iconWrapper: 'bg-blue-500/15 group-hover:bg-blue-500/25',
+        iconColor: 'text-blue-600 dark:text-blue-400',
     },
     {
         title: 'Music Player',
@@ -275,8 +279,8 @@ function ListSkeleton() {
 export default function Dashboard({ integrations }: Props) {
     const { props } = usePage<{ alerts?: AlertItem[] }>();
     const alerts = props.alerts ?? [];
-    const featuredTools = tools.filter((tool) => tool.featured);
-    const remainingTools = tools.filter((tool) => !tool.featured);
+    const featuredTools = mainTools.filter((tool) => tool.featured);
+    const remainingMainTools = mainTools.filter((tool) => !tool.featured);
     const alertsFor = (tool: Tool) =>
         alerts.filter((alert) => alert.tool === tool.title);
 
@@ -288,11 +292,11 @@ export default function Dashboard({ integrations }: Props) {
                 <PageBackground />
 
                 <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-4 lg:p-6">
-                    {/* Tools */}
+                    {/* Main tools */}
                     <div>
                         <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
                             <Layers className="size-5" />
-                            Tools
+                            Main tools
                         </h2>
                         <div className="grid gap-4">
                             {featuredTools.map((tool) => (
@@ -303,7 +307,7 @@ export default function Dashboard({ integrations }: Props) {
                                 />
                             ))}
                             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                {remainingTools.map((tool) => (
+                                {remainingMainTools.map((tool) => (
                                     <ToolTile
                                         key={tool.title}
                                         tool={tool}
@@ -311,6 +315,23 @@ export default function Dashboard({ integrations }: Props) {
                                     />
                                 ))}
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Additional tools */}
+                    <div>
+                        <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
+                            <Boxes className="size-5" />
+                            Additional tools
+                        </h2>
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            {additionalTools.map((tool) => (
+                                <ToolTile
+                                    key={tool.title}
+                                    tool={tool}
+                                    alerts={alertsFor(tool)}
+                                />
+                            ))}
                         </div>
                     </div>
 
