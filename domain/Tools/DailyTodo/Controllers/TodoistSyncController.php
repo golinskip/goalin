@@ -42,20 +42,19 @@ class TodoistSyncController extends Controller
             return back();
         }
 
-        $todoistId = $this->todoist->createTask($user, TodoistTaskMapper::createPayload($todoTask));
+        $this->createOnTodoist($user, $todoTask);
 
-        if ($todoistId === null) {
+        if ($todoTask->todoist_id === null) {
             return back()->withErrors(['todoist' => 'The task could not be sent to Todoist.']);
         }
-
-        $todoTask->update(['todoist_id' => $todoistId]);
 
         return back();
     }
 
     /**
-     * Push every linked task planned for the given day back onto Todoist: its
-     * title, its due date, and whether it is done.
+     * Make Todoist match this day as Daily Todo has it: linked tasks get their
+     * title, due date and done state pushed across, and tasks that have no
+     * Todoist counterpart yet are created there.
      */
     public function day(Request $request): JsonResponse
     {
@@ -75,23 +74,53 @@ class TodoistSyncController extends Controller
             ->whereDate('due_date', $date)
             ->get();
 
-        $synced = 0;
+        $updated = 0;
+        $created = 0;
         $failed = 0;
 
-        foreach ($tasks->whereNotNull('todoist_id') as $task) {
-            $pushed = $this->todoist->updateTask($user, $task->todoist_id, TodoistTaskMapper::updatePayload($task))
-                && ($task->isCompleted()
-                    ? $this->todoist->closeTask($user, $task->todoist_id)
-                    : $this->todoist->reopenTask($user, $task->todoist_id));
+        foreach ($tasks as $task) {
+            if ($task->todoist_id === null) {
+                $this->createOnTodoist($user, $task) ? $created++ : $failed++;
 
-            $pushed ? $synced++ : $failed++;
+                continue;
+            }
+
+            $this->pushOntoTodoist($user, $task) ? $updated++ : $failed++;
         }
 
         return response()->json([
-            'synced' => $synced,
+            'updated' => $updated,
+            'created' => $created,
             'failed' => $failed,
-            'unlinked' => $tasks->whereNull('todoist_id')->count(),
         ]);
+    }
+
+    /**
+     * Create the task on Todoist and link the two. A task that is already done
+     * locally is closed straight away.
+     */
+    private function createOnTodoist(User $user, TodoTask $task): bool
+    {
+        $todoistId = $this->todoist->createTask($user, TodoistTaskMapper::createPayload($task));
+
+        if ($todoistId === null) {
+            return false;
+        }
+
+        $task->update(['todoist_id' => $todoistId]);
+
+        return ! $task->isCompleted() || $this->todoist->closeTask($user, $todoistId);
+    }
+
+    /**
+     * Bring an already linked Todoist task back in line with the local one.
+     */
+    private function pushOntoTodoist(User $user, TodoTask $task): bool
+    {
+        return $this->todoist->updateTask($user, $task->todoist_id, TodoistTaskMapper::updatePayload($task))
+            && ($task->isCompleted()
+                ? $this->todoist->closeTask($user, $task->todoist_id)
+                : $this->todoist->reopenTask($user, $task->todoist_id));
     }
 
     private function isConnected(User $user): bool

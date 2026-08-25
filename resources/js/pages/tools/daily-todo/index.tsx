@@ -1239,15 +1239,15 @@ export default function DailyTodoIndex({ selectedDate, today, month, tasks, cale
                 throw new Error('Sync failed');
             }
 
-            const data: { synced: number; failed: number; unlinked: number } = await response.json();
-            const parts = [`${data.synced} synced`];
+            const data: { updated: number; created: number; failed: number } = await response.json();
+            const parts = [`${data.updated} updated`];
+
+            if (data.created > 0) {
+                parts.push(`${data.created} added to Todoist`);
+            }
 
             if (data.failed > 0) {
                 parts.push(`${data.failed} failed`);
-            }
-
-            if (data.unlinked > 0) {
-                parts.push(`${data.unlinked} not linked`);
             }
 
             setSyncResult(parts.join(' · '));
@@ -1325,7 +1325,7 @@ export default function DailyTodoIndex({ selectedDate, today, month, tasks, cale
                                             className="text-xs"
                                             onClick={syncDayWithTodoist}
                                             disabled={syncing}
-                                            title="Push this day's linked tasks back to Todoist"
+                                            title="Push every task of this day onto Todoist"
                                         >
                                             <RefreshCw className={cn('mr-1.5 size-3.5', syncing && 'animate-spin')} />
                                             Sync day

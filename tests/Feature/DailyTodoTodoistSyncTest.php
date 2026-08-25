@@ -201,6 +201,7 @@ test('editing an unlinked task never reaches Todoist', function () {
 
 test('the day sync pushes every linked task of that day', function () {
     Http::fake([
+        'api.todoist.com/api/v1/tasks' => Http::response(['id' => '904'], 200),
         'api.todoist.com/api/v1/tasks/*' => Http::response(['id' => 'ok'], 200),
     ]);
 
@@ -221,7 +222,8 @@ test('the day sync pushes every linked task of that day', function () {
         'completed_at' => null,
     ]);
 
-    TodoTask::factory()->for($user)->create([
+    $unlinked = TodoTask::factory()->for($user)->create([
+        'title' => 'Only in the app',
         'due_date' => '2026-08-25',
         'todoist_id' => null,
     ]);
@@ -234,7 +236,13 @@ test('the day sync pushes every linked task of that day', function () {
     $this->actingAs($user)
         ->postJson(route('daily-todo.todoist.sync'), ['date' => '2026-08-25'])
         ->assertOk()
-        ->assertJson(['synced' => 2, 'failed' => 0, 'unlinked' => 1]);
+        ->assertJson(['updated' => 2, 'created' => 1, 'failed' => 0]);
+
+    expect($unlinked->fresh()->todoist_id)->toBe('904');
+
+    Http::assertSent(fn ($request): bool => $request->url() === 'https://api.todoist.com/api/v1/tasks'
+        && $request->data()['content'] === 'Only in the app'
+        && $request->data()['due_date'] === '2026-08-25');
 
     Http::assertSent(fn ($request): bool => $request->url() === 'https://api.todoist.com/api/v1/tasks/901'
         && $request->data()['content'] === 'Finished');
@@ -262,7 +270,7 @@ test('the day sync counts tasks Todoist rejected', function () {
     $this->actingAs($user)
         ->postJson(route('daily-todo.todoist.sync'), ['date' => '2026-08-25'])
         ->assertOk()
-        ->assertJson(['synced' => 0, 'failed' => 1, 'unlinked' => 0]);
+        ->assertJson(['updated' => 0, 'created' => 0, 'failed' => 1]);
 });
 
 test('the day sync only touches the signed in users tasks', function () {
@@ -280,7 +288,7 @@ test('the day sync only touches the signed in users tasks', function () {
     $this->actingAs($other)
         ->postJson(route('daily-todo.todoist.sync'), ['date' => '2026-08-25'])
         ->assertOk()
-        ->assertJson(['synced' => 0, 'unlinked' => 0]);
+        ->assertJson(['updated' => 0, 'created' => 0, 'failed' => 0]);
 
     Http::assertNothingSent();
 });
@@ -318,4 +326,99 @@ test('the index marks which tasks are linked with Todoist', function () {
     $this->actingAs($user)
         ->get(route('daily-todo.index'))
         ->assertInertia(fn ($page) => $page->where('tasks.0.todoist_linked', true));
+});
+
+test('the day sync sends tasks that only exist in the app', function () {
+    Http::fake([
+        'api.todoist.com/api/v1/tasks' => Http::response(['id' => '910'], 200),
+    ]);
+
+    $user = User::factory()->create();
+    connectTodoistForSync($user);
+
+    $first = TodoTask::factory()->for($user)->create([
+        'title' => 'Written here',
+        'due_date' => '2026-08-25',
+        'todoist_id' => null,
+    ]);
+    $second = TodoTask::factory()->for($user)->create([
+        'title' => 'Also written here',
+        'due_date' => '2026-08-25',
+        'todoist_id' => null,
+    ]);
+
+    $this->actingAs($user)
+        ->postJson(route('daily-todo.todoist.sync'), ['date' => '2026-08-25'])
+        ->assertOk()
+        ->assertJson(['updated' => 0, 'created' => 2, 'failed' => 0]);
+
+    expect($first->fresh()->todoist_id)->toBe('910')
+        ->and($second->fresh()->todoist_id)->toBe('910');
+});
+
+test('a completed app task is closed on Todoist right after it is created', function () {
+    Http::fake([
+        'api.todoist.com/api/v1/tasks' => Http::response(['id' => '911'], 200),
+        'api.todoist.com/api/v1/tasks/911/close' => Http::response('', 204),
+    ]);
+
+    $user = User::factory()->create();
+    connectTodoistForSync($user);
+
+    TodoTask::factory()->for($user)->create([
+        'title' => 'Done before it was sent',
+        'due_date' => '2026-08-25',
+        'todoist_id' => null,
+        'completed_at' => now(),
+    ]);
+
+    $this->actingAs($user)
+        ->postJson(route('daily-todo.todoist.sync'), ['date' => '2026-08-25'])
+        ->assertOk()
+        ->assertJson(['created' => 1, 'failed' => 0]);
+
+    Http::assertSent(fn ($request): bool => $request->url() === 'https://api.todoist.com/api/v1/tasks/911/close');
+});
+
+test('a task Todoist refuses to create stays unlinked and is counted as failed', function () {
+    Http::fake([
+        'api.todoist.com/api/v1/tasks' => Http::response(['error' => 'Bad Request'], 400),
+    ]);
+
+    $user = User::factory()->create();
+    connectTodoistForSync($user);
+
+    $task = TodoTask::factory()->for($user)->create([
+        'due_date' => '2026-08-25',
+        'todoist_id' => null,
+    ]);
+
+    $this->actingAs($user)
+        ->postJson(route('daily-todo.todoist.sync'), ['date' => '2026-08-25'])
+        ->assertOk()
+        ->assertJson(['updated' => 0, 'created' => 0, 'failed' => 1]);
+
+    expect($task->fresh()->todoist_id)->toBeNull();
+});
+
+test('the day sync leaves subtasks to their parent', function () {
+    Http::fake([
+        'api.todoist.com/api/v1/tasks' => Http::response(['id' => '912'], 200),
+    ]);
+
+    $user = User::factory()->create();
+    connectTodoistForSync($user);
+
+    $parent = TodoTask::factory()->for($user)->create([
+        'due_date' => '2026-08-25',
+        'todoist_id' => null,
+    ]);
+    TodoTask::factory()->subtaskOf($parent)->create(['todoist_id' => null]);
+
+    $this->actingAs($user)
+        ->postJson(route('daily-todo.todoist.sync'), ['date' => '2026-08-25'])
+        ->assertOk()
+        ->assertJson(['created' => 1, 'failed' => 0]);
+
+    Http::assertSentCount(1);
 });
