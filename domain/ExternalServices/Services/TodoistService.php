@@ -25,7 +25,7 @@ class TodoistService
     /**
      * The user's active Todoist tasks due on the given day.
      *
-     * @return array<int, array{id: string, content: string, description: string|null, url: string, due: string|null, priority: int, project_id: string|null, labels: array<int, string>}>
+     * @return array<int, array{id: string, content: string, description: string|null, url: string, due: string|null, priority: int, project_id: string|null, labels: array<int, string>, completed: bool}>
      */
     public function tasksDueOn(User $user, CarbonInterface $date): array
     {
@@ -36,6 +36,37 @@ class TodoistService
         }
 
         return $this->fetchFiltered($connection, 'due: '.$date->format('Y-m-d'));
+    }
+
+    /**
+     * Read a single task, whatever its state. Todoist answers 200 for tasks it
+     * has deleted, so those are reported as gone.
+     *
+     * @return array{id: string, content: string, description: string|null, url: string, due: string|null, priority: int, project_id: string|null, labels: array<int, string>, completed: bool}|null
+     */
+    public function findTask(User $user, string $taskId): ?array
+    {
+        $connection = $user->serviceConnection(ServiceType::Todoist);
+
+        if ($connection === null) {
+            return null;
+        }
+
+        try {
+            $response = Http::withToken($connection->access_token)
+                ->timeout(10)
+                ->get(self::BASE_URL."/tasks/{$taskId}");
+
+            if (! $response->successful() || $response->json('is_deleted') === true) {
+                return null;
+            }
+
+            return self::presentTask($response->json());
+        } catch (\Throwable $e) {
+            self::logFailure('read', $taskId, null, $e->getMessage());
+
+            return null;
+        }
     }
 
     /**
@@ -156,7 +187,7 @@ class TodoistService
     }
 
     /**
-     * @return array<int, array{id: string, content: string, description: string|null, url: string, due: string|null, priority: int, project_id: string|null, labels: array<int, string>}>
+     * @return array<int, array{id: string, content: string, description: string|null, url: string, due: string|null, priority: int, project_id: string|null, labels: array<int, string>, completed: bool}>
      */
     private function fetchFiltered(ServiceConnection $connection, string $query): array
     {
@@ -196,7 +227,7 @@ class TodoistService
 
     /**
      * @param  array<string, mixed>  $task
-     * @return array{id: string, content: string, description: string|null, url: string, due: string|null, priority: int, project_id: string|null, labels: array<int, string>}
+     * @return array{id: string, content: string, description: string|null, url: string, due: string|null, priority: int, project_id: string|null, labels: array<int, string>, completed: bool}
      */
     private static function presentTask(array $task): array
     {
@@ -214,6 +245,7 @@ class TodoistService
                 (array) ($task['labels'] ?? []),
                 fn (mixed $label): bool => is_string($label) && $label !== '',
             )),
+            'completed' => (bool) ($task['checked'] ?? false),
         ];
     }
 
