@@ -55,6 +55,7 @@ class TodoPresenter
             'tags' => $task->tags ?? [],
             'estimated_cycles' => $task->estimated_cycles,
             'priority' => $task->priority?->value,
+            'todoist_linked' => $task->todoist_id !== null,
         ];
     }
 }

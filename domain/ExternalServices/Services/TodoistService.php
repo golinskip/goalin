@@ -7,6 +7,7 @@ use Domain\ExternalServices\Enums\ServiceType;
 use Domain\ExternalServices\Models\ServiceConnection;
 use Domain\User\Models\User;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class TodoistService
 {
@@ -38,6 +39,73 @@ class TodoistService
     }
 
     /**
+     * Create a task in Todoist, returning its id, or null when it could not be
+     * created.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    public function createTask(User $user, array $attributes): ?string
+    {
+        $connection = $user->serviceConnection(ServiceType::Todoist);
+
+        if ($connection === null) {
+            return null;
+        }
+
+        try {
+            $response = Http::withToken($connection->access_token)
+                ->timeout(10)
+                ->post(self::BASE_URL.'/tasks', self::withoutNulls($attributes));
+
+            if (! $response->successful()) {
+                self::logFailure('create', '-', $response->status(), $response->body());
+
+                return null;
+            }
+
+            $id = $response->json('id');
+
+            return is_scalar($id) ? (string) $id : null;
+        } catch (\Throwable $e) {
+            self::logFailure('create', '-', null, $e->getMessage());
+
+            return null;
+        }
+    }
+
+    /**
+     * Push changed fields onto an existing Todoist task.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    public function updateTask(User $user, string $taskId, array $attributes): bool
+    {
+        $connection = $user->serviceConnection(ServiceType::Todoist);
+
+        if ($connection === null) {
+            return false;
+        }
+
+        try {
+            $response = Http::withToken($connection->access_token)
+                ->timeout(10)
+                ->post(self::BASE_URL."/tasks/{$taskId}", self::withoutNulls($attributes));
+
+            if ($response->successful()) {
+                return true;
+            }
+
+            self::logFailure('update', $taskId, $response->status(), $response->body());
+
+            return false;
+        } catch (\Throwable $e) {
+            self::logFailure('update', $taskId, null, $e->getMessage());
+
+            return false;
+        }
+    }
+
+    /**
      * Complete the given task in Todoist. Returns false when the user has no
      * connection or Todoist could not be reached, so a local completion is
      * never blocked by the sync.
@@ -55,6 +123,10 @@ class TodoistService
         return $this->postTaskAction($user, $taskId, 'reopen');
     }
 
+    /**
+     * Todoist rejects the empty JSON array Laravel would otherwise send as the
+     * body of a bodyless POST, so an empty object is sent explicitly.
+     */
     private function postTaskAction(User $user, string $taskId, string $action): bool
     {
         $connection = $user->serviceConnection(ServiceType::Todoist);
@@ -64,11 +136,21 @@ class TodoistService
         }
 
         try {
-            return Http::withToken($connection->access_token)
+            $response = Http::withToken($connection->access_token)
                 ->timeout(5)
-                ->post(self::BASE_URL."/tasks/{$taskId}/{$action}")
-                ->successful();
-        } catch (\Throwable) {
+                ->withBody('{}', 'application/json')
+                ->post(self::BASE_URL."/tasks/{$taskId}/{$action}");
+
+            if ($response->successful()) {
+                return true;
+            }
+
+            self::logFailure($action, $taskId, $response->status(), $response->body());
+
+            return false;
+        } catch (\Throwable $e) {
+            self::logFailure($action, $taskId, null, $e->getMessage());
+
             return false;
         }
     }
@@ -133,5 +215,27 @@ class TodoistService
                 fn (mixed $label): bool => is_string($label) && $label !== '',
             )),
         ];
+    }
+
+    /**
+     * Todoist treats a missing key and a null value differently; only the keys
+     * a caller actually set are sent.
+     *
+     * @param  array<string, mixed>  $attributes
+     * @return array<string, mixed>
+     */
+    private static function withoutNulls(array $attributes): array
+    {
+        return array_filter($attributes, fn (mixed $value): bool => $value !== null);
+    }
+
+    private static function logFailure(string $action, string $taskId, ?int $status, string $detail): void
+    {
+        Log::warning('Todoist task sync failed.', [
+            'action' => $action,
+            'task_id' => $taskId,
+            'status' => $status,
+            'detail' => $detail,
+        ]);
     }
 }

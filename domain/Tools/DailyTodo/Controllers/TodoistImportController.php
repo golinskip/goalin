@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use Carbon\CarbonImmutable;
 use Domain\ExternalServices\Enums\ServiceType;
 use Domain\ExternalServices\Services\TodoistService;
-use Domain\Tools\DailyTodo\Enums\TodoPriority;
 use Domain\Tools\DailyTodo\Requests\ImportTodoistTasksRequest;
+use Domain\Tools\DailyTodo\Support\TodoistTaskMapper;
 use Domain\User\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -98,7 +98,7 @@ class TodoistImportController extends Controller
                     : null,
                 'links' => [['label' => 'Todoist', 'url' => $task['url']]],
                 'tags' => $task['labels'],
-                'priority' => self::mapPriority($task['priority'])?->value,
+                'priority' => TodoistTaskMapper::toPriority($task['priority'])?->value,
                 'due_date' => $date,
                 'position' => $position++,
             ]);
@@ -110,18 +110,5 @@ class TodoistImportController extends Controller
     private function isConnected(User $user): bool
     {
         return $user->serviceConnection(ServiceType::Todoist) !== null;
-    }
-
-    /**
-     * Todoist ranks priorities 4 (p1, highest) down to 1 (p4, none).
-     */
-    private static function mapPriority(int $priority): ?TodoPriority
-    {
-        return match ($priority) {
-            4 => TodoPriority::High,
-            3 => TodoPriority::Medium,
-            2 => TodoPriority::Low,
-            default => null,
-        };
     }
 }
