@@ -1,6 +1,6 @@
 import { router, useForm } from '@inertiajs/react';
-import { Check, CornerDownLeft, History, Pencil, Pin, Plus, RotateCcw, Star, Trash2, X } from 'lucide-react';
-import { useState } from 'react';
+import { Check, ChevronDown, CornerDownLeft, History, Pencil, Pin, Plus, RotateCcw, Star, Trash2, X } from 'lucide-react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode, Ref } from 'react';
 import {
     apply as applyNote,
@@ -197,6 +197,57 @@ export function StickyNoteComposer({ className, textareaRef }: { className?: str
     );
 }
 
+/**
+ * Note text clamped to six lines, with a toggle shown only when the text actually overflows.
+ */
+function NoteText({ content, applied }: { content: string; applied: boolean }) {
+    const textRef = useRef<HTMLParagraphElement>(null);
+    const [expanded, setExpanded] = useState(false);
+    const [overflows, setOverflows] = useState(false);
+
+    useLayoutEffect(() => {
+        const element = textRef.current;
+
+        if (!element || expanded) {
+            return;
+        }
+
+        const measure = () => setOverflows(element.scrollHeight > element.clientHeight + 1);
+        const observer = new ResizeObserver(measure);
+
+        measure();
+        observer.observe(element);
+
+        return () => observer.disconnect();
+    }, [content, expanded]);
+
+    return (
+        <div>
+            <p
+                ref={textRef}
+                className={cn(
+                    'text-sm leading-snug break-words whitespace-pre-wrap',
+                    !expanded && 'line-clamp-6',
+                    applied && 'line-through decoration-slate-500/60',
+                )}
+            >
+                {linkify(content)}
+            </p>
+            {overflows && (
+                <button
+                    type="button"
+                    onClick={() => setExpanded((shown) => !shown)}
+                    className={cn(actionStyles, '-ml-1.5 mt-1')}
+                    aria-expanded={expanded}
+                >
+                    <ChevronDown className={cn('size-3.5 transition-transform', expanded && 'rotate-180')} />
+                    {expanded ? 'Show less' : 'Show all'}
+                </button>
+            )}
+        </div>
+    );
+}
+
 export function StickyNoteCard({ note, tilt = false }: { note: StickyNoteItem; tilt?: boolean }) {
     const [editing, setEditing] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
@@ -299,9 +350,7 @@ export function StickyNoteCard({ note, tilt = false }: { note: StickyNoteItem; t
                     </div>
                 </div>
             ) : (
-                <p className={cn('text-sm leading-snug break-words whitespace-pre-wrap', note.is_applied && 'line-through decoration-slate-500/60')}>
-                    {linkify(note.content)}
-                </p>
+                <NoteText content={note.content} applied={note.is_applied} />
             )}
 
             {!editing && (
