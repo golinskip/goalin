@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Domain\Alerts\AlertManager;
+use Domain\Tools\StickyNotes\Support\StickyNotePresenter;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -55,6 +56,9 @@ class HandleInertiaRequests extends Middleware
             ],
             'alerts' => fn () => $user
                 ? app(AlertManager::class)->getActiveAlerts($user)
+                : [],
+            'stickyNotes' => fn () => $user
+                ? StickyNotePresenter::activeForUser($user)
                 : [],
         ];
     }

@@ -50,6 +50,9 @@ use Domain\Tools\RssFeeds\Alerts\UncheckedNewsTodayAlert;
 use Domain\Tools\RssFeeds\Events\ReadArticlesEvent;
 use Domain\Tools\RssFeeds\Models\RssFeed;
 use Domain\Tools\RssFeeds\Policies\RssFeedPolicy;
+use Domain\Tools\StickyNotes\Alerts\UnreviewedStickyNotesAlert;
+use Domain\Tools\StickyNotes\Models\StickyNote;
+use Domain\Tools\StickyNotes\Policies\StickyNotePolicy;
 use Domain\Tools\TaskMindmap\Models\MindmapTask;
 use Domain\Tools\TaskMindmap\Policies\MindmapTaskPolicy;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -74,6 +77,7 @@ class AppServiceProvider extends ServiceProvider
             new UncheckedNewsTodayAlert,
             new UnmarkedRoutineTasksAlert,
             new NoTodosTodayAlert,
+            new UnreviewedStickyNotesAlert,
         ));
 
         $this->app->singleton(EventRegistry::class, fn () => new EventRegistry(
@@ -131,6 +135,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(RoutineTask::class, RoutineTaskPolicy::class);
         Gate::policy(TodoTask::class, TodoTaskPolicy::class);
         Gate::policy(MindmapTask::class, MindmapTaskPolicy::class);
+        Gate::policy(StickyNote::class, StickyNotePolicy::class);
     }
 
     /**

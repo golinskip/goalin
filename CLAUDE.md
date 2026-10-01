@@ -76,6 +76,14 @@ domain/
     │   ├── Requests/             # StoreMindmapTask, UpdateMindmapTask form requests
     │   ├── Support/              # MindmapTreePresenter (nested tree + per-branch done/total counts)
     │   └── Policies/             # MindmapTask policy
+    ├── StickyNotes/              # Subdomain: quick sticky notes, opened from a top-bar icon in a right-side sheet
+    │   ├── Models/               # StickyNote (reviewed_on, applied_at), StickyNoteRevision (previous texts)
+    │   ├── Enums/                # StickyNoteColor
+    │   ├── Controllers/          # StickyNotes (index), StickyNote (store/update/apply/stay/destroy)
+    │   ├── Requests/             # StoreStickyNote, UpdateStickyNote form requests
+    │   ├── Support/              # StickyNotePresenter (open notes are shared globally via Inertia as `stickyNotes`)
+    │   ├── Alerts/               # UnreviewedStickyNotesAlert (open notes not reviewed today)
+    │   └── Policies/             # StickyNote policy
     └── Games/                    # Subdomain: games with shared results tracking
         ├── Models/               # GameResult (shared results table: game, result, played_at)
         ├── Controllers/          # Games (index), GameResult (store results API)
