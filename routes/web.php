@@ -37,6 +37,8 @@ use Domain\Tools\LongTermGoals\Controllers\LongTermGoalsController;
 use Domain\Tools\MusicPlayer\Controllers\MusicFileController;
 use Domain\Tools\MusicPlayer\Controllers\PlaylistController;
 use Domain\Tools\RssFeeds\Controllers\RssFeedController;
+use Domain\Tools\StickyNotes\Controllers\StickyNoteController;
+use Domain\Tools\StickyNotes\Controllers\StickyNotesController;
 use Domain\Tools\TaskMindmap\Controllers\MindmapTaskController;
 use Domain\Tools\TaskMindmap\Controllers\TaskMindmapController;
 use Illuminate\Support\Facades\Route;
@@ -147,6 +149,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('mindmap-tasks/{mindmapTask}', [MindmapTaskController::class, 'update'])->name('mindmap-tasks.update');
     Route::post('mindmap-tasks/{mindmapTask}/status', [MindmapTaskController::class, 'status'])->name('mindmap-tasks.status');
     Route::delete('mindmap-tasks/{mindmapTask}', [MindmapTaskController::class, 'destroy'])->name('mindmap-tasks.destroy');
+
+    // Sticky Notes
+    Route::get('sticky-notes', [StickyNotesController::class, 'index'])->name('sticky-notes.index');
+    Route::post('sticky-notes', [StickyNoteController::class, 'store'])->name('sticky-notes.store');
+    Route::put('sticky-notes/{stickyNote}', [StickyNoteController::class, 'update'])->name('sticky-notes.update');
+    Route::post('sticky-notes/{stickyNote}/apply', [StickyNoteController::class, 'apply'])->name('sticky-notes.apply');
+    Route::post('sticky-notes/{stickyNote}/stay', [StickyNoteController::class, 'stay'])->name('sticky-notes.stay');
+    Route::delete('sticky-notes/{stickyNote}', [StickyNoteController::class, 'destroy'])->name('sticky-notes.destroy');
 
     // RSS Feeds
     Route::get('rss-feeds', [RssFeedController::class, 'index'])->name('rss-feeds.index');

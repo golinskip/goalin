@@ -1,8 +1,9 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, ChevronDown, Compass, Gamepad2, Layers, LayoutGrid, ListTodo, Menu, Music, Network, NotebookPen, Repeat2, Rss, Shield, Target } from 'lucide-react';
+import { BookOpen, ChevronDown, Compass, Gamepad2, Layers, LayoutGrid, ListTodo, Menu, Music, Network, NotebookPen, Repeat2, Rss, Shield, StickyNote, Target } from 'lucide-react';
 import { AlertsMenu } from '@/components/alerts-menu';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { StickyNotesMenu } from '@/components/sticky-notes-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,9 +35,10 @@ import { dashboard } from '@/routes';
 import { index as dailyRoutineIndex } from '@/routes/daily-routine';
 import { index as dailyTodoIndex } from '@/routes/daily-todo';
 import { index as diaryIndex } from '@/routes/diary';
-import { index as taskMindmapIndex } from '@/routes/task-mindmap';
 import { index as memoSetsIndex } from '@/routes/memo-sets';
 import { index as musicIndex } from '@/routes/music';
+import { index as stickyNotesIndex } from '@/routes/sticky-notes';
+import { index as taskMindmapIndex } from '@/routes/task-mindmap';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
 type Props = {
@@ -92,6 +94,11 @@ const additionalToolsNavItems: NavItem[] = [
         title: 'RSS Feeds',
         href: '/rss-feeds',
         icon: Rss,
+    },
+    {
+        title: 'Sticky Notes',
+        href: stickyNotesIndex(),
+        icon: StickyNote,
     },
     {
         title: 'Games',
@@ -316,6 +323,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 </Link>
                             </Button>
                         )}
+                        <StickyNotesMenu />
                         <AlertsMenu />
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>

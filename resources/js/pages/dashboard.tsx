@@ -13,6 +13,7 @@ import {
     NotebookPen,
     Repeat2,
     Rss,
+    StickyNote,
     Target,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -138,6 +139,15 @@ const additionalTools: Tool[] = [
         card: 'border-orange-200/80 dark:border-orange-800/50',
         iconWrapper: 'bg-orange-500/15 group-hover:bg-orange-500/25',
         iconColor: 'text-orange-600 dark:text-orange-400',
+    },
+    {
+        title: 'Sticky Notes',
+        description: 'Quick notes to apply later',
+        href: '/sticky-notes',
+        icon: StickyNote,
+        card: 'border-yellow-200/80 dark:border-yellow-800/50',
+        iconWrapper: 'bg-yellow-500/15 group-hover:bg-yellow-500/25',
+        iconColor: 'text-yellow-600 dark:text-yellow-400',
     },
     {
         title: 'Games',
