@@ -1,7 +1,7 @@
 import { router, useForm } from '@inertiajs/react';
-import { Check, History, Pencil, Pin, Plus, RotateCcw, Star, Trash2, X } from 'lucide-react';
+import { Check, CornerDownLeft, History, Pencil, Pin, Plus, RotateCcw, Star, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
-import type { KeyboardEvent, ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode, Ref } from 'react';
 import {
     apply as applyNote,
     destroy as destroyNote,
@@ -88,7 +88,18 @@ function submitOnModEnter(event: KeyboardEvent<HTMLTextAreaElement>, submit: () 
     }
 }
 
-export function StickyNoteComposer({ className }: { className?: string }) {
+const ENTER_ADDS_STORAGE_KEY = 'sticky-notes.enter-adds';
+
+function readEnterAdds(): boolean {
+    try {
+        return localStorage.getItem(ENTER_ADDS_STORAGE_KEY) !== 'false';
+    } catch {
+        return true;
+    }
+}
+
+export function StickyNoteComposer({ className, textareaRef }: { className?: string; textareaRef?: Ref<HTMLTextAreaElement> }) {
+    const [enterAdds, setEnterAdds] = useState(readEnterAdds);
     const form = useForm<{ content: string; color: StickyNoteColor; is_important: boolean }>({
         content: '',
         color: 'yellow',
@@ -103,6 +114,29 @@ export function StickyNoteComposer({ className }: { className?: string }) {
         form.post(storeNote.url(), { ...visitOptions, onSuccess: () => form.reset() });
     };
 
+    const toggleEnterAdds = () => {
+        const next = !enterAdds;
+
+        setEnterAdds(next);
+
+        try {
+            localStorage.setItem(ENTER_ADDS_STORAGE_KEY, String(next));
+        } catch {
+            return;
+        }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+        if (event.key !== 'Enter' || event.nativeEvent.isComposing) {
+            return;
+        }
+
+        if (event.metaKey || event.ctrlKey || (enterAdds && !event.shiftKey)) {
+            event.preventDefault();
+            submit();
+        }
+    };
+
     return (
         <form
             onSubmit={(event) => {
@@ -112,9 +146,10 @@ export function StickyNoteComposer({ className }: { className?: string }) {
             className={cn(paperStyles, NOTE_COLORS[form.data.color].paper, 'space-y-2 p-3', className)}
         >
             <textarea
+                ref={textareaRef}
                 value={form.data.content}
                 onChange={(event) => form.setData('content', event.target.value)}
-                onKeyDown={(event) => submitOnModEnter(event, submit)}
+                onKeyDown={handleKeyDown}
                 rows={3}
                 maxLength={2000}
                 placeholder="Quick note…"
@@ -133,6 +168,20 @@ export function StickyNoteComposer({ className }: { className?: string }) {
                         title="Mark as important"
                     >
                         <Star className={cn('size-4', form.data.is_important && 'fill-red-500 text-red-600')} />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={toggleEnterAdds}
+                        className={cn(actionStyles, enterAdds && 'bg-black/15 text-slate-950')}
+                        aria-pressed={enterAdds}
+                        aria-label="Enter adds the note"
+                        title={
+                            enterAdds
+                                ? 'Enter adds the note, Shift+Enter starts a new line. Click to make Enter start a new line.'
+                                : 'Enter starts a new line, Ctrl+Enter adds the note. Click to make Enter add the note.'
+                        }
+                    >
+                        <CornerDownLeft className="size-4" />
                     </button>
                     <button
                         type="submit"
