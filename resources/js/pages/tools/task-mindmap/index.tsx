@@ -20,6 +20,7 @@ import {
     Lightbulb,
     Link2,
     ListTree,
+    MoreHorizontal,
     type LucideIcon,
     Music,
     PenTool,
@@ -254,6 +255,7 @@ function TaskRow({ node, parentId, ctx }: { node: TaskNode; parentId: number | n
     const resolved = node.status === 'done' || node.status === 'rejected';
     const completion = completionOf(node);
     const showCompletion = node.total_count > 0 ? completion > 0 : node.status === 'in_progress';
+    const [toolbarOpen, setToolbarOpen] = useState(false);
 
     return (
         <li>
@@ -331,44 +333,57 @@ function TaskRow({ node, parentId, ctx }: { node: TaskNode; parentId: number | n
                     </span>
                 )}
 
-                <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
-                    <Button variant="ghost" size="icon" className="size-7" onClick={() => ctx.onStatus(node, 'done')} title="Mark as done">
-                        <Check className="size-3.5" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className={cn('size-7', node.status === 'in_progress' ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground')}
-                        onClick={() => ctx.onStatus(node, 'in_progress')}
-                        title={node.status === 'in_progress' ? 'Mark as to do' : 'Mark as in progress'}
-                    >
-                        <CircleDashed className="size-3.5" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className={cn('size-7', node.status === 'rejected' ? 'text-rose-600 dark:text-rose-400' : 'text-muted-foreground')}
-                        onClick={() => ctx.onStatus(node, 'rejected')}
-                        title={node.status === 'rejected' ? 'Mark as to do' : 'Mark as rejected'}
-                    >
-                        <Ban className="size-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="size-7" onClick={() => ctx.onEdit(node)} title="Details">
-                        <Pencil className="size-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="size-7" onClick={() => ctx.onToggleExpand(node.id)} title="Add subtask">
-                        <Plus className="size-3.5" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-7 text-destructive hover:bg-destructive/10"
-                        onClick={() => ctx.onDelete(node)}
-                        title="Delete"
-                    >
-                        <Trash2 className="size-3.5" />
-                    </Button>
-                </div>
+                {toolbarOpen && (
+                    <div className="flex shrink-0 items-center gap-0.5">
+                        <Button variant="ghost" size="icon" className="size-7" onClick={() => ctx.onStatus(node, 'done')} title="Mark as done">
+                            <Check className="size-3.5" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn('size-7', node.status === 'in_progress' ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground')}
+                            onClick={() => ctx.onStatus(node, 'in_progress')}
+                            title={node.status === 'in_progress' ? 'Mark as to do' : 'Mark as in progress'}
+                        >
+                            <CircleDashed className="size-3.5" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn('size-7', node.status === 'rejected' ? 'text-rose-600 dark:text-rose-400' : 'text-muted-foreground')}
+                            onClick={() => ctx.onStatus(node, 'rejected')}
+                            title={node.status === 'rejected' ? 'Mark as to do' : 'Mark as rejected'}
+                        >
+                            <Ban className="size-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="size-7" onClick={() => ctx.onEdit(node)} title="Details">
+                            <Pencil className="size-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="size-7" onClick={() => ctx.onToggleExpand(node.id)} title="Add subtask">
+                            <Plus className="size-3.5" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 text-destructive hover:bg-destructive/10"
+                            onClick={() => ctx.onDelete(node)}
+                            title="Delete"
+                        >
+                            <Trash2 className="size-3.5" />
+                        </Button>
+                    </div>
+                )}
+
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn('size-7 shrink-0 text-muted-foreground', toolbarOpen && 'bg-muted text-foreground')}
+                    onClick={() => setToolbarOpen((open) => !open)}
+                    aria-expanded={toolbarOpen}
+                    title={toolbarOpen ? 'Hide actions' : 'Show actions'}
+                >
+                    <MoreHorizontal className="size-4" />
+                </Button>
             </div>
 
             {isExpanded && (
@@ -813,7 +828,7 @@ export default function TaskMindmapIndex({ tree }: Props) {
             <div className="relative flex h-full flex-1 flex-col">
                 <PageBackground />
 
-                <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col gap-5 p-4 lg:p-6">
+                <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-5 p-4 lg:p-6">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                             <h1 className="text-2xl font-semibold">Task Mindmap</h1>
