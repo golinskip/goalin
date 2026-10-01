@@ -9,6 +9,7 @@ import { index as stickyNotesIndex } from '@/routes/sticky-notes';
 export function StickyNotesMenu() {
     const notes = usePage().props.stickyNotes ?? [];
     const count = notes.length;
+    const importantCount = notes.filter((note) => note.is_important).length;
     const unreviewed = notes.filter((note) => note.needs_review).length;
 
     const [open, setOpen] = useState(false);
@@ -37,14 +38,14 @@ export function StickyNotesMenu() {
                     variant="ghost"
                     size="icon"
                     className="relative size-10 rounded-full"
-                    aria-label={`Sticky notes${count > 0 ? ` (${count})` : ''}`}
+                    aria-label={`Sticky notes${importantCount > 0 ? ` (${importantCount} important)` : ''}`}
                     aria-keyshortcuts="Control+Alt+N"
                     title="Sticky notes (Ctrl+Alt+N)"
                 >
                     <StickyNote className="size-5" />
-                    {count > 0 && (
+                    {importantCount > 0 && (
                         <span className="absolute -top-0.5 -right-0.5 flex size-5 items-center justify-center rounded-full bg-yellow-400 text-[10px] font-semibold text-slate-900">
-                            {count > 9 ? '9+' : count}
+                            {importantCount > 9 ? '9+' : importantCount}
                         </span>
                     )}
                 </Button>
